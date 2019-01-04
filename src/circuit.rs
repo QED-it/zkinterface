@@ -1,22 +1,44 @@
 use std::io::{Read, Write};
 use capnp::serialize;
-use circuit_capnp::{address_book, person, constraint_request};
+use circuit_capnp::{address_book, person, constraints_request};
 
-/*
+
 pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
     where W: Write
 {
     let mut message = ::capnp::message::Builder::new_default();
     {
-        let req = message.init_root::<constraint_request::Builder>();
+        let req = message.init_root::<constraints_request::Builder>();
 
+        let parent_id = 1;
+        let child_id = 2;
 
-        let mut people = req.init_instance();
+        let mut parent = req.init_instance();
+        {
+            let mut id_space = parent.reborrow().init_id_space();
+            id_space.set_owner_id(child_id);
+            id_space.set_owned(10);
+        }
+        {
+            let mut connections = parent.reborrow().init_connections(2);
+            {
+                let conn = connections.reborrow().get(0);
+                let mut incoming = conn.init_incoming();
+                incoming.set_owner_id(parent_id);
+                incoming.set_reference(1);
+            }
+            {
+                let conn = connections.reborrow().get(1);
+                let mut outgoing = conn.init_outgoing();
+                outgoing.set_owner_id(parent_id);
+                outgoing.set_reference(1);
+            }
+        }
     }
 
     serialize::write_message(w, &message)
 }
-*/
+
 
 pub fn write_address_book<W>(w: &mut W) -> ::std::io::Result<()>
     where W: Write
