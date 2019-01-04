@@ -12,6 +12,42 @@ struct VariableId {
 }
 # Globally unique variable IDs.
 
+struct Constraint {
+    struct Term {
+        variableId  @0 :VariableId;
+        coefficient @1 :Data;
+    }
+
+    # (A) * (B) = (C)
+    rowA @0 :List(Term);
+    rowB @1 :List(Term);
+    rowC @2 :List(Term);
+}
+# Low-level constraint between variables.
+# Targets the generic mechanisms that build circuits.
+
+struct Assignment {
+    variableId @0 :VariableId;
+    value      @1 :Data;
+}
+# Low-level assignment to a variable.
+# Targets the generic mechanisms that prepare proofs.
+
+struct Struct {
+    union {
+        variables @0 :List(VariableId);
+        structs   @1 :List(Struct);
+    }
+    type          @2 :Text;
+    name          @3 :Text;
+    info          @4 :List(KeyValue);
+
+    xInternal     @5 :AnyPointer;
+    # A space reserved for implementations to track internal information
+    # along with the struct. Not part of the protocol.
+}
+# A high-level structure of variables.
+# Targets gadget composition.
 
 struct IdSpace {
 
@@ -36,29 +72,14 @@ struct KeyValue {
 }
 
 struct Instance {
-    idSpace      @0 :IdSpace;
-    incomingVars @1 :List(VariableId);
-    outgoingVars @2 :List(VariableId);
-    params       @3 :List(KeyValue);
-}
+    idSpace        @0 :IdSpace;
+    incomingStruct @1 :Struct;
+    outgoingStruct @2 :Struct;
+    params         @3 :List(KeyValue);
 
-
-struct Constraint {
-    struct Term {
-        variableId  @0 :VariableId;
-        coefficient @1 :Data;
-    }
-
-    # (A) * (B) = (C)
-    rowA @0 :List(Term);
-    rowB @1 :List(Term);
-    rowC @2 :List(Term);
-}
-
-
-struct Assignment {
-    variableId @0 :VariableId;
-    value      @1 :Data;
+    xInternal      @4 :AnyPointer;
+    # A space reserved for implementations to track internal information
+    # along with the instance. Not part of the protocol.
 }
 
 
@@ -77,7 +98,7 @@ struct Assignment {
 # - Caller calls the gadget with pointers to:
 #     - the request.
 #     - a chunk handler function.
-#     - a response handler function.
+#     - a return handler function.
 #     - an opaque context for each handler to be given back when calling them.
 # - Gadget reads the request.
 # - Gadget prepares a chunk in its memory.
@@ -85,10 +106,10 @@ struct Assignment {
 # - Callback reads or copy the chunk.
 # - Gadget releases the chunk memory.
 # - Multiple chunks may be passed by calling the chunk handler multiple times.
-# - Gadget prepares a response in its memory.
-# - Gadget calls the response handler.
-# - Callback reads or copy the response.
-# - Gadget releases the response memory.
+# - Gadget prepares return data in its memory.
+# - Gadget calls the return handler.
+# - Callback reads or copy the return data.
+# - Gadget releases the return memory.
 # - Caller releases the request memory.
 #
 
@@ -99,27 +120,34 @@ struct Assignment {
 
 # # Motivation
 #
-# The entity handling chunks might not be the same as the one handling responses.
-# In case of gadget composition, the parent can handle the response, while chunks
+# The entity handling chunks might not be the same as the one handling the return.
+# In case of gadget composition, the parent can handle the return, while chunks
 # are handled directly by some global environment.
 # This avoid the needs to route chunks up the callstack.
 #
 
 struct ConstraintsRequest {
-    instance @0 :Instance;
+    instance       @0 :Instance;
+
+    xChunkContext  @1 :AnyPointer; # Opaque data to pass to the chunk handler.
+    xReturnContext @2 :AnyPointer; # Opaque data to pass to the return handler.
 }
 
 struct ConstraintsChunk {
-    constraints @0 :List(Constraint);
+    constraints   @0 :List(Constraint);
+
+    xChunkContext @1 :AnyPointer;
 }
 
-struct ConstraintsResponse {
+struct ConstraintsReturn {
     union {
-        error    @0 :Text;
-        response :group {
-            info @1 :List(KeyValue);
+        error      @0 :Text;
+        return     :group {
+            info   @1 :List(KeyValue);
         }
     }
+
+    xReturnContext @2 :AnyPointer;
 }
 
 
@@ -127,20 +155,27 @@ struct AssignmentsRequest {
     instance            @0 :Instance;
     incomingAssignments @1 :List(Assignment);
     witness             @2 :List(KeyValue);
+
+    xChunkContext       @3 :AnyPointer; # Opaque data to pass to the chunk handler.
+    xReturnContext      @4 :AnyPointer; # Opaque data to pass to the return handler.
 }
 
 struct AssignmentsChunk {
-    assignments @0 :List(Assignment);
+    assignments   @0 :List(Assignment);
+
+    xChunkContext @1 :AnyPointer;
 }
 
-struct AssignmentsResponse {
+struct AssignmentsReturn {
     union {
         error                   @0 :Text;
-        response                :group {
+        return                  :group {
             outgoingAssignments @1 :List(Assignment);
             info                @2 :List(KeyValue);
         }
     }
+
+    xReturnContext              @3 :AnyPointer;
 }
 
 
@@ -160,6 +195,6 @@ interface Caller {
 }
 
 interface Gadget {
-    makeConstraints @0 (params :ConstraintsRequest, caller :Caller) -> (res :ConstraintsResponse);
-    makeAssignments @1 (params :AssignmentsRequest, caller :Caller) -> (res :AssignmentsResponse);
+    makeConstraints @0 (params :ConstraintsRequest, caller :Caller) -> (res :ConstraintsReturn);
+    makeAssignments @1 (params :AssignmentsRequest, caller :Caller) -> (res :AssignmentsReturn);
 }

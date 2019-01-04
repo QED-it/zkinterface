@@ -1,6 +1,7 @@
 use std::io::{Read, Write};
 use capnp::serialize;
 use circuit_capnp::{constraints_request};
+use circuit_capnp::struct_::Which::Variables;
 
 
 pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
@@ -20,17 +21,19 @@ pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
             id_space.set_owned(10);
         }
         {
-            let mut incoming = parent.reborrow().init_incoming_vars(1);
+            let mut incoming = parent.reborrow().init_incoming_struct();
             {
-                let mut var = incoming.reborrow().get(0);
+                let vars = incoming.reborrow().init_variables(1);
+                let mut var = vars.get(0);
                 var.set_owner_id(parent_id);
                 var.set_reference(1);
             }
         }
         {
-            let mut outgoing = parent.reborrow().init_outgoing_vars(1);
+            let mut outgoing = parent.reborrow().init_outgoing_struct();
             {
-                let mut var = outgoing.reborrow().get(0);
+                let vars = outgoing.reborrow().init_variables(1);
+                let mut var = vars.get(0);
                 var.set_owner_id(parent_id);
                 var.set_reference(2);
             }
@@ -66,11 +69,19 @@ pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
     println!("owner: {}", id_space.get_owner_id());
     println!("owned: {}", id_space.get_owned());
 
-    for var in instance.get_incoming_vars()?.iter() {
+    let incoming = match instance.get_incoming_struct()?.which()? {
+      Variables(vars) => vars?,
+        _ => panic!("Nested structs are not implemented."),
+    };
+    for var in incoming.iter() {
         println!("incoming {}/{}", var.get_owner_id(), var.get_reference());
     }
 
-    for var in instance.get_outgoing_vars()?.iter() {
+    let outgoing = match instance.get_outgoing_struct()?.which()? {
+        Variables(vars) => vars?,
+        _ => panic!("Nested structs are not implemented."),
+    };
+    for var in outgoing.iter() {
         println!("outgoing {}/{}", var.get_owner_id(), var.get_reference());
     }
 
