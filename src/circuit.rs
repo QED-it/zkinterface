@@ -1,7 +1,7 @@
 use std::io::{Read, Write};
 use capnp::serialize;
-use circuit_capnp::{constraints_request};
-use circuit_capnp::struct_::Which::Variables;
+use circuit_capnp::{instance_request};
+use circuit_capnp::struct_var::Which::Variables;
 
 
 pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
@@ -9,37 +9,34 @@ pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
 {
     let mut message = ::capnp::message::Builder::new_default();
     {
-        let req = message.init_root::<constraints_request::Builder>();
+        let req = message.init_root::<instance_request::Builder>();
 
         let parent_id = 1;
         let child_id = 2;
 
-        let mut parent = req.init_instance();
+        let mut instance = req.init_instance();
+        instance.set_owner_id(child_id);
+        instance.set_own_next_ids(10);
         {
-            let mut id_space = parent.reborrow().init_id_space();
-            id_space.set_owner_id(child_id);
-            id_space.set_owned(10);
-        }
-        {
-            let mut incoming = parent.reborrow().init_incoming_struct();
+            let mut incoming = instance.reborrow().init_incoming_struct();
             {
                 let vars = incoming.reborrow().init_variables(1);
                 let mut var = vars.get(0);
                 var.set_owner_id(parent_id);
-                var.set_reference(1);
+                var.set_index(1);
             }
         }
         {
-            let mut outgoing = parent.reborrow().init_outgoing_struct();
+            let mut outgoing = instance.reborrow().init_outgoing_struct();
             {
                 let vars = outgoing.reborrow().init_variables(1);
                 let mut var = vars.get(0);
                 var.set_owner_id(parent_id);
-                var.set_reference(2);
+                var.set_index(2);
             }
         }
         {
-            let mut params = parent.reborrow().init_params(2);
+            let mut params = instance.reborrow().init_parameters(2);
             {
                 let mut param = params.reborrow().get(0);
                 param.set_key("Name");
@@ -62,19 +59,18 @@ pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
 {
     let message_reader = serialize::read_message(&mut r,
                                                  ::capnp::message::ReaderOptions::new())?;
-    let req = message_reader.get_root::<constraints_request::Reader>()?;
+    let req = message_reader.get_root::<instance_request::Reader>()?;
     let instance = req.get_instance()?;
 
-    let id_space = instance.get_id_space()?;
-    println!("owner: {}", id_space.get_owner_id());
-    println!("owned: {}", id_space.get_owned());
+    println!("owner ID: {}", instance.get_owner_id());
+    println!("owns extra IDs: {}", instance.get_own_next_ids());
 
     let incoming = match instance.get_incoming_struct()?.which()? {
       Variables(vars) => vars?,
         _ => panic!("Nested structs are not implemented."),
     };
     for var in incoming.iter() {
-        println!("incoming {}/{}", var.get_owner_id(), var.get_reference());
+        println!("incoming {}/{}", var.get_owner_id(), var.get_index());
     }
 
     let outgoing = match instance.get_outgoing_struct()?.which()? {
@@ -82,11 +78,11 @@ pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
         _ => panic!("Nested structs are not implemented."),
     };
     for var in outgoing.iter() {
-        println!("outgoing {}/{}", var.get_owner_id(), var.get_reference());
+        println!("outgoing {}/{}", var.get_owner_id(), var.get_index());
     }
 
-    for param in instance.get_params()?.iter() {
-        println!("param {}={}", param.get_key()?, param.get_value().get_as::<&str>()?);
+    for param in instance.get_parameters()?.iter() {
+        println!("param {} = {}", param.get_key()?, param.get_value().get_as::<&str>()?);
     }
 
     Ok(())

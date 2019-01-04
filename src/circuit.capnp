@@ -4,39 +4,59 @@
 
 struct VariableId {
 
-    ownerId   @0 :UInt32;
-    # Globally unique ID of the gadget that owns this variable.
-
-    reference @1 :UInt32;
+    index   @0 :UInt32;
     # A reference unique within the local scope of the owning gadget.
+    # Zero is a reserved special value.
+
+    ownerId @1 :UInt32;
+    # Globally unique ID of the instance that owns this variable.
+    # Zero is a reserved special value.
 }
-# Globally unique variable IDs.
+# Globally unique variable ID.
+
+struct Term {
+    coefficientLE @0 :Data;
+    # A coefficient in little-endian.
+
+    # See VariableId. This layout may allow specific optimizations in the future.
+    index         @1 :UInt32;
+    ownerId       @2 :UInt32;
+}
+# A term in a R1CS row.
+# Intended to be sent in sequences.
 
 struct Constraint {
-    struct Term {
-        variableId  @0 :VariableId;
-        coefficient @1 :Data;
-    }
-
     # (A) * (B) = (C)
     rowA @0 :List(Term);
     rowB @1 :List(Term);
     rowC @2 :List(Term);
 }
-# Low-level constraint between variables.
+# A low-level R1CS constraint between variables.
 # Targets the generic mechanisms that build circuits.
+# Intended to be sent in sequences.
 
 struct Assignment {
-    variableId @0 :VariableId;
-    value      @1 :Data;
-}
-# Low-level assignment to a variable.
-# Targets the generic mechanisms that prepare proofs.
+    valueLE @0 :Data;
+    # A value in little-endian.
 
-struct Struct {
+    # See VariableId. This layout may allow specific optimizations in the future.
+    index   @1 :UInt32;
+    ownerId @2 :UInt32;
+}
+# A low-level assignment to a variable.
+# Targets the generic mechanisms that prepare proofs.
+# Intended to be sent in sequences.
+
+struct KeyValue {
+    key   @0 :Text;
+    value @1 :AnyPointer;
+}
+# Generic key-value for miscellaneous attributes.
+
+struct StructVar {
     union {
         variables @0 :List(VariableId);
-        structs   @1 :List(Struct);
+        structs   @1 :List(StructVar);
     }
     type          @2 :Text;
     name          @3 :Text;
@@ -47,45 +67,125 @@ struct Struct {
     # along with the struct. Not part of the protocol.
 }
 # A high-level structure of variables.
-# Targets gadget composition.
-
-struct IdSpace {
-
-    ownerId @0 :UInt32;
-    # The unique id of a gadget.
-    # The gadget own all variables that refer to this ownerId.
-
-    owned   @1 :UInt32;
-    # How many consecutive GadgetId's belong to this gadget, starting with its own id.
-    # The owner may redistribute its ids to sub-gadgets.
-    # The owner is responsible for the uniqueness of VariableId's
-    # within the space of GadgetId's it owns.
-}
-# Used to delegate a part of the VariableId spaces to a gadget.
-#
-# Motivation: let gadgets allocate unique IDs without coordination.
-#
-
-struct KeyValue {
-    key   @0 :Text;
-    value @1 :AnyPointer;
-}
+# In gadget composition, the parent provides this structure to its child.
+# A gadget should document what structures it can accept.
 
 struct Instance {
-    idSpace        @0 :IdSpace;
-    incomingStruct @1 :Struct;
-    outgoingStruct @2 :Struct;
-    params         @3 :List(KeyValue);
 
-    xInternal      @4 :AnyPointer;
+    ownerId        @0 :UInt32;
+    # The unique id of this instance.
+    # The instance own all variables that refer to this ownerId.
+
+    incomingStruct @1 :StructVar;
+    # Structure of public variables that must be assigned by the calling parent.
+
+    outgoingStruct @2 :StructVar;
+    # Structure of public variables that must be assigned by the called gadget.
+    # There may be no outgoing variables if the gadget represents a pure assertion.
+
+    parameters     @3 :List(KeyValue);
+    # Any parameter that may influence the instance behavior.
+    # Parameters can be standard, conventional, or specific to a gadget.
+
+    ownNextIds     @4 :UInt32;
+    # How many consecutive ownerId's belong to this instance after its own id.
+    # Used to allocate unique IDs without global coordination.
+    # The owner may redistribute its ids to child instances.
+    # The owner is responsible for the uniqueness of VariableId's
+    # within the space of GadgetId's it owns.
+
+    xInternal      @5 :AnyPointer;
     # A space reserved for implementations to track internal information
     # along with the instance. Not part of the protocol.
 }
+# An instance of a gadget as part of a circuit.
 
 
-## Messages
+# == Messages for Instantiation ==
 
-# # Calling convention with shared memory and function calls:
+struct InstanceRequest {
+    instance       @0 :Instance;
+
+    xChunkContext  @1 :AnyPointer;
+    # Opaque data to pass to the chunk handler.
+
+    xReturnContext @2 :AnyPointer;
+    # Opaque data to pass to the return handler.
+}
+# Request to build an instance.
+
+struct ConstraintsChunk {
+    constraints   @0 :List(Constraint);
+
+    xChunkContext @1 :AnyPointer;
+}
+# Report all constraints in one or more chunks.
+
+struct InstanceReturn {
+    union {
+        error      @0 :Text;
+
+        return     :group {
+            info   @1 :List(KeyValue);
+            # Any info that may be useful to the calling parent.
+        }
+    }
+
+    xReturnContext @2 :AnyPointer;
+}
+# Return after the instantiation is complete.
+
+
+# == Messages for Proving ==
+
+struct AssignmentsRequest {
+    instance            @0 :Instance;
+    # The same instance parameter must be provided as in the corresponding InstanceRequest.
+
+    incomingAssignments @1 :List(Assignment);
+    # The values that the parent assigned to `instance.incomingStruct`.
+
+    witness             @2 :List(KeyValue);
+    # Any info that may be useful to the gadget to compute its assignments.
+
+    xChunkContext       @3 :AnyPointer;
+    # Opaque data to pass to the chunk handler.
+
+    xReturnContext      @4 :AnyPointer;
+    # Opaque data to pass to the return handler.
+}
+# Request assignments computed from a witness.
+
+struct AssignmentsChunk {
+    assignments   @0 :List(Assignment);
+
+    xChunkContext @1 :AnyPointer;
+}
+# Report internal and outgoing assignments in one or more chunks.
+
+struct AssignmentsReturn {
+    union {
+        error                   @0 :Text;
+
+        return                  :group {
+            info                @1 :List(KeyValue);
+            # Any info that may be useful to the calling parent.
+
+            outgoingAssignments @2 :List(Assignment);
+            # The values that the gadget assigned to `instance.outgoingStruct`.
+            # Intentionally redundant with AssignmentsChunk to allow handling
+            # the outgoing variables separately from the bulk of internal assignments.
+        }
+    }
+
+    xReturnContext              @3 :AnyPointer;
+}
+# Return after all assignments have been reported.
+
+
+# = RPC Approach =
+#
+# == Calling with shared memory ==
 #
 # The communicating parties are assumed to use different memory management,
 # even if they may run in the same process.
@@ -112,13 +212,13 @@ struct Instance {
 # - Gadget releases the return memory.
 # - Caller releases the request memory.
 #
-
-# # Message passing without shared memory:
+# == Calling by passing messages ==
 #
-# - Caller sends a serialized request
+# - Caller sends a serialized request message.
+# - Gadget sends one or more serialized chunks, possibly pipelined.
+# - Gadget sends a serialized return message.
 #
-
-# # Motivation
+# == Motivation ==
 #
 # The entity handling chunks might not be the same as the one handling the return.
 # In case of gadget composition, the parent can handle the return, while chunks
@@ -126,75 +226,23 @@ struct Instance {
 # This avoid the needs to route chunks up the callstack.
 #
 
-struct ConstraintsRequest {
-    instance       @0 :Instance;
-
-    xChunkContext  @1 :AnyPointer; # Opaque data to pass to the chunk handler.
-    xReturnContext @2 :AnyPointer; # Opaque data to pass to the return handler.
-}
-
-struct ConstraintsChunk {
-    constraints   @0 :List(Constraint);
-
-    xChunkContext @1 :AnyPointer;
-}
-
-struct ConstraintsReturn {
-    union {
-        error      @0 :Text;
-        return     :group {
-            info   @1 :List(KeyValue);
-        }
-    }
-
-    xReturnContext @2 :AnyPointer;
-}
-
-
-struct AssignmentsRequest {
-    instance            @0 :Instance;
-    incomingAssignments @1 :List(Assignment);
-    witness             @2 :List(KeyValue);
-
-    xChunkContext       @3 :AnyPointer; # Opaque data to pass to the chunk handler.
-    xReturnContext      @4 :AnyPointer; # Opaque data to pass to the return handler.
-}
-
-struct AssignmentsChunk {
-    assignments   @0 :List(Assignment);
-
-    xChunkContext @1 :AnyPointer;
-}
-
-struct AssignmentsReturn {
-    union {
-        error                   @0 :Text;
-        return                  :group {
-            outgoingAssignments @1 :List(Assignment);
-            info                @2 :List(KeyValue);
-        }
-    }
-
-    xReturnContext              @3 :AnyPointer;
-}
-
-
 struct GadgetRequest {
     union {
-        makeConstraints @0 :ConstraintsRequest;
+        makeInstance    @0 :InstanceRequest;
         makeAssignments @1 :AssignmentsRequest;
     }
 }
+# A polymorphic request to implement a basic RPC.
 
+# Methods in Cap'n'proto RPC format.
+# Although this might not be the most appropriate approach.
 
-## Methods
-
-interface Caller {
+interface Parent {
     constrain @0 (chunk :ConstraintsChunk) -> (ok :Bool);
     assign    @1 (chunk :AssignmentsChunk) -> (ok :Bool);
 }
 
 interface Gadget {
-    makeConstraints @0 (params :ConstraintsRequest, caller :Caller) -> (res :ConstraintsReturn);
-    makeAssignments @1 (params :AssignmentsRequest, caller :Caller) -> (res :AssignmentsReturn);
+    makeInstance    @0 (params :InstanceRequest, caller :Parent) -> (res :InstanceReturn);
+    makeAssignments @1 (params :AssignmentsRequest, caller :Parent) -> (res :AssignmentsReturn);
 }
