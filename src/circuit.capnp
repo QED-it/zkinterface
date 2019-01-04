@@ -30,17 +30,16 @@ struct IdSpace {
 # Motivation: let gadgets allocate unique IDs without coordination.
 #
 
-struct Instance {
-    struct Connection {
-        union {
-            incoming @0 :VariableId;
-            outgoing @1 :VariableId;
-        }
-    }
+struct KeyValue {
+    key   @0 :Text;
+    value @1 :AnyPointer;
+}
 
-    idSpace     @0 :IdSpace;
-    connections @1 :List(Connection);
-    params      @2 :AnyPointer;
+struct Instance {
+    idSpace      @0 :IdSpace;
+    incomingVars @1 :List(VariableId);
+    outgoingVars @2 :List(VariableId);
+    params       @3 :List(KeyValue);
 }
 
 
@@ -55,7 +54,6 @@ struct Constraint {
     rowB @1 :List(Term);
     rowC @2 :List(Term);
 }
-
 
 
 struct Assignment {
@@ -116,13 +114,19 @@ struct ConstraintsChunk {
 }
 
 struct ConstraintsResponse {
+    union {
+        error    @0 :Text;
+        response :group {
+            info @1 :List(KeyValue);
+        }
+    }
 }
 
 
 struct AssignmentsRequest {
     instance            @0 :Instance;
     incomingAssignments @1 :List(Assignment);
-    witness             @2 :AnyPointer;
+    witness             @2 :List(KeyValue);
 }
 
 struct AssignmentsChunk {
@@ -134,7 +138,7 @@ struct AssignmentsResponse {
         error                   @0 :Text;
         response                :group {
             outgoingAssignments @1 :List(Assignment);
-            info                @2 :AnyPointer;
+            info                @2 :List(KeyValue);
         }
     }
 }
@@ -158,38 +162,4 @@ interface Caller {
 interface Gadget {
     makeConstraints @0 (params :ConstraintsRequest, caller :Caller) -> (res :ConstraintsResponse);
     makeAssignments @1 (params :AssignmentsRequest, caller :Caller) -> (res :AssignmentsResponse);
-}
-
-
-
-## Example schema
-
-struct Person {
-  id @0 :UInt32;
-  name @1 :Text;
-  email @2 :Text;
-  phones @3 :List(PhoneNumber);
-
-  struct PhoneNumber {
-    number @0 :Text;
-    type @1 :Type;
-
-    enum Type {
-      mobile @0;
-      home @1;
-      work @2;
-    }
-  }
-
-  employment :union {
-    unemployed @4 :Void;
-    employer @5 :Text;
-    school @6 :Text;
-    selfEmployed @7 :Void;
-    # We assume that a person is only one of these.
-  }
-}
-
-struct AddressBook {
-  people @0 :List(Person);
 }
