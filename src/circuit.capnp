@@ -2,25 +2,28 @@
 
 ## Types
 
-struct VariableId {
-
-    index   @0 :UInt32;
+#struct OwnedVariableId {
+#    index   @0 :UInt32;
     # A reference unique within the local scope of the owning gadget.
     # Zero is a reserved special value.
 
-    ownerId @1 :UInt32;
+#    ownerId @1 :UInt32;
     # Globally unique ID of the instance that owns this variable.
     # Zero is a reserved special value.
-}
+#}
+# Globally unique variable ID interpreted as a namespace.
+# Going with the simpler concept below for now.
+
+using VariableId = UInt64;
 # Globally unique variable ID.
+# Zero is a reserved special value.
 
 struct Term {
     coefficientLE @0 :Data;
     # A coefficient in little-endian.
 
-    # See VariableId. This layout may allow specific optimizations in the future.
-    index         @1 :UInt32;
-    ownerId       @2 :UInt32;
+    variableId    @1 :VariableId;
+    # The ID comes last to allow optimizations that omit it.
 }
 # A term in a R1CS row.
 # Intended to be sent in sequences.
@@ -36,12 +39,11 @@ struct Constraint {
 # Intended to be sent in sequences.
 
 struct Assignment {
-    valueLE @0 :Data;
+    valueLE    @0 :Data;
     # A value in little-endian.
 
-    # See VariableId. This layout may allow specific optimizations in the future.
-    index   @1 :UInt32;
-    ownerId @2 :UInt32;
+    variableId @1 :VariableId;
+    # The ID comes last to allow optimizations that omit it.
 }
 # A low-level assignment to a variable.
 # Targets the generic mechanisms that prepare proofs.
@@ -67,34 +69,26 @@ struct StructVar {
     # along with the struct. Not part of the protocol.
 }
 # A high-level structure of variables.
-# In gadget composition, the parent provides this structure to its child.
+# In gadget composition, the parent provides these structures to its child.
 # A gadget should document what structures it can accept.
 
 struct Instance {
 
-    ownerId        @0 :UInt32;
-    # The unique id of this instance.
-    # The instance own all variables that refer to this ownerId.
+    freeVariableId @0 :VariableId;
+    # First free variable ID. The instance can allocate IDs greater or equal.
 
     incomingStruct @1 :StructVar;
-    # Structure of public variables that must be assigned by the calling parent.
+    # Structure of variables that must be assigned by the calling parent.
 
     outgoingStruct @2 :StructVar;
-    # Structure of public variables that must be assigned by the called gadget.
+    # Structure of variables that must be assigned by the called gadget.
     # There may be no outgoing variables if the gadget represents a pure assertion.
 
     parameters     @3 :List(KeyValue);
     # Any parameter that may influence the instance behavior.
     # Parameters can be standard, conventional, or specific to a gadget.
 
-    ownNextIds     @4 :UInt32;
-    # How many consecutive ownerId's belong to this instance after its own id.
-    # Used to allocate unique IDs without global coordination.
-    # The owner may redistribute its ids to child instances.
-    # The owner is responsible for the uniqueness of VariableId's
-    # within the space of GadgetId's it owns.
-
-    xInternal      @5 :AnyPointer;
+    xInternal      @4 :AnyPointer;
     # A space reserved for implementations to track internal information
     # along with the instance. Not part of the protocol.
 }
@@ -116,22 +110,28 @@ struct InstanceRequest {
 
 struct ConstraintsChunk {
     constraints   @0 :List(Constraint);
+    # Constraints to add.
 
     xChunkContext @1 :AnyPointer;
+    # The opaque data given in the request.
 }
 # Report all constraints in one or more chunks.
 
 struct InstanceReturn {
     union {
-        error      @0 :Text;
+        error              @0 :Text;
 
         return     :group {
-            info   @1 :List(KeyValue);
+            freeVariableId @1 :VariableId;
+            # A variable ID greater than all IDs allocated by the instance.
+
+            info           @2 :List(KeyValue);
             # Any info that may be useful to the calling parent.
         }
     }
 
-    xReturnContext @2 :AnyPointer;
+    xReturnContext         @3 :AnyPointer;
+    # The opaque data given in the request.
 }
 # Return after the instantiation is complete.
 
@@ -142,11 +142,11 @@ struct AssignmentsRequest {
     instance            @0 :Instance;
     # The same instance parameter must be provided as in the corresponding InstanceRequest.
 
-    incomingAssignments @1 :List(Assignment);
-    # The values that the parent assigned to `instance.incomingStruct`.
-
-    witness             @2 :List(KeyValue);
+    witness             @1 :List(KeyValue);
     # Any info that may be useful to the gadget to compute its assignments.
+
+    incomingAssignments @2 :List(Assignment);
+    # The values that the parent assigned to `instance.incomingStruct`.
 
     xChunkContext       @3 :AnyPointer;
     # Opaque data to pass to the chunk handler.
@@ -158,8 +158,10 @@ struct AssignmentsRequest {
 
 struct AssignmentsChunk {
     assignments   @0 :List(Assignment);
+    # Assignments computed by the gadgets.
 
     xChunkContext @1 :AnyPointer;
+    # The opaque data given in the request.
 }
 # Report internal and outgoing assignments in one or more chunks.
 
@@ -168,17 +170,21 @@ struct AssignmentsReturn {
         error                   @0 :Text;
 
         return                  :group {
-            info                @1 :List(KeyValue);
+            freeVariableId      @1 :VariableId;
+            # A variable ID greater than all IDs allocated by the instance.
+
+            info                @2 :List(KeyValue);
             # Any info that may be useful to the calling parent.
 
-            outgoingAssignments @2 :List(Assignment);
+            outgoingAssignments @3 :List(Assignment);
             # The values that the gadget assigned to `instance.outgoingStruct`.
             # Intentionally redundant with AssignmentsChunk to allow handling
             # the outgoing variables separately from the bulk of internal assignments.
         }
     }
 
-    xReturnContext              @3 :AnyPointer;
+    xReturnContext              @4 :AnyPointer;
+    # The opaque data given in the request.
 }
 # Return after all assignments have been reported.
 

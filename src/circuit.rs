@@ -15,24 +15,19 @@ pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
         let child_id = 2;
 
         let mut instance = req.init_instance();
-        instance.set_owner_id(child_id);
-        instance.set_own_next_ids(10);
+        instance.set_free_variable_id(child_id);
         {
             let mut incoming = instance.reborrow().init_incoming_struct();
             {
-                let vars = incoming.reborrow().init_variables(1);
-                let mut var = vars.get(0);
-                var.set_owner_id(parent_id);
-                var.set_index(1);
+                let mut vars = incoming.reborrow().init_variables(1);
+                vars.set(0, parent_id + 1);
             }
         }
         {
             let mut outgoing = instance.reborrow().init_outgoing_struct();
             {
-                let vars = outgoing.reborrow().init_variables(1);
-                let mut var = vars.get(0);
-                var.set_owner_id(parent_id);
-                var.set_index(2);
+                let mut vars = outgoing.reborrow().init_variables(1);
+                vars.set(1, parent_id + 2);
             }
         }
         {
@@ -62,15 +57,14 @@ pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
     let req = message_reader.get_root::<instance_request::Reader>()?;
     let instance = req.get_instance()?;
 
-    println!("owner ID: {}", instance.get_owner_id());
-    println!("owns extra IDs: {}", instance.get_own_next_ids());
+    println!("First var ID: {}", instance.get_free_variable_id());
 
     let incoming = match instance.get_incoming_struct()?.which()? {
       Variables(vars) => vars?,
         _ => panic!("Nested structs are not implemented."),
     };
     for var in incoming.iter() {
-        println!("incoming {}/{}", var.get_owner_id(), var.get_index());
+        println!("incoming {}", var);
     }
 
     let outgoing = match instance.get_outgoing_struct()?.which()? {
@@ -78,7 +72,7 @@ pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
         _ => panic!("Nested structs are not implemented."),
     };
     for var in outgoing.iter() {
-        println!("outgoing {}/{}", var.get_owner_id(), var.get_index());
+        println!("outgoing {}", var);
     }
 
     for param in instance.get_parameters()?.iter() {
