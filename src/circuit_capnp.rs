@@ -1217,10 +1217,10 @@ pub mod instance_request {
       !self.reader.get_pointer_field(1).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Reader<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Reader<'a> {
       ::capnp::any_pointer::Reader::new(self.reader.get_pointer_field(2))
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.reader.get_pointer_field(2).is_null()
     }
   }
@@ -1306,16 +1306,16 @@ pub mod instance_request {
       !self.builder.get_pointer_field(1).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Builder<'a> {
       ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(2))
     }
     #[inline]
-    pub fn init_x_return_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn init_x_response_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
       let mut result = ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(2));
       result.clear();
       result
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.builder.get_pointer_field(2).is_null()
     }
   }
@@ -1333,7 +1333,7 @@ pub mod instance_request {
     pub fn get_x_chunk_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(1))
     }
-    pub fn get_x_return_context(&self) -> ::capnp::any_pointer::Pipeline {
+    pub fn get_x_response_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(2))
     }
   }
@@ -1506,8 +1506,8 @@ pub mod constraints_chunk {
   }
 }
 
-pub mod instance_return {
-  pub use self::Which::{Error,Return};
+pub mod instance_response {
+  pub use self::Which::{Error,Response};
 
   #[derive(Copy, Clone)]
   pub struct Owned;
@@ -1559,10 +1559,10 @@ pub mod instance_return {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Reader<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Reader<'a> {
       ::capnp::any_pointer::Reader::new(self.reader.get_pointer_field(1))
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
     }
     #[inline]
@@ -1574,7 +1574,7 @@ pub mod instance_return {
           ))
         }
         1 => {
-          ::std::result::Result::Ok(Return(
+          ::std::result::Result::Ok(Response(
             ::capnp::traits::FromStructReader::new(self.reader)
           ))
         }
@@ -1650,23 +1650,23 @@ pub mod instance_return {
       !self.builder.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn init_return(self, ) -> ::circuit_capnp::instance_return::return_::Builder<'a> {
+    pub fn init_response(self, ) -> ::circuit_capnp::instance_response::response::Builder<'a> {
       self.builder.set_data_field::<u16>(0, 1);
       self.builder.set_data_field::<u64>(1, 0u64);
       self.builder.get_pointer_field(0).clear();
       ::capnp::traits::FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Builder<'a> {
       ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(1))
     }
     #[inline]
-    pub fn init_x_return_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn init_x_response_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
       let mut result = ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(1));
       result.clear();
       result
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.builder.get_pointer_field(1).is_null()
     }
     #[inline]
@@ -1678,7 +1678,7 @@ pub mod instance_return {
           ))
         }
         1 => {
-          ::std::result::Result::Ok(Return(
+          ::std::result::Result::Ok(Response(
             ::capnp::traits::FromStructBuilder::new(self.builder)
           ))
         }
@@ -1694,23 +1694,23 @@ pub mod instance_return {
     }
   }
   impl Pipeline  {
-    pub fn get_x_return_context(&self) -> ::capnp::any_pointer::Pipeline {
+    pub fn get_x_response_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(1))
     }
   }
   mod _private {
     use capnp::private::layout;
     pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 2, pointers: 2 };
-    pub const TYPE_ID: u64 = 0x9ef7_f5b3_ec8f_397d;
+    pub const TYPE_ID: u64 = 0xa332_0e66_e491_8406;
   }
   pub enum Which<A0,A1> {
     Error(A0),
-    Return(A1),
+    Response(A1),
   }
-  pub type WhichReader<'a,> = Which<::capnp::Result<::capnp::text::Reader<'a>>,::circuit_capnp::instance_return::return_::Reader<'a>>;
-  pub type WhichBuilder<'a,> = Which<::capnp::Result<::capnp::text::Builder<'a>>,::circuit_capnp::instance_return::return_::Builder<'a>>;
+  pub type WhichReader<'a,> = Which<::capnp::Result<::capnp::text::Reader<'a>>,::circuit_capnp::instance_response::response::Reader<'a>>;
+  pub type WhichBuilder<'a,> = Which<::capnp::Result<::capnp::text::Builder<'a>>,::circuit_capnp::instance_response::response::Builder<'a>>;
 
-  pub mod return_ {
+  pub mod response {
     #[derive(Copy, Clone)]
     pub struct Owned;
     impl <'a> ::capnp::traits::Owned<'a> for Owned { type Reader = Reader<'a>; type Builder = Builder<'a>; }
@@ -1857,7 +1857,7 @@ pub mod instance_return {
     mod _private {
       use capnp::private::layout;
       pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 2, pointers: 2 };
-      pub const TYPE_ID: u64 = 0xc5b9_7c65_5245_629d;
+      pub const TYPE_ID: u64 = 0xd119_cdf4_8a15_730a;
     }
   }
 }
@@ -1937,10 +1937,10 @@ pub mod assignments_request {
       !self.reader.get_pointer_field(3).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Reader<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Reader<'a> {
       ::capnp::any_pointer::Reader::new(self.reader.get_pointer_field(4))
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.reader.get_pointer_field(4).is_null()
     }
   }
@@ -2056,16 +2056,16 @@ pub mod assignments_request {
       !self.builder.get_pointer_field(3).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Builder<'a> {
       ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(4))
     }
     #[inline]
-    pub fn init_x_return_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn init_x_response_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
       let mut result = ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(4));
       result.clear();
       result
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.builder.get_pointer_field(4).is_null()
     }
   }
@@ -2083,7 +2083,7 @@ pub mod assignments_request {
     pub fn get_x_chunk_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(3))
     }
-    pub fn get_x_return_context(&self) -> ::capnp::any_pointer::Pipeline {
+    pub fn get_x_response_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(4))
     }
   }
@@ -2256,8 +2256,8 @@ pub mod assignments_chunk {
   }
 }
 
-pub mod assignments_return {
-  pub use self::Which::{Error,Return};
+pub mod assignments_response {
+  pub use self::Which::{Error,Response};
 
   #[derive(Copy, Clone)]
   pub struct Owned;
@@ -2309,10 +2309,10 @@ pub mod assignments_return {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Reader<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Reader<'a> {
       ::capnp::any_pointer::Reader::new(self.reader.get_pointer_field(2))
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.reader.get_pointer_field(2).is_null()
     }
     #[inline]
@@ -2324,7 +2324,7 @@ pub mod assignments_return {
           ))
         }
         1 => {
-          ::std::result::Result::Ok(Return(
+          ::std::result::Result::Ok(Response(
             ::capnp::traits::FromStructReader::new(self.reader)
           ))
         }
@@ -2400,7 +2400,7 @@ pub mod assignments_return {
       !self.builder.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn init_return(self, ) -> ::circuit_capnp::assignments_return::return_::Builder<'a> {
+    pub fn init_response(self, ) -> ::circuit_capnp::assignments_response::response::Builder<'a> {
       self.builder.set_data_field::<u16>(0, 1);
       self.builder.set_data_field::<u64>(1, 0u64);
       self.builder.get_pointer_field(0).clear();
@@ -2408,16 +2408,16 @@ pub mod assignments_return {
       ::capnp::traits::FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn get_x_return_context(self) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn get_x_response_context(self) -> ::capnp::any_pointer::Builder<'a> {
       ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(2))
     }
     #[inline]
-    pub fn init_x_return_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
+    pub fn init_x_response_context(self, ) -> ::capnp::any_pointer::Builder<'a> {
       let mut result = ::capnp::any_pointer::Builder::new(self.builder.get_pointer_field(2));
       result.clear();
       result
     }
-    pub fn has_x_return_context(&self) -> bool {
+    pub fn has_x_response_context(&self) -> bool {
       !self.builder.get_pointer_field(2).is_null()
     }
     #[inline]
@@ -2429,7 +2429,7 @@ pub mod assignments_return {
           ))
         }
         1 => {
-          ::std::result::Result::Ok(Return(
+          ::std::result::Result::Ok(Response(
             ::capnp::traits::FromStructBuilder::new(self.builder)
           ))
         }
@@ -2445,23 +2445,23 @@ pub mod assignments_return {
     }
   }
   impl Pipeline  {
-    pub fn get_x_return_context(&self) -> ::capnp::any_pointer::Pipeline {
+    pub fn get_x_response_context(&self) -> ::capnp::any_pointer::Pipeline {
       ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(2))
     }
   }
   mod _private {
     use capnp::private::layout;
     pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 2, pointers: 3 };
-    pub const TYPE_ID: u64 = 0xed82_c51f_a393_6b82;
+    pub const TYPE_ID: u64 = 0x99c0_0f01_c04e_d08d;
   }
   pub enum Which<A0,A1> {
     Error(A0),
-    Return(A1),
+    Response(A1),
   }
-  pub type WhichReader<'a,> = Which<::capnp::Result<::capnp::text::Reader<'a>>,::circuit_capnp::assignments_return::return_::Reader<'a>>;
-  pub type WhichBuilder<'a,> = Which<::capnp::Result<::capnp::text::Builder<'a>>,::circuit_capnp::assignments_return::return_::Builder<'a>>;
+  pub type WhichReader<'a,> = Which<::capnp::Result<::capnp::text::Reader<'a>>,::circuit_capnp::assignments_response::response::Reader<'a>>;
+  pub type WhichBuilder<'a,> = Which<::capnp::Result<::capnp::text::Builder<'a>>,::circuit_capnp::assignments_response::response::Builder<'a>>;
 
-  pub mod return_ {
+  pub mod response {
     #[derive(Copy, Clone)]
     pub struct Owned;
     impl <'a> ::capnp::traits::Owned<'a> for Owned { type Reader = Reader<'a>; type Builder = Builder<'a>; }
@@ -2630,7 +2630,7 @@ pub mod assignments_return {
     mod _private {
       use capnp::private::layout;
       pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 2, pointers: 3 };
-      pub const TYPE_ID: u64 = 0xeab9_7d38_c331_9c50;
+      pub const TYPE_ID: u64 = 0xca11_74cc_5671_5aa3;
     }
   }
 }
@@ -3767,7 +3767,7 @@ pub mod gadget {
         self.reader.total_size()
       }
       #[inline]
-      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::instance_return::Reader<'a>> {
+      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::instance_response::Reader<'a>> {
         ::capnp::traits::FromPointerReader::get_from_pointer(&self.reader.get_pointer_field(0))
       }
       pub fn has_res(&self) -> bool {
@@ -3828,15 +3828,15 @@ pub mod gadget {
         self.builder.into_reader().total_size()
       }
       #[inline]
-      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::instance_return::Builder<'a>> {
+      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::instance_response::Builder<'a>> {
         ::capnp::traits::FromPointerBuilder::get_from_pointer(self.builder.get_pointer_field(0))
       }
       #[inline]
-      pub fn set_res<'b>(&mut self, value: ::circuit_capnp::instance_return::Reader<'b>) -> ::capnp::Result<()> {
+      pub fn set_res<'b>(&mut self, value: ::circuit_capnp::instance_response::Reader<'b>) -> ::capnp::Result<()> {
         ::capnp::traits::SetPointerBuilder::set_pointer_builder(self.builder.get_pointer_field(0), value, false)
       }
       #[inline]
-      pub fn init_res(self, ) -> ::circuit_capnp::instance_return::Builder<'a> {
+      pub fn init_res(self, ) -> ::circuit_capnp::instance_response::Builder<'a> {
         ::capnp::traits::FromPointerBuilder::init_pointer(self.builder.get_pointer_field(0), 0)
       }
       pub fn has_res(&self) -> bool {
@@ -3851,7 +3851,7 @@ pub mod gadget {
       }
     }
     impl Pipeline  {
-      pub fn get_res(&self) -> ::circuit_capnp::instance_return::Pipeline {
+      pub fn get_res(&self) -> ::circuit_capnp::instance_response::Pipeline {
         ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(0))
       }
     }
@@ -4066,7 +4066,7 @@ pub mod gadget {
         self.reader.total_size()
       }
       #[inline]
-      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::assignments_return::Reader<'a>> {
+      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::assignments_response::Reader<'a>> {
         ::capnp::traits::FromPointerReader::get_from_pointer(&self.reader.get_pointer_field(0))
       }
       pub fn has_res(&self) -> bool {
@@ -4127,15 +4127,15 @@ pub mod gadget {
         self.builder.into_reader().total_size()
       }
       #[inline]
-      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::assignments_return::Builder<'a>> {
+      pub fn get_res(self) -> ::capnp::Result<::circuit_capnp::assignments_response::Builder<'a>> {
         ::capnp::traits::FromPointerBuilder::get_from_pointer(self.builder.get_pointer_field(0))
       }
       #[inline]
-      pub fn set_res<'b>(&mut self, value: ::circuit_capnp::assignments_return::Reader<'b>) -> ::capnp::Result<()> {
+      pub fn set_res<'b>(&mut self, value: ::circuit_capnp::assignments_response::Reader<'b>) -> ::capnp::Result<()> {
         ::capnp::traits::SetPointerBuilder::set_pointer_builder(self.builder.get_pointer_field(0), value, false)
       }
       #[inline]
-      pub fn init_res(self, ) -> ::circuit_capnp::assignments_return::Builder<'a> {
+      pub fn init_res(self, ) -> ::circuit_capnp::assignments_response::Builder<'a> {
         ::capnp::traits::FromPointerBuilder::init_pointer(self.builder.get_pointer_field(0), 0)
       }
       pub fn has_res(&self) -> bool {
@@ -4150,7 +4150,7 @@ pub mod gadget {
       }
     }
     impl Pipeline  {
-      pub fn get_res(&self) -> ::circuit_capnp::assignments_return::Pipeline {
+      pub fn get_res(&self) -> ::circuit_capnp::assignments_response::Pipeline {
         ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(0))
       }
     }

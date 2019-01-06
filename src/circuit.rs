@@ -1,15 +1,16 @@
+use std::iter::FromIterator;
 use std::io::{Read, Write};
 use capnp::serialize;
-use circuit_capnp::{instance_request};
+use circuit_capnp::{assignments_request, assignments_response};
 use circuit_capnp::struct_var::Which::Variables;
 
 
-pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
+pub fn request_assignments<W>(w: &mut W) -> ::std::io::Result<()>
     where W: Write
 {
     let mut message = ::capnp::message::Builder::new_default();
     {
-        let req = message.init_root::<instance_request::Builder>();
+        let req = message.init_root::<assignments_request::Builder>();
 
         let parent_id = 1;
         let child_id = 2;
@@ -48,45 +49,55 @@ pub fn write_constraint_request<W>(w: &mut W) -> ::std::io::Result<()>
     serialize::write_message(w, &message)
 }
 
-
-pub fn print_constraint_request<R>(mut r: R) -> ::capnp::Result<()>
+pub fn handle_assignments<R>(mut r: R) -> ::capnp::Result<()>
     where R: Read
 {
-    let message_reader = serialize::read_message(&mut r,
-                                                 ::capnp::message::ReaderOptions::new())?;
-    let req = message_reader.get_root::<instance_request::Reader>()?;
-    let instance = req.get_instance()?;
+    let request_buf = serialize::read_message(&mut r,
+                                              ::capnp::message::ReaderOptions::new())?;
+    let request: assignments_request::Reader = request_buf.get_root()?;
 
-    println!("First var ID: {}", instance.get_free_variable_id());
+    let mut response_buf = ::capnp::message::Builder::new_default();
+    let mut response_msg: assignments_response::Builder = response_buf.init_root();
 
-    let incoming = match instance.get_incoming_struct()?.which()? {
-      Variables(vars) => vars?,
-        _ => panic!("Nested structs are not implemented."),
-    };
-    for var in incoming.iter() {
-        println!("incoming {}", var);
+    {   // Echo the caller's context.
+        response_msg.reborrow().init_x_response_context().set_as(request.get_x_response_context())?;
     }
 
-    let outgoing = match instance.get_outgoing_struct()?.which()? {
-        Variables(vars) => vars?,
-        _ => panic!("Nested structs are not implemented."),
-    };
-    for var in outgoing.iter() {
-        println!("outgoing {}", var);
-    }
+    let mut response = response_msg.reborrow().init_response();
 
-    for param in instance.get_parameters()?.iter() {
-        println!("param {} = {}", param.get_key()?, param.get_value().get_as::<&str>()?);
+    // Process the instance parameters.
+    {
+        let instance = request.get_instance()?;
+
+        // Allocate 100 local variables.
+        response.set_free_variable_id(instance.get_free_variable_id() + 100);
+        println!("Got free var ID: {}", instance.get_free_variable_id());
+        println!("Return free var ID: {}", response.get_free_variable_id());
+
+        let incoming = match instance.get_incoming_struct()?.which()? {
+            Variables(vars) => vars?,
+            _ => panic!("Nested structs are not implemented."),
+        };
+        println!("incoming vars: {:?}", Vec::from_iter(incoming.iter()));
+
+        let outgoing = match instance.get_outgoing_struct()?.which()? {
+            Variables(vars) => vars?,
+            _ => panic!("Nested structs are not implemented."),
+        };
+        println!("outgoing vars: {:?}", Vec::from_iter(outgoing.iter()));
+
+        for param in instance.get_parameters()?.iter() {
+            println!("param {} = {}", param.get_key()?, param.get_value().get_as::<&str>()?);
+        }
     }
 
     Ok(())
 }
 
-
 #[test]
 fn test_cap_circuit() {
     let mut buf = vec![];
-    write_constraint_request(&mut buf).unwrap();
+    request_assignments(&mut buf).unwrap();
 
-    print_constraint_request(&buf[..]).unwrap();
+    handle_assignments(&buf[..]).unwrap();
 }

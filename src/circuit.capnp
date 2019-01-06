@@ -98,12 +98,12 @@ struct Instance {
 # == Messages for Instantiation ==
 
 struct InstanceRequest {
-    instance       @0 :Instance;
+    instance         @0 :Instance;
 
-    xChunkContext  @1 :AnyPointer;
+    xChunkContext    @1 :AnyPointer;
     # Opaque data to pass to the chunk handler.
 
-    xReturnContext @2 :AnyPointer;
+    xResponseContext @2 :AnyPointer;
     # Opaque data to pass to the return handler.
 }
 # Request to build an instance.
@@ -117,11 +117,11 @@ struct ConstraintsChunk {
 }
 # Report all constraints in one or more chunks.
 
-struct InstanceReturn {
+struct InstanceResponse {
     union {
         error              @0 :Text;
 
-        return     :group {
+        response          :group {
             freeVariableId @1 :VariableId;
             # A variable ID greater than all IDs allocated by the instance.
 
@@ -130,10 +130,10 @@ struct InstanceReturn {
         }
     }
 
-    xReturnContext         @3 :AnyPointer;
+    xResponseContext       @3 :AnyPointer;
     # The opaque data given in the request.
 }
-# Return after the instantiation is complete.
+# Response after the instantiation is complete.
 
 
 # == Messages for Proving ==
@@ -151,7 +151,7 @@ struct AssignmentsRequest {
     xChunkContext       @3 :AnyPointer;
     # Opaque data to pass to the chunk handler.
 
-    xReturnContext      @4 :AnyPointer;
+    xResponseContext    @4 :AnyPointer;
     # Opaque data to pass to the return handler.
 }
 # Request assignments computed from a witness.
@@ -163,13 +163,13 @@ struct AssignmentsChunk {
     xChunkContext @1 :AnyPointer;
     # The opaque data given in the request.
 }
-# Report internal and outgoing assignments in one or more chunks.
+# Report local and outgoing assignments in one or more chunks.
 
-struct AssignmentsReturn {
+struct AssignmentsResponse {
     union {
         error                   @0 :Text;
 
-        return                  :group {
+        response                :group {
             freeVariableId      @1 :VariableId;
             # A variable ID greater than all IDs allocated by the instance.
 
@@ -179,14 +179,14 @@ struct AssignmentsReturn {
             outgoingAssignments @3 :List(Assignment);
             # The values that the gadget assigned to `instance.outgoingStruct`.
             # Intentionally redundant with AssignmentsChunk to allow handling
-            # the outgoing variables separately from the bulk of internal assignments.
+            # the outgoing variables separately from the bulk of local variables assignments.
         }
     }
 
-    xReturnContext              @4 :AnyPointer;
+    xResponseContext            @4 :AnyPointer;
     # The opaque data given in the request.
 }
-# Return after all assignments have been reported.
+# Response after all assignments have been reported.
 
 
 # = RPC Approach =
@@ -249,6 +249,6 @@ interface Parent {
 }
 
 interface Gadget {
-    makeInstance    @0 (params :InstanceRequest, caller :Parent) -> (res :InstanceReturn);
-    makeAssignments @1 (params :AssignmentsRequest, caller :Parent) -> (res :AssignmentsReturn);
+    makeInstance    @0 (params :InstanceRequest, caller :Parent) -> (res :InstanceResponse);
+    makeAssignments @1 (params :AssignmentsRequest, caller :Parent) -> (res :AssignmentsResponse);
 }
