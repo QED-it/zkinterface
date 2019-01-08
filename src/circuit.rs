@@ -1,8 +1,9 @@
+use std::str::from_utf8;
 use std::iter::FromIterator;
 use std::io::{Read, Write};
 use capnp::serialize;
 use circuit_capnp::{assignments_request, assignments_response};
-use circuit_capnp::struct_var::Which::Variables;
+use circuit_capnp::structured_gadget_interface::Which::Variables;
 
 
 pub fn request_assignments<W>(w: &mut W) -> ::std::io::Result<()>
@@ -36,12 +37,12 @@ pub fn request_assignments<W>(w: &mut W) -> ::std::io::Result<()>
             {
                 let mut param = params.reborrow().get(0);
                 param.set_key("Name");
-                param.init_value().set_as("Gadget1").unwrap();
+                param.set_value("Gadget1".as_bytes());
             }
             {
                 let mut param = params.reborrow().get(1);
                 param.set_key("Field");
-                param.init_value().set_as("BLS12").unwrap();
+                param.set_value("BLS12".as_bytes());
             }
         }
     }
@@ -58,10 +59,6 @@ pub fn handle_assignments<R>(mut r: R) -> ::capnp::Result<()>
 
     let mut response_buf = ::capnp::message::Builder::new_default();
     let mut response: assignments_response::Builder = response_buf.init_root();
-
-    {   // Echo the caller's context.
-        response.reborrow().init_x_response_context().set_as(request.get_x_response_context())?;
-    }
 
     // Process the instance parameters.
     {
@@ -85,7 +82,7 @@ pub fn handle_assignments<R>(mut r: R) -> ::capnp::Result<()>
         println!("outgoing vars: {:?}", Vec::from_iter(outgoing.iter()));
 
         for param in instance.get_parameters()?.iter() {
-            println!("param {} = {}", param.get_key()?, param.get_value().get_as::<&str>()?);
+            println!("param {} = {}", param.get_key()?, from_utf8(param.get_value()?)?);
         }
     }
 

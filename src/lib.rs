@@ -7,3 +7,6 @@ pub mod circuit_capnp
 ;
 
 pub mod circuit;
+
+#[allow(unused)]
+pub mod gadget;

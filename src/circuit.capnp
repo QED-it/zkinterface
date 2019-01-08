@@ -15,80 +15,98 @@
 # Going with the simpler concept below for now.
 
 using VariableId = UInt64;
-# Globally unique variable ID.
+# Variable ID unique within a constraint system.
 # Zero is a reserved special value.
 
-struct Term {
-    coefficientLE @0 :Data;
-    # A coefficient in little-endian.
+using FieldElementLE = Data;
+# A field element as a unsigned integer in little-endian bytes.
 
-    variableId    @1 :VariableId;
-    # The ID comes last to allow optimizations that omit it.
+struct Term {
+    variableId  @1 :VariableId;
+    # The ID of the variable.
+
+    coefficient @0 :FieldElementLE;
+    # A coefficient.
 }
 # A term in a R1CS row.
 # Intended to be sent in sequences.
 
 struct Constraint {
     # (A) * (B) = (C)
-    rowA @0 :List(Term);
-    rowB @1 :List(Term);
-    rowC @2 :List(Term);
+    a @0 :List(Term);
+    b @1 :List(Term);
+    c @2 :List(Term);
 }
 # A low-level R1CS constraint between variables.
 # Targets the generic mechanisms that build circuits.
 # Intended to be sent in sequences.
 
-struct Assignment {
-    valueLE    @0 :Data;
-    # A value in little-endian.
-
+struct AssignedVariable {
     variableId @1 :VariableId;
-    # The ID comes last to allow optimizations that omit it.
+    # The ID of the variable.
+
+    value      @0 :FieldElementLE;
+    # The value to assign.
+
 }
 # A low-level assignment to a variable.
 # Targets the generic mechanisms that prepare proofs.
 # Intended to be sent in sequences.
 
-struct KeyValue {
+struct CustomKeyValue {
     key   @0 :Text;
-    value @1 :AnyPointer;
+    value @1 :Data;
 }
 # Generic key-value for miscellaneous attributes.
 
-struct StructVar {
+struct StructuredGadgetInterface {
     union {
         variables @0 :List(VariableId);
-        structs   @1 :List(StructVar);
-    }
-    type          @2 :Text;
-    name          @3 :Text;
-    info          @4 :List(KeyValue);
+        # Allocated variables.
 
-    xInternal     @5 :AnyPointer;
+        structs   @1 :List(StructuredGadgetInterface);
+        # Or recursive type.
+    }
+
+    type          @2 :Text;
+    # Standard, conventional, or custom type name.
+    # Allows a gadget to support multiple representation.
+    # TODO: not necessary?
+
+    name          @3 :Text;
+
+    info          @4 :List(CustomKeyValue);
+
+    #xInternal     @5 :AnyPointer;
     # A space reserved for implementations to track internal information
     # along with the struct. Not part of the protocol.
 }
 # A high-level structure of variables.
+# Define the interface between a gadget and the rest of the circuit.
 # In gadget composition, the parent provides these structures to its child.
 # A gadget should document what structures it can accept.
 
-struct Instance {
+struct GadgetInstance {
 
-    freeVariableId @0 :VariableId;
-    # First free variable ID. The instance can allocate IDs greater or equal.
+    gadgetName     @0 :Text;
+    # Which gadget to instantiate.
+    # Allows a library to provide multiple gadgets.
 
-    incomingStruct @1 :StructVar;
-    # Structure of variables that must be assigned by the calling parent.
-
-    outgoingStruct @2 :StructVar;
-    # Structure of variables that must be assigned by the called gadget.
-    # There may be no outgoing variables if the gadget represents a pure assertion.
-
-    parameters     @3 :List(KeyValue);
+    parameters     @1 :List(CustomKeyValue);
     # Any parameter that may influence the instance behavior.
     # Parameters can be standard, conventional, or specific to a gadget.
 
-    xInternal      @4 :AnyPointer;
+    incomingStruct @2 :StructuredGadgetInterface;
+    # Structure of variables that must be assigned by the calling parent.
+
+    outgoingStruct @3 :StructuredGadgetInterface;
+    # Structure of variables that must be assigned by the called gadget.
+    # There may be no outgoing variables if the gadget represents a pure assertion.
+
+    freeVariableId @4 :VariableId;
+    # First free variable ID. The instance can allocate IDs greater or equal.
+
+    #xInternal      @5 :AnyPointer;
     # A space reserved for implementations to track internal information
     # along with the instance. Not part of the protocol.
 }
@@ -97,37 +115,26 @@ struct Instance {
 
 # == Messages for Instantiation ==
 
-struct InstanceRequest {
-    instance         @0 :Instance;
-
-    xChunkContext    @1 :AnyPointer;
-    # Opaque data to pass to the chunk handler.
-
-    xResponseContext @2 :AnyPointer;
-    # Opaque data to pass to the return handler.
+struct R1CSRequest {
+    instance @0 :GadgetInstance;
+    # All details necessary to construct the instance.
 }
 # Request to build an instance.
 
 struct ConstraintsChunk {
-    constraints   @0 :List(Constraint);
+    constraints @0 :List(Constraint);
     # Constraints to add.
-
-    xChunkContext @1 :AnyPointer;
-    # The opaque data given in the request.
 }
 # Report all constraints in one or more chunks.
 
-struct InstanceResponse {
-    freeVariableId   @0 :VariableId;
+struct R1CSResponse {
+    freeVariableId @0 :VariableId;
     # A variable ID greater than all IDs allocated by the instance.
 
-    info             @1 :List(KeyValue);
+    info           @1 :List(CustomKeyValue);
     # Any info that may be useful to the calling parent.
 
-    xResponseContext @2 :AnyPointer;
-    # The opaque data given in the request.
-
-    error            @3 :Text;
+    error          @2 :Text;
     # An error message. Null if no error.
 }
 # Response after the instantiation is complete.
@@ -136,29 +143,21 @@ struct InstanceResponse {
 # == Messages for Proving ==
 
 struct AssignmentsRequest {
-    instance            @0 :Instance;
-    # The same instance parameter must be provided as in the corresponding InstanceRequest.
+    instance            @0 :GadgetInstance;
+    # All details necessary to construct the instance.
+    # The same instance parameter must be provided as in the corresponding R1CSRequest.
 
-    witness             @1 :List(KeyValue);
+    witness             @1 :List(CustomKeyValue);
     # Any info that may be useful to the gadget to compute its assignments.
 
-    incomingAssignments @2 :List(Assignment);
+    incomingAssignments @2 :List(AssignedVariable);
     # The values that the parent assigned to `instance.incomingStruct`.
-
-    xChunkContext       @3 :AnyPointer;
-    # Opaque data to pass to the chunk handler.
-
-    xResponseContext    @4 :AnyPointer;
-    # Opaque data to pass to the return handler.
 }
 # Request assignments computed from a witness.
 
 struct AssignmentsChunk {
-    assignments   @0 :List(Assignment);
+    assignments @0 :List(AssignedVariable);
     # Assignments computed by the gadgets.
-
-    xChunkContext @1 :AnyPointer;
-    # The opaque data given in the request.
 }
 # Report local and outgoing assignments in one or more chunks.
 
@@ -166,18 +165,15 @@ struct AssignmentsResponse {
     freeVariableId      @0 :VariableId;
     # A variable ID greater than all IDs allocated by the instance.
 
-    info                @1 :List(KeyValue);
+    info                @1 :List(CustomKeyValue);
     # Any info that may be useful to the calling parent.
 
-    outgoingAssignments @2 :List(Assignment);
+    outgoingAssignments @2 :List(AssignedVariable);
     # The values that the gadget assigned to `instance.outgoingStruct`.
     # Intentionally redundant with AssignmentsChunk to allow handling
     # the outgoing variables separately from the bulk of local variables assignments.
 
-    xResponseContext    @3 :AnyPointer;
-    # The opaque data given in the request.
-
-    error               @4 :Text;
+    error               @3 :Text;
     # An error message. Null if no error.
 }
 # Response after all assignments have been reported.
@@ -228,7 +224,7 @@ struct AssignmentsResponse {
 
 struct GadgetRequest {
     union {
-        makeInstance    @0 :InstanceRequest;
+        makeR1CS        @0 :R1CSRequest;
         makeAssignments @1 :AssignmentsRequest;
     }
 }
@@ -243,6 +239,6 @@ interface Parent {
 }
 
 interface Gadget {
-    makeInstance    @0 (params :InstanceRequest, caller :Parent) -> (res :InstanceResponse);
+    makeR1CS        @0 (params :R1CSRequest, caller :Parent) -> (res :R1CSResponse);
     makeAssignments @1 (params :AssignmentsRequest, caller :Parent) -> (res :AssignmentsResponse);
 }
