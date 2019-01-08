@@ -57,13 +57,11 @@ pub fn handle_assignments<R>(mut r: R) -> ::capnp::Result<()>
     let request: assignments_request::Reader = request_buf.get_root()?;
 
     let mut response_buf = ::capnp::message::Builder::new_default();
-    let mut response_msg: assignments_response::Builder = response_buf.init_root();
+    let mut response: assignments_response::Builder = response_buf.init_root();
 
     {   // Echo the caller's context.
-        response_msg.reborrow().init_x_response_context().set_as(request.get_x_response_context())?;
+        response.reborrow().init_x_response_context().set_as(request.get_x_response_context())?;
     }
-
-    let mut response = response_msg.reborrow().init_response();
 
     // Process the instance parameters.
     {

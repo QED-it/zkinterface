@@ -118,20 +118,17 @@ struct ConstraintsChunk {
 # Report all constraints in one or more chunks.
 
 struct InstanceResponse {
-    union {
-        error              @0 :Text;
+    freeVariableId   @0 :VariableId;
+    # A variable ID greater than all IDs allocated by the instance.
 
-        response          :group {
-            freeVariableId @1 :VariableId;
-            # A variable ID greater than all IDs allocated by the instance.
+    info             @1 :List(KeyValue);
+    # Any info that may be useful to the calling parent.
 
-            info           @2 :List(KeyValue);
-            # Any info that may be useful to the calling parent.
-        }
-    }
-
-    xResponseContext       @3 :AnyPointer;
+    xResponseContext @2 :AnyPointer;
     # The opaque data given in the request.
+
+    error            @3 :Text;
+    # An error message. Null if no error.
 }
 # Response after the instantiation is complete.
 
@@ -166,25 +163,22 @@ struct AssignmentsChunk {
 # Report local and outgoing assignments in one or more chunks.
 
 struct AssignmentsResponse {
-    union {
-        error                   @0 :Text;
+    freeVariableId      @0 :VariableId;
+    # A variable ID greater than all IDs allocated by the instance.
 
-        response                :group {
-            freeVariableId      @1 :VariableId;
-            # A variable ID greater than all IDs allocated by the instance.
+    info                @1 :List(KeyValue);
+    # Any info that may be useful to the calling parent.
 
-            info                @2 :List(KeyValue);
-            # Any info that may be useful to the calling parent.
+    outgoingAssignments @2 :List(Assignment);
+    # The values that the gadget assigned to `instance.outgoingStruct`.
+    # Intentionally redundant with AssignmentsChunk to allow handling
+    # the outgoing variables separately from the bulk of local variables assignments.
 
-            outgoingAssignments @3 :List(Assignment);
-            # The values that the gadget assigned to `instance.outgoingStruct`.
-            # Intentionally redundant with AssignmentsChunk to allow handling
-            # the outgoing variables separately from the bulk of local variables assignments.
-        }
-    }
-
-    xResponseContext            @4 :AnyPointer;
+    xResponseContext    @3 :AnyPointer;
     # The opaque data given in the request.
+
+    error               @4 :Text;
+    # An error message. Null if no error.
 }
 # Response after all assignments have been reported.
 
