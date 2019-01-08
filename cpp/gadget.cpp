@@ -1,3 +1,6 @@
+#include "gadget.capnp.h"
+#include <capnp/message.h>
+#include <capnp/serialize-packed.h>
 #include <iostream>
 
 using std::cout;
