@@ -1,5 +1,5 @@
 extern crate zkstandard;
-use zkstandard::circuit;
+use zkstandard::gadget_call;
 
 pub fn main() {
 
@@ -8,8 +8,8 @@ pub fn main() {
         println!("usage: $ {} [write | read]", args[0]);
     } else {
         match &*args[1] {
-            "write" => circuit::write_address_book(&mut ::std::io::stdout()).unwrap(),
-            "read" =>  circuit::print_address_book(&mut ::std::io::stdin()).unwrap(),
+            "write" => gadget_call::write_address_book(&mut ::std::io::stdout()).unwrap(),
+            "read" =>  gadget_call::print_address_book(&mut ::std::io::stdin()).unwrap(),
             _ => {println!("unrecognized argument") }
         }
     }

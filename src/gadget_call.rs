@@ -2,8 +2,8 @@ use std::str::from_utf8;
 use std::iter::FromIterator;
 use std::io::{Read, Write};
 use capnp::serialize;
-use circuit_capnp::{assignments_request, assignments_response};
-use circuit_capnp::structured_gadget_interface::Which::Variables;
+use gadget_capnp::{assignments_request, assignments_response};
+use gadget_capnp::structured_gadget_interface::Which::Variables;
 
 
 pub fn request_assignments<W>(w: &mut W) -> ::std::io::Result<()>
