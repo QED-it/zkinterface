@@ -1273,7 +1273,7 @@ pub mod r1_c_s_request {
   }
 }
 
-pub mod constraints_chunk {
+pub mod r1_c_s_chunk {
   #[derive(Copy, Clone)]
   pub struct Owned;
   impl <'a> ::capnp::traits::Owned<'a> for Owned { type Reader = Reader<'a>; type Builder = Builder<'a>; }
@@ -1408,7 +1408,7 @@ pub mod constraints_chunk {
   mod _private {
     use capnp::private::layout;
     pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 0, pointers: 1 };
-    pub const TYPE_ID: u64 = 0xfb55_4a79_b49d_9b1d;
+    pub const TYPE_ID: u64 = 0xe66b_6d64_2cc9_952c;
   }
 }
 
@@ -2441,7 +2441,7 @@ pub mod parent {
         self.reader.total_size()
       }
       #[inline]
-      pub fn get_chunk(self) -> ::capnp::Result<::gadget_capnp::constraints_chunk::Reader<'a>> {
+      pub fn get_chunk(self) -> ::capnp::Result<::gadget_capnp::r1_c_s_chunk::Reader<'a>> {
         ::capnp::traits::FromPointerReader::get_from_pointer(&self.reader.get_pointer_field(0))
       }
       pub fn has_chunk(&self) -> bool {
@@ -2502,15 +2502,15 @@ pub mod parent {
         self.builder.into_reader().total_size()
       }
       #[inline]
-      pub fn get_chunk(self) -> ::capnp::Result<::gadget_capnp::constraints_chunk::Builder<'a>> {
+      pub fn get_chunk(self) -> ::capnp::Result<::gadget_capnp::r1_c_s_chunk::Builder<'a>> {
         ::capnp::traits::FromPointerBuilder::get_from_pointer(self.builder.get_pointer_field(0))
       }
       #[inline]
-      pub fn set_chunk<'b>(&mut self, value: ::gadget_capnp::constraints_chunk::Reader<'b>) -> ::capnp::Result<()> {
+      pub fn set_chunk<'b>(&mut self, value: ::gadget_capnp::r1_c_s_chunk::Reader<'b>) -> ::capnp::Result<()> {
         ::capnp::traits::SetPointerBuilder::set_pointer_builder(self.builder.get_pointer_field(0), value, false)
       }
       #[inline]
-      pub fn init_chunk(self, ) -> ::gadget_capnp::constraints_chunk::Builder<'a> {
+      pub fn init_chunk(self, ) -> ::gadget_capnp::r1_c_s_chunk::Builder<'a> {
         ::capnp::traits::FromPointerBuilder::init_pointer(self.builder.get_pointer_field(0), 0)
       }
       pub fn has_chunk(&self) -> bool {
@@ -2525,7 +2525,7 @@ pub mod parent {
       }
     }
     impl Pipeline  {
-      pub fn get_chunk(&self) -> ::gadget_capnp::constraints_chunk::Pipeline {
+      pub fn get_chunk(&self) -> ::gadget_capnp::r1_c_s_chunk::Pipeline {
         ::capnp::capability::FromTypelessPipeline::new(self._typeless.get_pointer_field(0))
       }
     }

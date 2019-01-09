@@ -36,7 +36,10 @@ fn main() {
         .cpp(true)
         .flag("-std=c++14")
         .file("cpp/gadget.cpp")
+        .include("/usr/local/include/")
         .compile("cpp_gadget");
+    println!("cargo:rustc-link-lib=capnp");
+    println!("cargo:rustc-link-lib=kj");
 
 
     /* Tentative compilation as a shared lib.

@@ -121,7 +121,7 @@ struct R1CSRequest {
 }
 # Request to build an instance.
 
-struct ConstraintsChunk {
+struct R1CSChunk {
     constraints @0 :List(Constraint);
     # Constraints to add.
 }
@@ -234,7 +234,7 @@ struct GadgetRequest {
 # Although this might not be the most appropriate approach.
 
 interface Parent {
-    constrain @0 (chunk :ConstraintsChunk) -> (ok :Bool);
+    constrain @0 (chunk :R1CSChunk) -> (ok :Bool);
     assign    @1 (chunk :AssignmentsChunk) -> (ok :Bool);
 }
 

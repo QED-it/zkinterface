@@ -24,7 +24,7 @@ CAPNP_DECLARE_SCHEMA(e71a04084cc54a1a);
 CAPNP_DECLARE_SCHEMA(8957f59f216dc578);
 CAPNP_DECLARE_SCHEMA(bea209a4d3b01d5d);
 CAPNP_DECLARE_SCHEMA(d5d92c1deda3a065);
-CAPNP_DECLARE_SCHEMA(fb554a79b49d9b1d);
+CAPNP_DECLARE_SCHEMA(e66b6d642cc9952c);
 CAPNP_DECLARE_SCHEMA(911e7215e6f25ee0);
 CAPNP_DECLARE_SCHEMA(c0e4cff46ab292c3);
 CAPNP_DECLARE_SCHEMA(e148f7682011f583);
@@ -154,15 +154,15 @@ struct R1CSRequest {
   };
 };
 
-struct ConstraintsChunk {
-  ConstraintsChunk() = delete;
+struct R1CSChunk {
+  R1CSChunk() = delete;
 
   class Reader;
   class Builder;
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(fb554a79b49d9b1d, 0, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(e66b6d642cc9952c, 0, 1)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -1104,9 +1104,9 @@ private:
 };
 #endif  // !CAPNP_LITE
 
-class ConstraintsChunk::Reader {
+class R1CSChunk::Reader {
 public:
-  typedef ConstraintsChunk Reads;
+  typedef R1CSChunk Reads;
 
   Reader() = default;
   inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
@@ -1136,9 +1136,9 @@ private:
   friend class ::capnp::Orphanage;
 };
 
-class ConstraintsChunk::Builder {
+class R1CSChunk::Builder {
 public:
-  typedef ConstraintsChunk Builds;
+  typedef R1CSChunk Builds;
 
   Builder() = delete;  // Deleted to discourage incorrect usage.
                        // You can explicitly initialize to nullptr instead.
@@ -1169,9 +1169,9 @@ private:
 };
 
 #if !CAPNP_LITE
-class ConstraintsChunk::Pipeline {
+class R1CSChunk::Pipeline {
 public:
-  typedef ConstraintsChunk Pipelines;
+  typedef R1CSChunk Pipelines;
 
   inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
@@ -1742,7 +1742,7 @@ public:
 #endif  // !CAPNP_LITE
 
   inline bool hasChunk() const;
-  inline  ::ConstraintsChunk::Reader getChunk() const;
+  inline  ::R1CSChunk::Reader getChunk() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1773,11 +1773,11 @@ public:
 #endif  // !CAPNP_LITE
 
   inline bool hasChunk();
-  inline  ::ConstraintsChunk::Builder getChunk();
-  inline void setChunk( ::ConstraintsChunk::Reader value);
-  inline  ::ConstraintsChunk::Builder initChunk();
-  inline void adoptChunk(::capnp::Orphan< ::ConstraintsChunk>&& value);
-  inline ::capnp::Orphan< ::ConstraintsChunk> disownChunk();
+  inline  ::R1CSChunk::Builder getChunk();
+  inline void setChunk( ::R1CSChunk::Reader value);
+  inline  ::R1CSChunk::Builder initChunk();
+  inline void adoptChunk(::capnp::Orphan< ::R1CSChunk>&& value);
+  inline ::capnp::Orphan< ::R1CSChunk> disownChunk();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1797,7 +1797,7 @@ public:
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
       : _typeless(kj::mv(typeless)) {}
 
-  inline  ::ConstraintsChunk::Pipeline getChunk();
+  inline  ::R1CSChunk::Pipeline getChunk();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -3147,36 +3147,36 @@ inline ::capnp::Orphan< ::GadgetInstance> R1CSRequest::Builder::disownInstance()
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
-inline bool ConstraintsChunk::Reader::hasConstraints() const {
+inline bool R1CSChunk::Reader::hasConstraints() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline bool ConstraintsChunk::Builder::hasConstraints() {
+inline bool R1CSChunk::Builder::hasConstraints() {
   return !_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Reader ConstraintsChunk::Reader::getConstraints() const {
+inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Reader R1CSChunk::Reader::getConstraints() const {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::get(_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Builder ConstraintsChunk::Builder::getConstraints() {
+inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Builder R1CSChunk::Builder::getConstraints() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::get(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline void ConstraintsChunk::Builder::setConstraints( ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Reader value) {
+inline void R1CSChunk::Builder::setConstraints( ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Reader value) {
   ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::set(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), value);
 }
-inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Builder ConstraintsChunk::Builder::initConstraints(unsigned int size) {
+inline  ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>::Builder R1CSChunk::Builder::initConstraints(unsigned int size) {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::init(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), size);
 }
-inline void ConstraintsChunk::Builder::adoptConstraints(
+inline void R1CSChunk::Builder::adoptConstraints(
     ::capnp::Orphan< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>&& value) {
   ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::adopt(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>> ConstraintsChunk::Builder::disownConstraints() {
+inline ::capnp::Orphan< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>> R1CSChunk::Builder::disownConstraints() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::Constraint,  ::capnp::Kind::STRUCT>>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
@@ -3669,34 +3669,34 @@ inline bool Parent::ConstrainParams::Builder::hasChunk() {
   return !_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
 }
-inline  ::ConstraintsChunk::Reader Parent::ConstrainParams::Reader::getChunk() const {
-  return ::capnp::_::PointerHelpers< ::ConstraintsChunk>::get(_reader.getPointerField(
+inline  ::R1CSChunk::Reader Parent::ConstrainParams::Reader::getChunk() const {
+  return ::capnp::_::PointerHelpers< ::R1CSChunk>::get(_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
-inline  ::ConstraintsChunk::Builder Parent::ConstrainParams::Builder::getChunk() {
-  return ::capnp::_::PointerHelpers< ::ConstraintsChunk>::get(_builder.getPointerField(
+inline  ::R1CSChunk::Builder Parent::ConstrainParams::Builder::getChunk() {
+  return ::capnp::_::PointerHelpers< ::R1CSChunk>::get(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 #if !CAPNP_LITE
-inline  ::ConstraintsChunk::Pipeline Parent::ConstrainParams::Pipeline::getChunk() {
-  return  ::ConstraintsChunk::Pipeline(_typeless.getPointerField(0));
+inline  ::R1CSChunk::Pipeline Parent::ConstrainParams::Pipeline::getChunk() {
+  return  ::R1CSChunk::Pipeline(_typeless.getPointerField(0));
 }
 #endif  // !CAPNP_LITE
-inline void Parent::ConstrainParams::Builder::setChunk( ::ConstraintsChunk::Reader value) {
-  ::capnp::_::PointerHelpers< ::ConstraintsChunk>::set(_builder.getPointerField(
+inline void Parent::ConstrainParams::Builder::setChunk( ::R1CSChunk::Reader value) {
+  ::capnp::_::PointerHelpers< ::R1CSChunk>::set(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), value);
 }
-inline  ::ConstraintsChunk::Builder Parent::ConstrainParams::Builder::initChunk() {
-  return ::capnp::_::PointerHelpers< ::ConstraintsChunk>::init(_builder.getPointerField(
+inline  ::R1CSChunk::Builder Parent::ConstrainParams::Builder::initChunk() {
+  return ::capnp::_::PointerHelpers< ::R1CSChunk>::init(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 inline void Parent::ConstrainParams::Builder::adoptChunk(
-    ::capnp::Orphan< ::ConstraintsChunk>&& value) {
-  ::capnp::_::PointerHelpers< ::ConstraintsChunk>::adopt(_builder.getPointerField(
+    ::capnp::Orphan< ::R1CSChunk>&& value) {
+  ::capnp::_::PointerHelpers< ::R1CSChunk>::adopt(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::ConstraintsChunk> Parent::ConstrainParams::Builder::disownChunk() {
-  return ::capnp::_::PointerHelpers< ::ConstraintsChunk>::disown(_builder.getPointerField(
+inline ::capnp::Orphan< ::R1CSChunk> Parent::ConstrainParams::Builder::disownChunk() {
+  return ::capnp::_::PointerHelpers< ::R1CSChunk>::disown(_builder.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS));
 }
 
