@@ -120,11 +120,13 @@ pub fn make_witness<A: Allocator>(message: &Builder<A>) -> Result<AssignmentCont
 
 #[test]
 fn test_gadget_request() {
+    let free_var_id = 100;
+
     let mut message = Builder::new_default();
     {
         let mut request = message.init_root::<assignments_request::Builder>();
         let mut instance = request.init_instance();
-        instance.set_free_variable_id(100);
+        instance.set_free_variable_id(free_var_id);
     }
 
     let assign_ctx = unsafe {
@@ -132,15 +134,31 @@ fn test_gadget_request() {
     };
 
     println!("gadget_request sent {} chunks and {} response.", assign_ctx.chunks.len(), if assign_ctx.response.is_some() { "a" } else { "no" });
+    assert!(assign_ctx.chunks.len() == 1);
+    assert!(assign_ctx.response.is_some());
 
     let chunk = assign_ctx.chunks[0].reader().unwrap();
-    let assignments = chunk.get_assignments().unwrap();
-    println!("Got {} assignments", assignments.len());
-    for a in assignments.iter() {
-        println!("{} = {:?}", a.get_variable_id(), a.get_value().unwrap());
+    let assigned_variables = chunk.get_assigned_variables().unwrap();
+    let var_ids = assigned_variables.get_variable_ids().unwrap();
+    let elements = assigned_variables.get_elements().unwrap();
+
+    let element_count = var_ids.len() as usize;
+    let element_size = 3 as usize;
+    assert!(elements.len() == element_count * element_size);
+
+    println!("Got {} assigned_variables", element_count);
+    for (i, var_id) in var_ids.iter().enumerate() {
+        let element = &elements[i * element_size..(i + 1) * element_size];
+        println!("{} = {:?}", var_id, element);
     }
+
+    assert!(var_ids.get(0) == free_var_id);
+    assert!(var_ids.get(1) == free_var_id + 1);
+    assert!(elements == &[10, 11, 12, 8, 7, 6]);
 
     let response = assign_ctx.response.unwrap();
     let response = response.reader().unwrap();
     println!("Next free variable id: {}", response.get_free_variable_id());
+    assert!(response.get_free_variable_id() == free_var_id + 2);
+    assert!(response.get_error().unwrap() == "");
 }

@@ -2,56 +2,50 @@
 
 ## Types
 
-#struct OwnedVariableId {
-#    index   @0 :UInt32;
-    # A reference unique within the local scope of the owning gadget.
-    # Zero is a reserved special value.
-
-#    ownerId @1 :UInt32;
-    # Globally unique ID of the instance that owns this variable.
-    # Zero is a reserved special value.
-#}
-# Globally unique variable ID interpreted as a namespace.
-# Going with the simpler concept below for now.
-
 using VariableId = UInt64;
 # Variable ID unique within a constraint system.
 # Zero is a reserved special value.
 
-using FieldElementLE = Data;
-# A field element as a unsigned integer in little-endian bytes.
+struct FieldElementRepresentation {
+    name @0 :Text;
+    # The well-known name of the representation.
 
-struct Term {
-    variableId  @1 :VariableId;
-    # The ID of the variable.
-
-    coefficient @0 :FieldElementLE;
-    # A coefficient.
+    size @1 :UInt32;
+    # The size of the representation of an element in bytes.
 }
-# A term in a R1CS row.
-# Intended to be sent in sequences.
+# Description of the representation or encoding of field elements.
+# If omitted, use a default representation:
+# name = "little-endian"
+# size = 32 bytes
+
+struct Terms {
+    variableIds    @0 :List(VariableId);
+
+    coefficients   @1 :Data;
+    # Contiguous coefficient representations
+    # in the same order as variableIds.
+}
+# Terms in a R1CS vector.
 
 struct Constraint {
     # (A) * (B) = (C)
-    a @0 :List(Term);
-    b @1 :List(Term);
-    c @2 :List(Term);
+    a @0 :Terms;
+    b @1 :Terms;
+    c @2 :Terms;
 }
 # A low-level R1CS constraint between variables.
 # Targets the generic mechanisms that build circuits.
 # Intended to be sent in sequences.
 
-struct AssignedVariable {
-    variableId @1 :VariableId;
-    # The ID of the variable.
+struct AssignedVariables {
+    variableIds @0 :List(VariableId);
 
-    value      @0 :FieldElementLE;
-    # The value to assign.
-
+    elements    @1 :Data;
+    # Contiguous element representations
+    # in the same order as variableIds.
 }
-# A low-level assignment to a variable.
+# Low-level assignments to variables.
 # Targets the generic mechanisms that prepare proofs.
-# Intended to be sent in sequences.
 
 struct CustomKeyValue {
     key   @0 :Text;
@@ -68,18 +62,9 @@ struct StructuredGadgetInterface {
         # Or recursive type.
     }
 
-    type          @2 :Text;
-    # Standard, conventional, or custom type name.
-    # Allows a gadget to support multiple representation.
-    # TODO: not necessary?
+    name          @2 :Text;
 
-    name          @3 :Text;
-
-    info          @4 :List(CustomKeyValue);
-
-    #xInternal     @5 :AnyPointer;
-    # A space reserved for implementations to track internal information
-    # along with the struct. Not part of the protocol.
+    info          @3 :List(CustomKeyValue);
 }
 # A high-level structure of variables.
 # Define the interface between a gadget and the rest of the circuit.
@@ -105,10 +90,6 @@ struct GadgetInstance {
 
     freeVariableId @4 :VariableId;
     # First free variable ID. The instance can allocate IDs greater or equal.
-
-    #xInternal      @5 :AnyPointer;
-    # A space reserved for implementations to track internal information
-    # along with the instance. Not part of the protocol.
 }
 # An instance of a gadget as part of a circuit.
 
@@ -118,12 +99,16 @@ struct GadgetInstance {
 struct R1CSRequest {
     instance @0 :GadgetInstance;
     # All details necessary to construct the instance.
+    # The same instance parameter must be provided in the corresponding AssignmentsRequest.
 }
 # Request to build an instance.
 
 struct R1CSChunk {
-    constraints @0 :List(Constraint);
+    constraints    @0 :List(Constraint);
     # Constraints to add.
+
+    representation @1 :FieldElementRepresentation;
+    # The representation used for the constraints.
 }
 # Report all constraints in one or more chunks.
 
@@ -150,14 +135,20 @@ struct AssignmentsRequest {
     witness             @1 :List(CustomKeyValue);
     # Any info that may be useful to the gadget to compute its assignments.
 
-    incomingAssignments @2 :List(AssignedVariable);
+    incomingAssignments @2 :AssignedVariables;
     # The values that the parent assigned to `instance.incomingStruct`.
+
+    representation      @3 :FieldElementRepresentation;
+    # The representation used for the incomingAssignments.
 }
 # Request assignments computed from a witness.
 
 struct AssignmentsChunk {
-    assignments @0 :List(AssignedVariable);
+    assignedVariables @0 :AssignedVariables;
     # Assignments computed by the gadgets.
+
+    representation    @1 :FieldElementRepresentation;
+    # The representation used for the assignments.
 }
 # Report local and outgoing assignments in one or more chunks.
 
@@ -168,12 +159,15 @@ struct AssignmentsResponse {
     info                @1 :List(CustomKeyValue);
     # Any info that may be useful to the calling parent.
 
-    outgoingAssignments @2 :List(AssignedVariable);
+    outgoingAssignments @2 :AssignedVariables;
     # The values that the gadget assigned to `instance.outgoingStruct`.
     # Intentionally redundant with AssignmentsChunk to allow handling
     # the outgoing variables separately from the bulk of local variables assignments.
 
-    error               @3 :Text;
+    representation      @3 :FieldElementRepresentation;
+    # The representation used for the outgoingAssignments.
+
+    error               @4 :Text;
     # An error message. Null if no error.
 }
 # Response after all assignments have been reported.

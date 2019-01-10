@@ -7,6 +7,8 @@
 using std::cout;
 using std::endl;
 
+typedef uint64_t VariableId;
+
 
 bool gadget_request(
         char *request_ptr,
@@ -24,28 +26,37 @@ bool gadget_request(
         auto request = message.getRoot<AssignmentsRequest>();
         auto instance = request.getInstance();
         freeVarId = instance.getFreeVariableId();
-        cout << "Got request: len=" << request_len << " bytes, freeVariableId=" << freeVarId << endl;
+        cout << "C++ got request: len=" << request_len << " bytes, freeVariableId=" << freeVarId << endl;
     }
 
-    {
+    {   // Send the assignment.
         capnp::MallocMessageBuilder message;
 
         AssignmentsChunk::Builder chunk = message.initRoot<AssignmentsChunk>();
-        capnp::List<AssignedVariable>::Builder assignments = chunk.initAssignments(2);
 
-        AssignedVariable::Builder var0 = assignments[0];
-        var0.setVariableId(freeVarId);
-        capnp::Data::Builder val0 = var0.initValue(3);
-        val0[0] = 10;
-        val0[1] = 11;
-        val0[2] = 12;
+        unsigned int elementCount = 2;
+        unsigned int elementSize = 3;
 
-        AssignedVariable::Builder var1 = assignments[1];
-        var1.setVariableId(freeVarId + 1);
-        capnp::Data::Builder val1 = var1.initValue(3);
-        val1[0] = 8;
-        val1[1] = 7;
-        val1[2] = 6;
+        AssignedVariables::Builder assignedVariables = chunk.initAssignedVariables();
+        capnp::List<VariableId>::Builder varIds = assignedVariables.initVariableIds(elementCount);
+        capnp::Data::Builder elements = assignedVariables.initElements(elementCount * elementSize);
+
+        // Send an element.
+        {
+            varIds.set(0, freeVarId);
+            auto element = elements.slice(0, elementSize);
+            element[0] = 10;
+            element[1] = 11;
+            element[2] = 12;
+        }
+        // Send another element.
+        {
+            varIds.set(1, freeVarId + 1);
+            auto element = elements.slice(elementSize, 2 * elementSize);
+            element[0] = 8;
+            element[1] = 7;
+            element[2] = 6;
+        }
 
         if (chunk_callback != NULL) {
             auto words = capnp::messageToFlatArray(message);
@@ -54,6 +65,7 @@ bool gadget_request(
         }
     }
 
+    // Send a high-level response.
     {
         capnp::MallocMessageBuilder message;
 
