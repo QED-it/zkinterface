@@ -1,11 +1,11 @@
 #include <iostream>
-#include <capnp/message.h>
-#include <capnp/serialize-packed.h>
-#include "gadget.capnp.h"
+#include "gadget_generated.h"
 #include "gadget.h"
 
 using std::cout;
 using std::endl;
+using std::vector;
+using namespace Gadget;
 
 typedef uint64_t VariableId;
 
@@ -18,64 +18,61 @@ bool gadget_request(
         gadget_handle_response_t response_callback,
         void *response_context
 ) {
-
-    uint64_t freeVarId;
+    // Read the request.
+    uint64_t free_variable_id;
     {
-        auto words = kj::ArrayPtr<capnp::word>((capnp::word *) request_ptr, request_len / sizeof(capnp::word));
-        auto message = capnp::FlatArrayMessageReader(words);
-        auto request = message.getRoot<AssignmentsRequest>();
-        auto instance = request.getInstance();
-        freeVarId = instance.getFreeVariableId();
-        cout << "C++ got request: len=" << request_len << " bytes, freeVariableId=" << freeVarId << endl;
+        auto root = GetRoot(request_ptr);
+        assert(root->message_type() == Message_AssignmentsRequest);
+        auto request = root->message_as_AssignmentsRequest();
+        auto instance = request->instance();
+        free_variable_id = instance->free_variable_id();
+        cout << "C++ got request: len=" << request_len << " bytes, free_variable_id=" << free_variable_id << endl;
     }
 
-    {   // Send the assignment.
-        capnp::MallocMessageBuilder message;
+    // Send an assignment.
+    {
+        flatbuffers::FlatBufferBuilder builder;
 
-        AssignmentsChunk::Builder chunk = message.initRoot<AssignmentsChunk>();
+        vector <uint64_t> variable_ids;
+        variable_ids.push_back(free_variable_id); // First variable.
+        variable_ids.push_back(free_variable_id + 1); // Second variable.
 
-        unsigned int elementCount = 2;
-        unsigned int elementSize = 3;
+        vector <uint8_t> elements = {
+                10, 11, 12, // First element.
+                8, 7, 6, // Second element.
+        };
 
-        AssignedVariables::Builder assignedVariables = chunk.initAssignedVariables();
-        capnp::List<VariableId>::Builder varIds = assignedVariables.initVariableIds(elementCount);
-        capnp::Data::Builder elements = assignedVariables.initElements(elementCount * elementSize);
-
-        // Send an element.
-        {
-            varIds.set(0, freeVarId);
-            auto element = elements.slice(0, elementSize);
-            element[0] = 10;
-            element[1] = 11;
-            element[2] = 12;
-        }
-        // Send another element.
-        {
-            varIds.set(1, freeVarId + 1);
-            auto element = elements.slice(elementSize, 2 * elementSize);
-            element[0] = 8;
-            element[1] = 7;
-            element[2] = 6;
-        }
+        auto assigned_variables = CreateAssignedVariables(
+                builder,
+                builder.CreateVector(variable_ids),
+                builder.CreateVector(elements));
+        auto chunk = CreateAssignmentsChunk(builder, assigned_variables);
+        auto root = CreateRoot(builder, Message_AssignmentsChunk, chunk.Union());
+        builder.Finish(root);
 
         if (chunk_callback != NULL) {
-            auto words = capnp::messageToFlatArray(message);
-            auto bytes = words.asBytes();
-            chunk_callback(chunk_context, (char *) bytes.begin(), bytes.size());
+            chunk_callback(chunk_context, (char *) builder.GetBufferPointer(), builder.GetSize());
         }
     }
 
     // Send a high-level response.
     {
-        capnp::MallocMessageBuilder message;
+        flatbuffers::FlatBufferBuilder builder;
 
-        AssignmentsResponse::Builder response = message.initRoot<AssignmentsResponse>();
-        response.setFreeVariableId(freeVarId + 2);
+        auto error = builder.CreateString("Some error");
+        auto response = CreateAssignmentsResponse(
+                builder,
+                free_variable_id + 2,
+                0, // info.
+                0, // outgoingAssignments.
+                0, // representation.
+                error // Test error handling.
+        );
+        auto root = CreateRoot(builder, Message_AssignmentsResponse, response.Union());
+        builder.Finish(root);
 
         if (response_callback != NULL) {
-            auto words = capnp::messageToFlatArray(message);
-            auto bytes = words.asBytes();
-            response_callback(response_context, (char *) bytes.begin(), bytes.size());
+            response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
         }
     }
 
