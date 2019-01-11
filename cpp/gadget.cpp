@@ -26,7 +26,10 @@ bool gadget_request(
         auto request = root->message_as_AssignmentsRequest();
         auto instance = request->instance();
         free_variable_id = instance->free_variable_id();
-        cout << "C++ got request: len=" << request_len << " bytes, free_variable_id=" << free_variable_id << endl;
+        cout << "C++ got request: len=" << request_len << " bytes"
+             << ", name=" << instance->gadget_name()->str()
+             << ", free_variable_id="
+             << free_variable_id << endl;
     }
 
     // Send an assignment.
@@ -42,11 +45,11 @@ bool gadget_request(
                 8, 7, 6, // Second element.
         };
 
-        auto assigned_variables = CreateAssignedVariables(
+        auto chunk = CreateAssignmentsChunk(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
-        auto chunk = CreateAssignmentsChunk(builder, assigned_variables);
+
         auto root = CreateRoot(builder, Message_AssignmentsChunk, chunk.Union());
         builder.Finish(root);
 
@@ -59,15 +62,10 @@ bool gadget_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto error = builder.CreateString("Some error");
         auto response = CreateAssignmentsResponse(
                 builder,
-                free_variable_id + 2,
-                0, // info.
-                0, // outgoingAssignments.
-                0, // representation.
-                error // Test error handling.
-        );
+                free_variable_id + 2);
+
         auto root = CreateRoot(builder, Message_AssignmentsResponse, response.Union());
         builder.Finish(root);
 

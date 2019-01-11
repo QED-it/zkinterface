@@ -235,100 +235,6 @@ impl<'a: 'b, 'b> RootBuilder<'a, 'b> {
   }
 }
 
-/// Description of the representation or encoding of field elements.
-/// If omitted, use a default representation:
-/// name = "little-endian"
-/// size = 32 bytes
-pub enum FieldElementRepresentationOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct FieldElementRepresentation<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for FieldElementRepresentation<'a> {
-    type Inner = FieldElementRepresentation<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> FieldElementRepresentation<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        FieldElementRepresentation {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args FieldElementRepresentationArgs<'args>) -> flatbuffers::WIPOffset<FieldElementRepresentation<'bldr>> {
-      let mut builder = FieldElementRepresentationBuilder::new(_fbb);
-      builder.add_size_(args.size_);
-      if let Some(x) = args.name { builder.add_name(x); }
-      builder.finish()
-    }
-
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_SIZE_: flatbuffers::VOffsetT = 6;
-
-  /// The well-known name of the representation.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(FieldElementRepresentation::VT_NAME, None)
-  }
-  /// The size of the representation of an element in bytes.
-  #[inline]
-  pub fn size_(&self) -> u32 {
-    self._tab.get::<u32>(FieldElementRepresentation::VT_SIZE_, Some(0)).unwrap()
-  }
-}
-
-pub struct FieldElementRepresentationArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub size_: u32,
-}
-impl<'a> Default for FieldElementRepresentationArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        FieldElementRepresentationArgs {
-            name: None,
-            size_: 0,
-        }
-    }
-}
-pub struct FieldElementRepresentationBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> FieldElementRepresentationBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(FieldElementRepresentation::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_size_(&mut self, size_: u32) {
-    self.fbb_.push_slot::<u32>(FieldElementRepresentation::VT_SIZE_, size_, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> FieldElementRepresentationBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    FieldElementRepresentationBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<FieldElementRepresentation<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
 /// Terms in a R1CS vector.
 pub enum TermsOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -522,308 +428,6 @@ impl<'a: 'b, 'b> ConstraintBuilder<'a, 'b> {
   }
 }
 
-/// Low-level assignments to variables.
-/// Targets the generic mechanisms that prepare proofs.
-pub enum AssignedVariablesOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct AssignedVariables<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for AssignedVariables<'a> {
-    type Inner = AssignedVariables<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> AssignedVariables<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        AssignedVariables {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args AssignedVariablesArgs<'args>) -> flatbuffers::WIPOffset<AssignedVariables<'bldr>> {
-      let mut builder = AssignedVariablesBuilder::new(_fbb);
-      if let Some(x) = args.elements { builder.add_elements(x); }
-      if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
-      builder.finish()
-    }
-
-    pub const VT_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
-    pub const VT_ELEMENTS: flatbuffers::VOffsetT = 6;
-
-  /// The IDs of the variables being assigned to.
-  #[inline]
-  pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(AssignedVariables::VT_VARIABLE_IDS, None)
-  }
-  /// Contiguous element representations in the same order as variable_ids.
-  #[inline]
-  pub fn elements(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignedVariables::VT_ELEMENTS, None).map(|v| v.safe_slice())
-  }
-}
-
-pub struct AssignedVariablesArgs<'a> {
-    pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
-    pub elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-}
-impl<'a> Default for AssignedVariablesArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        AssignedVariablesArgs {
-            variable_ids: None,
-            elements: None,
-        }
-    }
-}
-pub struct AssignedVariablesBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> AssignedVariablesBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignedVariables::VT_VARIABLE_IDS, variable_ids);
-  }
-  #[inline]
-  pub fn add_elements(&mut self, elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignedVariables::VT_ELEMENTS, elements);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> AssignedVariablesBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    AssignedVariablesBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<AssignedVariables<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// Generic key-value for miscellaneous attributes.
-pub enum CustomKeyValueOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct CustomKeyValue<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for CustomKeyValue<'a> {
-    type Inner = CustomKeyValue<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> CustomKeyValue<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        CustomKeyValue {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args CustomKeyValueArgs<'args>) -> flatbuffers::WIPOffset<CustomKeyValue<'bldr>> {
-      let mut builder = CustomKeyValueBuilder::new(_fbb);
-      if let Some(x) = args.value { builder.add_value(x); }
-      if let Some(x) = args.key { builder.add_key(x); }
-      builder.finish()
-    }
-
-    pub const VT_KEY: flatbuffers::VOffsetT = 4;
-    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub fn key(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(CustomKeyValue::VT_KEY, None)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(CustomKeyValue::VT_VALUE, None).map(|v| v.safe_slice())
-  }
-}
-
-pub struct CustomKeyValueArgs<'a> {
-    pub key: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub value: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-}
-impl<'a> Default for CustomKeyValueArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        CustomKeyValueArgs {
-            key: None,
-            value: None,
-        }
-    }
-}
-pub struct CustomKeyValueBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> CustomKeyValueBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CustomKeyValue::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CustomKeyValue::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CustomKeyValueBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    CustomKeyValueBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<CustomKeyValue<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// A high-level structure of variables.
-/// Define the interface between a gadget and the rest of the circuit.
-/// In gadget composition, the parent provides these structures to its child.
-/// A gadget should document what structures it can accept.
-pub enum StructuredConnectionOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct StructuredConnection<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for StructuredConnection<'a> {
-    type Inner = StructuredConnection<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> StructuredConnection<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        StructuredConnection {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args StructuredConnectionArgs<'args>) -> flatbuffers::WIPOffset<StructuredConnection<'bldr>> {
-      let mut builder = StructuredConnectionBuilder::new(_fbb);
-      if let Some(x) = args.info { builder.add_info(x); }
-      if let Some(x) = args.name { builder.add_name(x); }
-      if let Some(x) = args.structures { builder.add_structures(x); }
-      if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
-      builder.finish()
-    }
-
-    pub const VT_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
-    pub const VT_STRUCTURES: flatbuffers::VOffsetT = 6;
-    pub const VT_NAME: flatbuffers::VOffsetT = 8;
-    pub const VT_INFO: flatbuffers::VOffsetT = 10;
-
-  /// Variables allocated by the caller to use as connections to the gadget.
-  #[inline]
-  pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(StructuredConnection::VT_VARIABLE_IDS, None)
-  }
-  /// Optionally recursive type.
-  /// If used, the field `variable_ids` must be null.
-  #[inline]
-  pub fn structures(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>>>(StructuredConnection::VT_STRUCTURES, None)
-  }
-  /// Name of the connection.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StructuredConnection::VT_NAME, None)
-  }
-  /// Any custom information.
-  #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(StructuredConnection::VT_INFO, None)
-  }
-}
-
-pub struct StructuredConnectionArgs<'a> {
-    pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
-    pub structures: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<StructuredConnection<'a >>>>>,
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
-}
-impl<'a> Default for StructuredConnectionArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        StructuredConnectionArgs {
-            variable_ids: None,
-            structures: None,
-            name: None,
-            info: None,
-        }
-    }
-}
-pub struct StructuredConnectionBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> StructuredConnectionBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_VARIABLE_IDS, variable_ids);
-  }
-  #[inline]
-  pub fn add_structures(&mut self, structures: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<StructuredConnection<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_STRUCTURES, structures);
-  }
-  #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_INFO, info);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StructuredConnectionBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    StructuredConnectionBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<StructuredConnection<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
 /// An instance of a gadget as part of a circuit.
 pub enum GadgetInstanceOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -855,18 +459,18 @@ impl<'a> GadgetInstance<'a> {
         args: &'args GadgetInstanceArgs<'args>) -> flatbuffers::WIPOffset<GadgetInstance<'bldr>> {
       let mut builder = GadgetInstanceBuilder::new(_fbb);
       builder.add_free_variable_id(args.free_variable_id);
-      if let Some(x) = args.outgoing_connections { builder.add_outgoing_connections(x); }
-      if let Some(x) = args.incoming_connections { builder.add_incoming_connections(x); }
       if let Some(x) = args.parameters { builder.add_parameters(x); }
+      if let Some(x) = args.outgoing_variable_ids { builder.add_outgoing_variable_ids(x); }
+      if let Some(x) = args.incoming_variable_ids { builder.add_incoming_variable_ids(x); }
       if let Some(x) = args.gadget_name { builder.add_gadget_name(x); }
       builder.finish()
     }
 
     pub const VT_GADGET_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_PARAMETERS: flatbuffers::VOffsetT = 6;
-    pub const VT_INCOMING_CONNECTIONS: flatbuffers::VOffsetT = 8;
-    pub const VT_OUTGOING_CONNECTIONS: flatbuffers::VOffsetT = 10;
-    pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 12;
+    pub const VT_INCOMING_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
+    pub const VT_OUTGOING_VARIABLE_IDS: flatbuffers::VOffsetT = 8;
+    pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 10;
+    pub const VT_PARAMETERS: flatbuffers::VOffsetT = 12;
 
   /// Which gadget to instantiate.
   /// Allows a library to provide multiple gadgets.
@@ -874,46 +478,48 @@ impl<'a> GadgetInstance<'a> {
   pub fn gadget_name(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetInstance::VT_GADGET_NAME, None)
   }
-  /// Any parameter that may influence the instance behavior.
-  /// Parameters can be standard, conventional, or specific to a gadget.
+  /// Variables allocated by the caller to use as connections to the gadget.
+  /// Incoming variables are assigned by the calling parent.
   #[inline]
-  pub fn parameters(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetInstance::VT_PARAMETERS, None)
+  pub fn incoming_variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(GadgetInstance::VT_INCOMING_VARIABLE_IDS, None)
   }
-  /// Structure of variables that must be assigned by the calling parent.
-  #[inline]
-  pub fn incoming_connections(&self) -> Option<StructuredConnection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetInstance::VT_INCOMING_CONNECTIONS, None)
-  }
-  /// Structure of variables that must be assigned by the called gadget.
+  /// Variables allocated by the caller to use as connections to the gadget.
+  /// Outgoing variables are assigned by the called gadget.
   /// There may be no outgoing variables if the gadget represents a pure assertion.
   #[inline]
-  pub fn outgoing_connections(&self) -> Option<StructuredConnection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetInstance::VT_OUTGOING_CONNECTIONS, None)
+  pub fn outgoing_variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(GadgetInstance::VT_OUTGOING_VARIABLE_IDS, None)
   }
   /// First free variable ID. The instance can allocate IDs greater or equal.
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
     self._tab.get::<u64>(GadgetInstance::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
+  /// Any parameter that may influence the instance behavior.
+  /// Parameters can be standard, conventional, or specific to a gadget.
+  #[inline]
+  pub fn parameters(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetInstance::VT_PARAMETERS, None)
+  }
 }
 
 pub struct GadgetInstanceArgs<'a> {
     pub gadget_name: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub parameters: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
-    pub incoming_connections: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
-    pub outgoing_connections: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
+    pub incoming_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
+    pub outgoing_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub free_variable_id: u64,
+    pub parameters: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
 }
 impl<'a> Default for GadgetInstanceArgs<'a> {
     #[inline]
     fn default() -> Self {
         GadgetInstanceArgs {
             gadget_name: None,
-            parameters: None,
-            incoming_connections: None,
-            outgoing_connections: None,
+            incoming_variable_ids: None,
+            outgoing_variable_ids: None,
             free_variable_id: 0,
+            parameters: None,
         }
     }
 }
@@ -927,20 +533,20 @@ impl<'a: 'b, 'b> GadgetInstanceBuilder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_GADGET_NAME, gadget_name);
   }
   #[inline]
-  pub fn add_parameters(&mut self, parameters: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_PARAMETERS, parameters);
+  pub fn add_incoming_variable_ids(&mut self, incoming_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_INCOMING_VARIABLE_IDS, incoming_variable_ids);
   }
   #[inline]
-  pub fn add_incoming_connections(&mut self, incoming_connections: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(GadgetInstance::VT_INCOMING_CONNECTIONS, incoming_connections);
-  }
-  #[inline]
-  pub fn add_outgoing_connections(&mut self, outgoing_connections: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(GadgetInstance::VT_OUTGOING_CONNECTIONS, outgoing_connections);
+  pub fn add_outgoing_variable_ids(&mut self, outgoing_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_OUTGOING_VARIABLE_IDS, outgoing_variable_ids);
   }
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
     self.fbb_.push_slot::<u64>(GadgetInstance::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+  }
+  #[inline]
+  pub fn add_parameters(&mut self, parameters: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_PARAMETERS, parameters);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetInstanceBuilder<'a, 'b> {
@@ -1079,7 +685,7 @@ impl<'a> R1CSChunk<'a> {
   pub fn constraints(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>>>(R1CSChunk::VT_CONSTRAINTS, None)
   }
-  /// The representation used for the constraints.
+  /// The representation used for the constraint coefficients.
   #[inline]
   pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(R1CSChunk::VT_REPRESENTATION, None)
@@ -1167,7 +773,7 @@ impl<'a> R1CSResponse<'a> {
     pub const VT_INFO: flatbuffers::VOffsetT = 6;
     pub const VT_ERROR: flatbuffers::VOffsetT = 8;
 
-  /// A variable ID greater than all IDs allocated by the instance.
+  /// A variable ID greater than all IDs allocated by the gadget.
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
     self._tab.get::<u64>(R1CSResponse::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
@@ -1261,17 +867,17 @@ impl<'a> AssignmentsRequest<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args AssignmentsRequestArgs<'args>) -> flatbuffers::WIPOffset<AssignmentsRequest<'bldr>> {
       let mut builder = AssignmentsRequestBuilder::new(_fbb);
-      if let Some(x) = args.representation { builder.add_representation(x); }
-      if let Some(x) = args.incoming_assignments { builder.add_incoming_assignments(x); }
       if let Some(x) = args.witness { builder.add_witness(x); }
+      if let Some(x) = args.representation { builder.add_representation(x); }
+      if let Some(x) = args.incoming_elements { builder.add_incoming_elements(x); }
       if let Some(x) = args.instance { builder.add_instance(x); }
       builder.finish()
     }
 
     pub const VT_INSTANCE: flatbuffers::VOffsetT = 4;
-    pub const VT_WITNESS: flatbuffers::VOffsetT = 6;
-    pub const VT_INCOMING_ASSIGNMENTS: flatbuffers::VOffsetT = 8;
-    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 10;
+    pub const VT_INCOMING_ELEMENTS: flatbuffers::VOffsetT = 6;
+    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 8;
+    pub const VT_WITNESS: flatbuffers::VOffsetT = 10;
 
   /// All details necessary to construct the instance.
   /// The same instance parameter must be provided as in the corresponding R1CSRequest.
@@ -1279,37 +885,37 @@ impl<'a> AssignmentsRequest<'a> {
   pub fn instance(&self) -> Option<GadgetInstance<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<GadgetInstance<'a>>>(AssignmentsRequest::VT_INSTANCE, None)
   }
+  /// The values that the parent assigned to `instance.incoming_variable_ids`.
+  #[inline]
+  pub fn incoming_elements(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignmentsRequest::VT_INCOMING_ELEMENTS, None).map(|v| v.safe_slice())
+  }
+  /// The representation used for the incoming_elements.
+  #[inline]
+  pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(AssignmentsRequest::VT_REPRESENTATION, None)
+  }
   /// Any info that may be useful to the gadget to compute its assignments.
   #[inline]
   pub fn witness(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentsRequest::VT_WITNESS, None)
   }
-  /// The values that the parent assigned to `instance.incomingConnections`.
-  #[inline]
-  pub fn incoming_assignments(&self) -> Option<AssignedVariables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<AssignedVariables<'a>>>(AssignmentsRequest::VT_INCOMING_ASSIGNMENTS, None)
-  }
-  /// The representation used for the incomingAssignments.
-  #[inline]
-  pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(AssignmentsRequest::VT_REPRESENTATION, None)
-  }
 }
 
 pub struct AssignmentsRequestArgs<'a> {
     pub instance: Option<flatbuffers::WIPOffset<GadgetInstance<'a >>>,
-    pub witness: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
-    pub incoming_assignments: Option<flatbuffers::WIPOffset<AssignedVariables<'a >>>,
+    pub incoming_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub representation: Option<flatbuffers::WIPOffset<FieldElementRepresentation<'a >>>,
+    pub witness: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
 }
 impl<'a> Default for AssignmentsRequestArgs<'a> {
     #[inline]
     fn default() -> Self {
         AssignmentsRequestArgs {
             instance: None,
-            witness: None,
-            incoming_assignments: None,
+            incoming_elements: None,
             representation: None,
+            witness: None,
         }
     }
 }
@@ -1323,16 +929,16 @@ impl<'a: 'b, 'b> AssignmentsRequestBuilder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<GadgetInstance>>(AssignmentsRequest::VT_INSTANCE, instance);
   }
   #[inline]
-  pub fn add_witness(&mut self, witness: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsRequest::VT_WITNESS, witness);
-  }
-  #[inline]
-  pub fn add_incoming_assignments(&mut self, incoming_assignments: flatbuffers::WIPOffset<AssignedVariables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<AssignedVariables>>(AssignmentsRequest::VT_INCOMING_ASSIGNMENTS, incoming_assignments);
+  pub fn add_incoming_elements(&mut self, incoming_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsRequest::VT_INCOMING_ELEMENTS, incoming_elements);
   }
   #[inline]
   pub fn add_representation(&mut self, representation: flatbuffers::WIPOffset<FieldElementRepresentation<'b >>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<FieldElementRepresentation>>(AssignmentsRequest::VT_REPRESENTATION, representation);
+  }
+  #[inline]
+  pub fn add_witness(&mut self, witness: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsRequest::VT_WITNESS, witness);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> AssignmentsRequestBuilder<'a, 'b> {
@@ -1349,7 +955,8 @@ impl<'a: 'b, 'b> AssignmentsRequestBuilder<'a, 'b> {
   }
 }
 
-/// Report local and outgoing assignments in one or more chunks.
+/// Report local and outgoing assignments computed by the gadget.
+/// There may be one or more chunks.
 pub enum AssignmentsChunkOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -1380,19 +987,26 @@ impl<'a> AssignmentsChunk<'a> {
         args: &'args AssignmentsChunkArgs<'args>) -> flatbuffers::WIPOffset<AssignmentsChunk<'bldr>> {
       let mut builder = AssignmentsChunkBuilder::new(_fbb);
       if let Some(x) = args.representation { builder.add_representation(x); }
-      if let Some(x) = args.assigned_variables { builder.add_assigned_variables(x); }
+      if let Some(x) = args.elements { builder.add_elements(x); }
+      if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
       builder.finish()
     }
 
-    pub const VT_ASSIGNED_VARIABLES: flatbuffers::VOffsetT = 4;
-    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 6;
+    pub const VT_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
+    pub const VT_ELEMENTS: flatbuffers::VOffsetT = 6;
+    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 8;
 
-  /// Assignments computed by the gadgets.
+  /// The IDs of the variables being assigned to.
   #[inline]
-  pub fn assigned_variables(&self) -> Option<AssignedVariables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<AssignedVariables<'a>>>(AssignmentsChunk::VT_ASSIGNED_VARIABLES, None)
+  pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(AssignmentsChunk::VT_VARIABLE_IDS, None)
   }
-  /// The representation used for the assignments.
+  /// Contiguous element representations in the same order as variable_ids.
+  #[inline]
+  pub fn elements(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignmentsChunk::VT_ELEMENTS, None).map(|v| v.safe_slice())
+  }
+  /// The representation used for the elements.
   #[inline]
   pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(AssignmentsChunk::VT_REPRESENTATION, None)
@@ -1400,14 +1014,16 @@ impl<'a> AssignmentsChunk<'a> {
 }
 
 pub struct AssignmentsChunkArgs<'a> {
-    pub assigned_variables: Option<flatbuffers::WIPOffset<AssignedVariables<'a >>>,
+    pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
+    pub elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub representation: Option<flatbuffers::WIPOffset<FieldElementRepresentation<'a >>>,
 }
 impl<'a> Default for AssignmentsChunkArgs<'a> {
     #[inline]
     fn default() -> Self {
         AssignmentsChunkArgs {
-            assigned_variables: None,
+            variable_ids: None,
+            elements: None,
             representation: None,
         }
     }
@@ -1418,8 +1034,12 @@ pub struct AssignmentsChunkBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> AssignmentsChunkBuilder<'a, 'b> {
   #[inline]
-  pub fn add_assigned_variables(&mut self, assigned_variables: flatbuffers::WIPOffset<AssignedVariables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<AssignedVariables>>(AssignmentsChunk::VT_ASSIGNED_VARIABLES, assigned_variables);
+  pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsChunk::VT_VARIABLE_IDS, variable_ids);
+  }
+  #[inline]
+  pub fn add_elements(&mut self, elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsChunk::VT_ELEMENTS, elements);
   }
   #[inline]
   pub fn add_representation(&mut self, representation: flatbuffers::WIPOffset<FieldElementRepresentation<'b >>) {
@@ -1472,16 +1092,16 @@ impl<'a> AssignmentsResponse<'a> {
       let mut builder = AssignmentsResponseBuilder::new(_fbb);
       builder.add_free_variable_id(args.free_variable_id);
       if let Some(x) = args.error { builder.add_error(x); }
-      if let Some(x) = args.representation { builder.add_representation(x); }
-      if let Some(x) = args.outgoing_assignments { builder.add_outgoing_assignments(x); }
       if let Some(x) = args.info { builder.add_info(x); }
+      if let Some(x) = args.representation { builder.add_representation(x); }
+      if let Some(x) = args.outgoing_elements { builder.add_outgoing_elements(x); }
       builder.finish()
     }
 
     pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_INFO: flatbuffers::VOffsetT = 6;
-    pub const VT_OUTGOING_ASSIGNMENTS: flatbuffers::VOffsetT = 8;
-    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 10;
+    pub const VT_OUTGOING_ELEMENTS: flatbuffers::VOffsetT = 6;
+    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 8;
+    pub const VT_INFO: flatbuffers::VOffsetT = 10;
     pub const VT_ERROR: flatbuffers::VOffsetT = 12;
 
   /// A variable ID greater than all IDs allocated by the instance.
@@ -1489,22 +1109,22 @@ impl<'a> AssignmentsResponse<'a> {
   pub fn free_variable_id(&self) -> u64 {
     self._tab.get::<u64>(AssignmentsResponse::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
-  /// Any info that may be useful to the calling parent.
-  #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentsResponse::VT_INFO, None)
-  }
-  /// The values that the gadget assigned to `instance.outgoingConnections`.
+  /// The values that the gadget assigned to `instance.outgoing_variable_ids`.
   /// Intentionally redundant with AssignmentsChunk to allow handling
   /// the outgoing variables separately from the bulk of local variables assignments.
   #[inline]
-  pub fn outgoing_assignments(&self) -> Option<AssignedVariables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<AssignedVariables<'a>>>(AssignmentsResponse::VT_OUTGOING_ASSIGNMENTS, None)
+  pub fn outgoing_elements(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignmentsResponse::VT_OUTGOING_ELEMENTS, None).map(|v| v.safe_slice())
   }
   /// The representation used for the outgoingAssignments.
   #[inline]
   pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(AssignmentsResponse::VT_REPRESENTATION, None)
+  }
+  /// Any info that may be useful to the calling parent.
+  #[inline]
+  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentsResponse::VT_INFO, None)
   }
   /// An error message. Null if no error.
   #[inline]
@@ -1515,9 +1135,9 @@ impl<'a> AssignmentsResponse<'a> {
 
 pub struct AssignmentsResponseArgs<'a> {
     pub free_variable_id: u64,
-    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
-    pub outgoing_assignments: Option<flatbuffers::WIPOffset<AssignedVariables<'a >>>,
+    pub outgoing_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub representation: Option<flatbuffers::WIPOffset<FieldElementRepresentation<'a >>>,
+    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
     pub error: Option<flatbuffers::WIPOffset<&'a  str>>,
 }
 impl<'a> Default for AssignmentsResponseArgs<'a> {
@@ -1525,9 +1145,9 @@ impl<'a> Default for AssignmentsResponseArgs<'a> {
     fn default() -> Self {
         AssignmentsResponseArgs {
             free_variable_id: 0,
-            info: None,
-            outgoing_assignments: None,
+            outgoing_elements: None,
             representation: None,
+            info: None,
             error: None,
         }
     }
@@ -1542,16 +1162,16 @@ impl<'a: 'b, 'b> AssignmentsResponseBuilder<'a, 'b> {
     self.fbb_.push_slot::<u64>(AssignmentsResponse::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
   #[inline]
-  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsResponse::VT_INFO, info);
-  }
-  #[inline]
-  pub fn add_outgoing_assignments(&mut self, outgoing_assignments: flatbuffers::WIPOffset<AssignedVariables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<AssignedVariables>>(AssignmentsResponse::VT_OUTGOING_ASSIGNMENTS, outgoing_assignments);
+  pub fn add_outgoing_elements(&mut self, outgoing_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsResponse::VT_OUTGOING_ELEMENTS, outgoing_elements);
   }
   #[inline]
   pub fn add_representation(&mut self, representation: flatbuffers::WIPOffset<FieldElementRepresentation<'b >>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<FieldElementRepresentation>>(AssignmentsResponse::VT_REPRESENTATION, representation);
+  }
+  #[inline]
+  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(AssignmentsResponse::VT_INFO, info);
   }
   #[inline]
   pub fn add_error(&mut self, error: flatbuffers::WIPOffset<&'b  str>) {
@@ -1567,6 +1187,419 @@ impl<'a: 'b, 'b> AssignmentsResponseBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<AssignmentsResponse<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// Generic key-value for miscellaneous attributes.
+pub enum CustomKeyValueOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct CustomKeyValue<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for CustomKeyValue<'a> {
+    type Inner = CustomKeyValue<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> CustomKeyValue<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        CustomKeyValue {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args CustomKeyValueArgs<'args>) -> flatbuffers::WIPOffset<CustomKeyValue<'bldr>> {
+      let mut builder = CustomKeyValueBuilder::new(_fbb);
+      if let Some(x) = args.value { builder.add_value(x); }
+      if let Some(x) = args.key { builder.add_key(x); }
+      builder.finish()
+    }
+
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+  #[inline]
+  pub fn key(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(CustomKeyValue::VT_KEY, None)
+  }
+  #[inline]
+  pub fn value(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(CustomKeyValue::VT_VALUE, None).map(|v| v.safe_slice())
+  }
+}
+
+pub struct CustomKeyValueArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub value: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+}
+impl<'a> Default for CustomKeyValueArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        CustomKeyValueArgs {
+            key: None,
+            value: None,
+        }
+    }
+}
+pub struct CustomKeyValueBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> CustomKeyValueBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CustomKeyValue::VT_KEY, key);
+  }
+  #[inline]
+  pub fn add_value(&mut self, value: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CustomKeyValue::VT_VALUE, value);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CustomKeyValueBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    CustomKeyValueBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<CustomKeyValue<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// Description of the representation or encoding of field elements.
+/// All messages that transmit field elements should include it.
+/// If omitted, assume the recommended representation:
+/// name = "little-endian"
+/// size = 32 bytes
+///
+/// There are two ways to use this information:
+/// - Simply check it, and return an error if the representation is incorrect.
+/// - Or write generic code that converts automatically when necessary.
+///
+pub enum FieldElementRepresentationOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct FieldElementRepresentation<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for FieldElementRepresentation<'a> {
+    type Inner = FieldElementRepresentation<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> FieldElementRepresentation<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        FieldElementRepresentation {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args FieldElementRepresentationArgs<'args>) -> flatbuffers::WIPOffset<FieldElementRepresentation<'bldr>> {
+      let mut builder = FieldElementRepresentationBuilder::new(_fbb);
+      builder.add_size_(args.size_);
+      if let Some(x) = args.name { builder.add_name(x); }
+      builder.finish()
+    }
+
+    pub const VT_NAME: flatbuffers::VOffsetT = 4;
+    pub const VT_SIZE_: flatbuffers::VOffsetT = 6;
+
+  /// The well-known name of the representation.
+  #[inline]
+  pub fn name(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(FieldElementRepresentation::VT_NAME, None)
+  }
+  /// The size of the representation of an element in bytes.
+  #[inline]
+  pub fn size_(&self) -> u32 {
+    self._tab.get::<u32>(FieldElementRepresentation::VT_SIZE_, Some(0)).unwrap()
+  }
+}
+
+pub struct FieldElementRepresentationArgs<'a> {
+    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub size_: u32,
+}
+impl<'a> Default for FieldElementRepresentationArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        FieldElementRepresentationArgs {
+            name: None,
+            size_: 0,
+        }
+    }
+}
+pub struct FieldElementRepresentationBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> FieldElementRepresentationBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(FieldElementRepresentation::VT_NAME, name);
+  }
+  #[inline]
+  pub fn add_size_(&mut self, size_: u32) {
+    self.fbb_.push_slot::<u32>(FieldElementRepresentation::VT_SIZE_, size_, 0);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> FieldElementRepresentationBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    FieldElementRepresentationBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<FieldElementRepresentation<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// A high-level structure of variables for type safety.
+/// A structure describes the semantics over a flat array of variables.
+/// Define the interface between a gadget and the rest of the circuit.
+/// In gadget composition, the parent provides these structures to its child.
+/// A gadget should document what structures it can accept.
+pub enum StructuredConnectionOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct StructuredConnection<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for StructuredConnection<'a> {
+    type Inner = StructuredConnection<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> StructuredConnection<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        StructuredConnection {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args StructuredConnectionArgs<'args>) -> flatbuffers::WIPOffset<StructuredConnection<'bldr>> {
+      let mut builder = StructuredConnectionBuilder::new(_fbb);
+      if let Some(x) = args.info { builder.add_info(x); }
+      if let Some(x) = args.name { builder.add_name(x); }
+      if let Some(x) = args.structures { builder.add_structures(x); }
+      if let Some(x) = args.variable_count { builder.add_variable_count(x); }
+      builder.finish()
+    }
+
+    pub const VT_VARIABLE_COUNT: flatbuffers::VOffsetT = 4;
+    pub const VT_STRUCTURES: flatbuffers::VOffsetT = 6;
+    pub const VT_NAME: flatbuffers::VOffsetT = 8;
+    pub const VT_INFO: flatbuffers::VOffsetT = 10;
+
+  #[inline]
+  pub fn variable_count(&self) -> Option<flatbuffers::Vector<'a, u64>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(StructuredConnection::VT_VARIABLE_COUNT, None)
+  }
+  /// Optionally recursive type.
+  /// If used, the field `variable_ids` must be null.
+  #[inline]
+  pub fn structures(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>>>(StructuredConnection::VT_STRUCTURES, None)
+  }
+  /// Name of the connection.
+  #[inline]
+  pub fn name(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StructuredConnection::VT_NAME, None)
+  }
+  /// Any custom information.
+  #[inline]
+  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(StructuredConnection::VT_INFO, None)
+  }
+}
+
+pub struct StructuredConnectionArgs<'a> {
+    pub variable_count: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
+    pub structures: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<StructuredConnection<'a >>>>>,
+    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
+}
+impl<'a> Default for StructuredConnectionArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        StructuredConnectionArgs {
+            variable_count: None,
+            structures: None,
+            name: None,
+            info: None,
+        }
+    }
+}
+pub struct StructuredConnectionBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> StructuredConnectionBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_variable_count(&mut self, variable_count: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_VARIABLE_COUNT, variable_count);
+  }
+  #[inline]
+  pub fn add_structures(&mut self, structures: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<StructuredConnection<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_STRUCTURES, structures);
+  }
+  #[inline]
+  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_NAME, name);
+  }
+  #[inline]
+  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StructuredConnection::VT_INFO, info);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StructuredConnectionBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    StructuredConnectionBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<StructuredConnection<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// A description of the types that a gadget expects.
+/// Used to provide type safety.
+pub enum TypeDescriptionOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct TypeDescription<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for TypeDescription<'a> {
+    type Inner = TypeDescription<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> TypeDescription<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        TypeDescription {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args TypeDescriptionArgs<'args>) -> flatbuffers::WIPOffset<TypeDescription<'bldr>> {
+      let mut builder = TypeDescriptionBuilder::new(_fbb);
+      if let Some(x) = args.representation { builder.add_representation(x); }
+      if let Some(x) = args.outgoing_connection { builder.add_outgoing_connection(x); }
+      if let Some(x) = args.incoming_connection { builder.add_incoming_connection(x); }
+      builder.finish()
+    }
+
+    pub const VT_INCOMING_CONNECTION: flatbuffers::VOffsetT = 4;
+    pub const VT_OUTGOING_CONNECTION: flatbuffers::VOffsetT = 6;
+    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 8;
+
+  #[inline]
+  pub fn incoming_connection(&self) -> Option<StructuredConnection<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(TypeDescription::VT_INCOMING_CONNECTION, None)
+  }
+  #[inline]
+  pub fn outgoing_connection(&self) -> Option<StructuredConnection<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(TypeDescription::VT_OUTGOING_CONNECTION, None)
+  }
+  /// The representation used for the incoming_elements.
+  #[inline]
+  pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(TypeDescription::VT_REPRESENTATION, None)
+  }
+}
+
+pub struct TypeDescriptionArgs<'a> {
+    pub incoming_connection: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
+    pub outgoing_connection: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
+    pub representation: Option<flatbuffers::WIPOffset<FieldElementRepresentation<'a >>>,
+}
+impl<'a> Default for TypeDescriptionArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        TypeDescriptionArgs {
+            incoming_connection: None,
+            outgoing_connection: None,
+            representation: None,
+        }
+    }
+}
+pub struct TypeDescriptionBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> TypeDescriptionBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_incoming_connection(&mut self, incoming_connection: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(TypeDescription::VT_INCOMING_CONNECTION, incoming_connection);
+  }
+  #[inline]
+  pub fn add_outgoing_connection(&mut self, outgoing_connection: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(TypeDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
+  }
+  #[inline]
+  pub fn add_representation(&mut self, representation: flatbuffers::WIPOffset<FieldElementRepresentation<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<FieldElementRepresentation>>(TypeDescription::VT_REPRESENTATION, representation);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> TypeDescriptionBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    TypeDescriptionBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<TypeDescription<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }

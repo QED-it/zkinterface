@@ -91,36 +91,43 @@ pub fn make_witness(message_buf: &[u8]) -> Result<AssignmentContext, String> {
 
 #[test]
 fn test_gadget_request() {
+    use self::flatbuffers::FlatBufferBuilder;
     use self::gadget_generated::gadget::{
         get_root_as_root, Root, RootArgs, Message,
         AssignmentsRequest, AssignmentsRequestArgs,
         GadgetInstance, GadgetInstanceArgs,
     };
 
+    let base_id = 100;
 
-    let free_var_id = 100;
-
-    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
+    let builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let assign_ctx = {
-        let gadget_name = builder.create_string("test");
+        let name = builder.create_string("test");
 
-        let instance = GadgetInstance::create(&mut builder, &GadgetInstanceArgs {
-            gadget_name: Some(gadget_name),
+        let in_ids = builder.create_vector(&[
+            base_id + 0,
+            base_id + 1]);
+
+        let out_ids = builder.create_vector(&[
+            base_id + 2]);
+
+        let instance = GadgetInstance::create(builder, &GadgetInstanceArgs {
+            gadget_name: Some(name),
+            incoming_variable_ids: Some(in_ids),
+            outgoing_variable_ids: Some(out_ids),
+            free_variable_id: base_id + 3,
             parameters: None,
-            incoming_connections: None,
-            outgoing_connections: None,
-            free_variable_id: free_var_id,
         });
 
-        let request = AssignmentsRequest::create(&mut builder, &AssignmentsRequestArgs {
+        let request = AssignmentsRequest::create(builder, &AssignmentsRequestArgs {
             instance: Some(instance),
-            witness: None,
-            incoming_assignments: None,
+            incoming_elements: None,
             representation: None,
+            witness: None,
         });
 
-        let root = Root::create(&mut builder, &RootArgs {
+        let root = Root::create(builder, &RootArgs {
             message_type: Message::AssignmentsRequest,
             message: Some(request.as_union_value()),
         });
@@ -139,9 +146,8 @@ fn test_gadget_request() {
         let buf = &assign_ctx.chunks[0];
         let root = get_root_as_root(buf);
         let chunk = root.message_as_assignments_chunk().unwrap();
-        let assigned_variables = chunk.assigned_variables().unwrap();
-        let var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
-        let elements = assigned_variables.elements().unwrap();
+        let var_ids = chunk.variable_ids().unwrap().safe_slice();
+        let elements = chunk.elements().unwrap();
 
         let element_count = var_ids.len() as usize;
         let element_size = 3 as usize;
@@ -153,8 +159,8 @@ fn test_gadget_request() {
             println!("{} = {:?}", var_id, element);
         }
 
-        assert_eq!(var_ids[0], free_var_id); // First variable.
-        assert_eq!(var_ids[1], free_var_id + 1); // Second variable.
+        assert_eq!(var_ids[0], base_id + 3 + 0); // First gadget-allocated variable.
+        assert_eq!(var_ids[1], base_id + 3 + 1); // Second "
         assert_eq!(elements, &[
             10, 11, 12, // First element.
             8, 7, 6, // Second element.
@@ -165,7 +171,6 @@ fn test_gadget_request() {
         let root = get_root_as_root(buf);
         let response = root.message_as_assignments_response().unwrap();
         println!("Next free variable id: {}", response.free_variable_id());
-        assert!(response.free_variable_id() == free_var_id + 2);
-        assert_eq!(response.error().unwrap(), "Some error");
+        assert!(response.free_variable_id() == base_id + 3 + 2);
     }
 }

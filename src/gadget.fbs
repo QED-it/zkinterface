@@ -23,18 +23,6 @@ root_type Root;
 // Unique within a constraint system.
 // Zero is a reserved special value.
 
-/// Description of the representation or encoding of field elements.
-/// If omitted, use a default representation:
-/// name = "little-endian"
-/// size = 32 bytes
-table FieldElementRepresentation {
-    /// The well-known name of the representation.
-    name :string;
-
-    /// The size of the representation of an element in bytes.
-    size :uint32;
-}
-
 /// Terms in a R1CS vector.
 table Terms {
     // The IDs of the variables to constrain.
@@ -54,61 +42,27 @@ table Constraint {
     c :Terms;
 }
 
-/// Low-level assignments to variables.
-/// Targets the generic mechanisms that prepare proofs.
-table AssignedVariables {
-    /// The IDs of the variables being assigned to.
-    variable_ids :[uint64];
-
-    /// Contiguous element representations in the same order as variable_ids.
-    elements     :[ubyte];
-}
-
-/// Generic key-value for miscellaneous attributes.
-table CustomKeyValue {
-    key   :string;
-    value :[ubyte];
-}
-
-/// A high-level structure of variables.
-/// Define the interface between a gadget and the rest of the circuit.
-/// In gadget composition, the parent provides these structures to its child.
-/// A gadget should document what structures it can accept.
-table StructuredConnection {
-    /// Variables allocated by the caller to use as connections to the gadget.
-    variable_ids :[uint64];
-
-    /// Optionally recursive type.
-    /// If used, the field `variable_ids` must be null.
-    structures   :[StructuredConnection];
-
-    /// Name of the connection.
-    name         :string;
-
-    /// Any custom information.
-    info         :[CustomKeyValue];
-}
-
 /// An instance of a gadget as part of a circuit.
 table GadgetInstance {
-
     /// Which gadget to instantiate.
     /// Allows a library to provide multiple gadgets.
-    gadget_name          :string;
+    gadget_name           :string;
+
+    /// Variables allocated by the caller to use as connections to the gadget.
+    /// Incoming variables are assigned by the calling parent.
+    incoming_variable_ids :[uint64];
+
+    /// Variables allocated by the caller to use as connections to the gadget.
+    /// Outgoing variables are assigned by the called gadget.
+    /// There may be no outgoing variables if the gadget represents a pure assertion.
+    outgoing_variable_ids :[uint64];
+
+    /// First free variable ID. The instance can allocate IDs greater or equal.
+    free_variable_id      :uint64;
 
     /// Any parameter that may influence the instance behavior.
     /// Parameters can be standard, conventional, or specific to a gadget.
-    parameters           :[CustomKeyValue];
-
-    /// Structure of variables that must be assigned by the calling parent.
-    incoming_connections :StructuredConnection;
-
-    /// Structure of variables that must be assigned by the called gadget.
-    /// There may be no outgoing variables if the gadget represents a pure assertion.
-    outgoing_connections :StructuredConnection;
-
-    /// First free variable ID. The instance can allocate IDs greater or equal.
-    free_variable_id     :uint64;
+    parameters            :[CustomKeyValue];
 }
 
 
@@ -126,13 +80,13 @@ table R1CSChunk {
     /// Constraints to add.
     constraints    :[Constraint];
 
-    /// The representation used for the constraints.
+    /// The representation used for the constraint coefficients.
     representation :FieldElementRepresentation;
 }
 
 /// Response after the instantiation is complete.
 table R1CSResponse {
-    /// A variable ID greater than all IDs allocated by the instance.
+    /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id :uint64;
 
     /// Any info that may be useful to the calling parent.
@@ -149,43 +103,117 @@ table R1CSResponse {
 table AssignmentsRequest {
     /// All details necessary to construct the instance.
     /// The same instance parameter must be provided as in the corresponding R1CSRequest.
-    instance             :GadgetInstance;
+    instance          :GadgetInstance;
+
+    /// The values that the parent assigned to `instance.incoming_variable_ids`.
+    incoming_elements :[ubyte];
+
+    /// The representation used for the incoming_elements.
+    representation    :FieldElementRepresentation;
 
     /// Any info that may be useful to the gadget to compute its assignments.
-    witness              :[CustomKeyValue];
-
-    /// The values that the parent assigned to `instance.incomingConnections`.
-    incoming_assignments :AssignedVariables;
-
-    /// The representation used for the incomingAssignments.
-    representation       :FieldElementRepresentation;
+    witness           :[CustomKeyValue];
 }
 
-/// Report local and outgoing assignments in one or more chunks.
+/// Report local and outgoing assignments computed by the gadget.
+/// There may be one or more chunks.
 table AssignmentsChunk {
-    /// Assignments computed by the gadgets.
-    assigned_variables :AssignedVariables;
+    /// The IDs of the variables being assigned to.
+    variable_ids   :[uint64];
 
-    /// The representation used for the assignments.
-    representation     :FieldElementRepresentation;
+    /// Contiguous element representations in the same order as variable_ids.
+    elements       :[ubyte];
+
+    /// The representation used for the elements.
+    representation :FieldElementRepresentation;
 }
 
 /// Response after all assignments have been reported.
 table AssignmentsResponse {
     /// A variable ID greater than all IDs allocated by the instance.
-    free_variable_id     :uint64;
+    free_variable_id  :uint64;
 
-    /// Any info that may be useful to the calling parent.
-    info                 :[CustomKeyValue];
-
-    /// The values that the gadget assigned to `instance.outgoingConnections`.
+    /// The values that the gadget assigned to `instance.outgoing_variable_ids`.
     /// Intentionally redundant with AssignmentsChunk to allow handling
     /// the outgoing variables separately from the bulk of local variables assignments.
-    outgoing_assignments :AssignedVariables;
+    outgoing_elements :[ubyte];
 
     /// The representation used for the outgoingAssignments.
-    representation       :FieldElementRepresentation;
+    representation    :FieldElementRepresentation;
+
+    /// Any info that may be useful to the calling parent.
+    info              :[CustomKeyValue];
 
     /// An error message. Null if no error.
-    error                :string;
+    error             :string;
+}
+
+
+// == Flexibility Concept ==
+
+/// Generic key-value for miscellaneous attributes.
+table CustomKeyValue {
+    key   :string;
+    value :[ubyte];
+}
+
+/// Description of the representation or encoding of field elements.
+/// All messages that transmit field elements should include it.
+/// If omitted, assume the recommended representation:
+/// name = "little-endian"
+/// size = 32 bytes
+///
+/// There are two ways to use this information:
+/// - Simply check it, and return an error if the representation is incorrect.
+/// - Or write generic code that converts automatically when necessary.
+///
+table FieldElementRepresentation {
+    /// The well-known name of the representation.
+    name :string;
+
+    /// The size of the representation of an element in bytes.
+    size :uint32;
+}
+
+
+// == Type Safety Concept ==
+//
+// The interface uses flat array of variables,
+// because it is the lowest common denomitor and
+// is simple to implement in all situations.
+//
+// Typing information is provided as an overlay that describes the variables.
+// A framework may omit or ignore typing information.
+//
+
+/// A high-level structure of variables for type safety.
+/// A structure describes the semantics over a flat array of variables.
+/// Define the interface between a gadget and the rest of the circuit.
+/// In gadget composition, the parent provides these structures to its child.
+/// A gadget should document what structures it can accept.
+table StructuredConnection {
+    variable_count :[uint64];
+
+    /// Optionally recursive type.
+    /// If used, the field `variable_ids` must be null.
+    structures     :[StructuredConnection];
+
+    /// Name of the connection.
+    name           :string;
+
+    /// Any custom information.
+    info           :[CustomKeyValue];
+}
+
+/// A description of the types that a gadget expects.
+/// Used to provide type safety.
+table TypeDescription {
+    // Describe the structure of the incoming array of variables.
+    incoming_connection :StructuredConnection;
+
+    // Describe the structure of the outgoing array of variables.
+    outgoing_connection :StructuredConnection;
+
+    /// The representation used for the incoming_elements.
+    representation      :FieldElementRepresentation;
 }
