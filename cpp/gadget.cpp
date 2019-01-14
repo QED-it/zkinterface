@@ -12,45 +12,49 @@ typedef uint64_t VariableId;
 
 bool assignments_request(
         const AssignmentsRequest *request,
-        gadget_handle_response_t chunk_callback,
-        void *chunk_context,
-        gadget_handle_response_t response_callback,
+
+        gadget_callback_t result_stream_callback,
+        void *result_stream_context,
+
+        gadget_callback_t response_callback,
         void *response_context
 ) {
     // Read the request.
-    uint64_t free_variable_id;
+    uint64_t free_variable_id_before;
     {
         auto instance = request->instance();
-        free_variable_id = instance->free_variable_id();
+        free_variable_id_before = instance->free_variable_id_before();
         cout << "C++ got request"
              << ", name=" << instance->gadget_name()->str()
-             << ", free_variable_id="
-             << free_variable_id << endl;
+             << ", free_variable_id_before="
+             << free_variable_id_before << endl;
     }
 
     // Send an assignment.
+    uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
 
         vector <uint64_t> variable_ids;
-        variable_ids.push_back(free_variable_id); // First variable.
-        variable_ids.push_back(free_variable_id + 1); // Second variable.
+        variable_ids.push_back(free_variable_id_before); // First variable.
+        variable_ids.push_back(free_variable_id_before + 1); // Second variable.
+        free_variable_id_after = free_variable_id_before + 2;
 
         vector <uint8_t> elements = {
                 10, 11, 12, // First element.
                 8, 7, 6, // Second element.
         };
 
-        auto chunk = CreateAssignmentsChunk(
+        auto assigned_variables = CreateAssignedVariables(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
 
-        auto root = CreateRoot(builder, Message_AssignmentsChunk, chunk.Union());
+        auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
         builder.Finish(root);
 
-        if (chunk_callback != NULL) {
-            chunk_callback(chunk_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+        if (result_stream_callback != NULL) {
+            result_stream_callback(result_stream_context, (char *) builder.GetBufferPointer(), builder.GetSize());
         }
     }
 
@@ -60,7 +64,7 @@ bool assignments_request(
 
         auto response = CreateAssignmentsResponse(
                 builder,
-                free_variable_id + 2);
+                free_variable_id_after);
 
         auto root = CreateRoot(builder, Message_AssignmentsResponse, response.Union());
         builder.Finish(root);
@@ -75,7 +79,7 @@ bool assignments_request(
 
 
 bool descriptions_request(
-        gadget_handle_response_t response_callback,
+        gadget_callback_t response_callback,
         void *response_context
 ) {
     flatbuffers::FlatBufferBuilder builder;
@@ -103,10 +107,12 @@ bool descriptions_request(
 
 bool gadget_request(
         char *request_ptr,
-        uint64_t request_len,
-        gadget_handle_response_t chunk_callback,
-        void *chunk_context,
-        gadget_handle_response_t response_callback,
+        uint64_t /*request_len*/,
+
+        gadget_callback_t result_stream_callback,
+        void *result_stream_context,
+
+        gadget_callback_t response_callback,
         void *response_context
 ) {
     auto root = GetRoot(request_ptr);
@@ -118,7 +124,7 @@ bool gadget_request(
         case Message_AssignmentsRequest:
             return assignments_request(
                     root->message_as_AssignmentsRequest(),
-                    chunk_callback, chunk_context,
+                    result_stream_callback, result_stream_context,
                     response_callback, response_context
             );
 

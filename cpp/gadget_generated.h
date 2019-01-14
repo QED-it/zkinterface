@@ -10,7 +10,7 @@ namespace Gadget {
 
 struct Root;
 
-struct Terms;
+struct LinearCombination;
 
 struct Constraint;
 
@@ -18,13 +18,13 @@ struct GadgetInstance;
 
 struct R1CSRequest;
 
-struct R1CSChunk;
+struct R1CSConstraints;
 
 struct R1CSResponse;
 
 struct AssignmentsRequest;
 
-struct AssignmentsChunk;
+struct AssignedVariables;
 
 struct AssignmentsResponse;
 
@@ -45,10 +45,10 @@ enum Message {
   Message_GadgetsDescriptionRequest = 1,
   Message_GadgetsDescriptionResponse = 2,
   Message_R1CSRequest = 3,
-  Message_R1CSChunk = 4,
+  Message_R1CSConstraints = 4,
   Message_R1CSResponse = 5,
   Message_AssignmentsRequest = 6,
-  Message_AssignmentsChunk = 7,
+  Message_AssignedVariables = 7,
   Message_AssignmentsResponse = 8,
   Message_MIN = Message_NONE,
   Message_MAX = Message_AssignmentsResponse
@@ -60,10 +60,10 @@ inline const Message (&EnumValuesMessage())[9] {
     Message_GadgetsDescriptionRequest,
     Message_GadgetsDescriptionResponse,
     Message_R1CSRequest,
-    Message_R1CSChunk,
+    Message_R1CSConstraints,
     Message_R1CSResponse,
     Message_AssignmentsRequest,
-    Message_AssignmentsChunk,
+    Message_AssignedVariables,
     Message_AssignmentsResponse
   };
   return values;
@@ -75,10 +75,10 @@ inline const char * const *EnumNamesMessage() {
     "GadgetsDescriptionRequest",
     "GadgetsDescriptionResponse",
     "R1CSRequest",
-    "R1CSChunk",
+    "R1CSConstraints",
     "R1CSResponse",
     "AssignmentsRequest",
-    "AssignmentsChunk",
+    "AssignedVariables",
     "AssignmentsResponse",
     nullptr
   };
@@ -107,8 +107,8 @@ template<> struct MessageTraits<R1CSRequest> {
   static const Message enum_value = Message_R1CSRequest;
 };
 
-template<> struct MessageTraits<R1CSChunk> {
-  static const Message enum_value = Message_R1CSChunk;
+template<> struct MessageTraits<R1CSConstraints> {
+  static const Message enum_value = Message_R1CSConstraints;
 };
 
 template<> struct MessageTraits<R1CSResponse> {
@@ -119,8 +119,8 @@ template<> struct MessageTraits<AssignmentsRequest> {
   static const Message enum_value = Message_AssignmentsRequest;
 };
 
-template<> struct MessageTraits<AssignmentsChunk> {
-  static const Message enum_value = Message_AssignmentsChunk;
+template<> struct MessageTraits<AssignedVariables> {
+  static const Message enum_value = Message_AssignedVariables;
 };
 
 template<> struct MessageTraits<AssignmentsResponse> {
@@ -151,8 +151,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const R1CSRequest *message_as_R1CSRequest() const {
     return message_type() == Message_R1CSRequest ? static_cast<const R1CSRequest *>(message()) : nullptr;
   }
-  const R1CSChunk *message_as_R1CSChunk() const {
-    return message_type() == Message_R1CSChunk ? static_cast<const R1CSChunk *>(message()) : nullptr;
+  const R1CSConstraints *message_as_R1CSConstraints() const {
+    return message_type() == Message_R1CSConstraints ? static_cast<const R1CSConstraints *>(message()) : nullptr;
   }
   const R1CSResponse *message_as_R1CSResponse() const {
     return message_type() == Message_R1CSResponse ? static_cast<const R1CSResponse *>(message()) : nullptr;
@@ -160,8 +160,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const AssignmentsRequest *message_as_AssignmentsRequest() const {
     return message_type() == Message_AssignmentsRequest ? static_cast<const AssignmentsRequest *>(message()) : nullptr;
   }
-  const AssignmentsChunk *message_as_AssignmentsChunk() const {
-    return message_type() == Message_AssignmentsChunk ? static_cast<const AssignmentsChunk *>(message()) : nullptr;
+  const AssignedVariables *message_as_AssignedVariables() const {
+    return message_type() == Message_AssignedVariables ? static_cast<const AssignedVariables *>(message()) : nullptr;
   }
   const AssignmentsResponse *message_as_AssignmentsResponse() const {
     return message_type() == Message_AssignmentsResponse ? static_cast<const AssignmentsResponse *>(message()) : nullptr;
@@ -187,8 +187,8 @@ template<> inline const R1CSRequest *Root::message_as<R1CSRequest>() const {
   return message_as_R1CSRequest();
 }
 
-template<> inline const R1CSChunk *Root::message_as<R1CSChunk>() const {
-  return message_as_R1CSChunk();
+template<> inline const R1CSConstraints *Root::message_as<R1CSConstraints>() const {
+  return message_as_R1CSConstraints();
 }
 
 template<> inline const R1CSResponse *Root::message_as<R1CSResponse>() const {
@@ -199,8 +199,8 @@ template<> inline const AssignmentsRequest *Root::message_as<AssignmentsRequest>
   return message_as_AssignmentsRequest();
 }
 
-template<> inline const AssignmentsChunk *Root::message_as<AssignmentsChunk>() const {
-  return message_as_AssignmentsChunk();
+template<> inline const AssignedVariables *Root::message_as<AssignedVariables>() const {
+  return message_as_AssignedVariables();
 }
 
 template<> inline const AssignmentsResponse *Root::message_as<AssignmentsResponse>() const {
@@ -238,8 +238,8 @@ inline flatbuffers::Offset<Root> CreateRoot(
   return builder_.Finish();
 }
 
-/// Terms in a R1CS vector.
-struct Terms FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+/// The terms in a R1CS linear combination.
+struct LinearCombination FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VARIABLE_IDS = 4,
     VT_COEFFICIENTS = 6
@@ -247,7 +247,7 @@ struct Terms FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint64_t> *variable_ids() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_VARIABLE_IDS);
   }
-  /// Contiguous coefficient representations in the same order as variable_ids.
+  /// Contiguous constant coefficient representations in the same order as variable_ids.
   const flatbuffers::Vector<uint8_t> *coefficients() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_COEFFICIENTS);
   }
@@ -261,44 +261,44 @@ struct Terms FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct TermsBuilder {
+struct LinearCombinationBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids) {
-    fbb_.AddOffset(Terms::VT_VARIABLE_IDS, variable_ids);
+    fbb_.AddOffset(LinearCombination::VT_VARIABLE_IDS, variable_ids);
   }
   void add_coefficients(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> coefficients) {
-    fbb_.AddOffset(Terms::VT_COEFFICIENTS, coefficients);
+    fbb_.AddOffset(LinearCombination::VT_COEFFICIENTS, coefficients);
   }
-  explicit TermsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit LinearCombinationBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  TermsBuilder &operator=(const TermsBuilder &);
-  flatbuffers::Offset<Terms> Finish() {
+  LinearCombinationBuilder &operator=(const LinearCombinationBuilder &);
+  flatbuffers::Offset<LinearCombination> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Terms>(end);
+    auto o = flatbuffers::Offset<LinearCombination>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Terms> CreateTerms(
+inline flatbuffers::Offset<LinearCombination> CreateLinearCombination(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> coefficients = 0) {
-  TermsBuilder builder_(_fbb);
+  LinearCombinationBuilder builder_(_fbb);
   builder_.add_coefficients(coefficients);
   builder_.add_variable_ids(variable_ids);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Terms> CreateTermsDirect(
+inline flatbuffers::Offset<LinearCombination> CreateLinearCombinationDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint64_t> *variable_ids = nullptr,
     const std::vector<uint8_t> *coefficients = nullptr) {
   auto variable_ids__ = variable_ids ? _fbb.CreateVector<uint64_t>(*variable_ids) : 0;
   auto coefficients__ = coefficients ? _fbb.CreateVector<uint8_t>(*coefficients) : 0;
-  return Gadget::CreateTerms(
+  return Gadget::CreateLinearCombination(
       _fbb,
       variable_ids__,
       coefficients__);
@@ -313,14 +313,14 @@ struct Constraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_B = 6,
     VT_C = 8
   };
-  const Terms *a() const {
-    return GetPointer<const Terms *>(VT_A);
+  const LinearCombination *a() const {
+    return GetPointer<const LinearCombination *>(VT_A);
   }
-  const Terms *b() const {
-    return GetPointer<const Terms *>(VT_B);
+  const LinearCombination *b() const {
+    return GetPointer<const LinearCombination *>(VT_B);
   }
-  const Terms *c() const {
-    return GetPointer<const Terms *>(VT_C);
+  const LinearCombination *c() const {
+    return GetPointer<const LinearCombination *>(VT_C);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -337,13 +337,13 @@ struct Constraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct ConstraintBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_a(flatbuffers::Offset<Terms> a) {
+  void add_a(flatbuffers::Offset<LinearCombination> a) {
     fbb_.AddOffset(Constraint::VT_A, a);
   }
-  void add_b(flatbuffers::Offset<Terms> b) {
+  void add_b(flatbuffers::Offset<LinearCombination> b) {
     fbb_.AddOffset(Constraint::VT_B, b);
   }
-  void add_c(flatbuffers::Offset<Terms> c) {
+  void add_c(flatbuffers::Offset<LinearCombination> c) {
     fbb_.AddOffset(Constraint::VT_C, c);
   }
   explicit ConstraintBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -360,9 +360,9 @@ struct ConstraintBuilder {
 
 inline flatbuffers::Offset<Constraint> CreateConstraint(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Terms> a = 0,
-    flatbuffers::Offset<Terms> b = 0,
-    flatbuffers::Offset<Terms> c = 0) {
+    flatbuffers::Offset<LinearCombination> a = 0,
+    flatbuffers::Offset<LinearCombination> b = 0,
+    flatbuffers::Offset<LinearCombination> c = 0) {
   ConstraintBuilder builder_(_fbb);
   builder_.add_c(c);
   builder_.add_b(b);
@@ -376,7 +376,7 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_GADGET_NAME = 4,
     VT_INCOMING_VARIABLE_IDS = 6,
     VT_OUTGOING_VARIABLE_IDS = 8,
-    VT_FREE_VARIABLE_ID = 10,
+    VT_FREE_VARIABLE_ID_BEFORE = 10,
     VT_PARAMETERS = 12
   };
   /// Which gadget to instantiate.
@@ -395,11 +395,12 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint64_t> *outgoing_variable_ids() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_OUTGOING_VARIABLE_IDS);
   }
-  /// First free variable ID. The instance can allocate IDs greater or equal.
-  uint64_t free_variable_id() const {
-    return GetField<uint64_t>(VT_FREE_VARIABLE_ID, 0);
+  /// First free variable ID before the call.
+  /// The gadget can allocate IDs greater or equal.
+  uint64_t free_variable_id_before() const {
+    return GetField<uint64_t>(VT_FREE_VARIABLE_ID_BEFORE, 0);
   }
-  /// Any parameter that may influence the instance behavior.
+  /// Optional: Any parameter that may influence the instance behavior.
   /// Parameters can be standard, conventional, or specific to a gadget.
   const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *parameters() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_PARAMETERS);
@@ -412,7 +413,7 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(incoming_variable_ids()) &&
            VerifyOffset(verifier, VT_OUTGOING_VARIABLE_IDS) &&
            verifier.VerifyVector(outgoing_variable_ids()) &&
-           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID) &&
+           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID_BEFORE) &&
            VerifyOffset(verifier, VT_PARAMETERS) &&
            verifier.VerifyVector(parameters()) &&
            verifier.VerifyVectorOfTables(parameters()) &&
@@ -432,8 +433,8 @@ struct GadgetInstanceBuilder {
   void add_outgoing_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> outgoing_variable_ids) {
     fbb_.AddOffset(GadgetInstance::VT_OUTGOING_VARIABLE_IDS, outgoing_variable_ids);
   }
-  void add_free_variable_id(uint64_t free_variable_id) {
-    fbb_.AddElement<uint64_t>(GadgetInstance::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+  void add_free_variable_id_before(uint64_t free_variable_id_before) {
+    fbb_.AddElement<uint64_t>(GadgetInstance::VT_FREE_VARIABLE_ID_BEFORE, free_variable_id_before, 0);
   }
   void add_parameters(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> parameters) {
     fbb_.AddOffset(GadgetInstance::VT_PARAMETERS, parameters);
@@ -455,10 +456,10 @@ inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstance(
     flatbuffers::Offset<flatbuffers::String> gadget_name = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> incoming_variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> outgoing_variable_ids = 0,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_before = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> parameters = 0) {
   GadgetInstanceBuilder builder_(_fbb);
-  builder_.add_free_variable_id(free_variable_id);
+  builder_.add_free_variable_id_before(free_variable_id_before);
   builder_.add_parameters(parameters);
   builder_.add_outgoing_variable_ids(outgoing_variable_ids);
   builder_.add_incoming_variable_ids(incoming_variable_ids);
@@ -471,7 +472,7 @@ inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstanceDirect(
     const char *gadget_name = nullptr,
     const std::vector<uint64_t> *incoming_variable_ids = nullptr,
     const std::vector<uint64_t> *outgoing_variable_ids = nullptr,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_before = 0,
     const std::vector<flatbuffers::Offset<CustomKeyValue>> *parameters = nullptr) {
   auto gadget_name__ = gadget_name ? _fbb.CreateString(gadget_name) : 0;
   auto incoming_variable_ids__ = incoming_variable_ids ? _fbb.CreateVector<uint64_t>(*incoming_variable_ids) : 0;
@@ -482,7 +483,7 @@ inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstanceDirect(
       gadget_name__,
       incoming_variable_ids__,
       outgoing_variable_ids__,
-      free_variable_id,
+      free_variable_id_before,
       parameters__);
 }
 
@@ -530,17 +531,17 @@ inline flatbuffers::Offset<R1CSRequest> CreateR1CSRequest(
   return builder_.Finish();
 }
 
-/// Report all constraints in one or more chunks.
-struct R1CSChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+/// Report constraints to be added to the constraints system.
+/// To send to the stream of constraints.
+struct R1CSConstraints FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONSTRAINTS = 4,
     VT_REPRESENTATION = 6
   };
-  /// Constraints to add.
   const flatbuffers::Vector<flatbuffers::Offset<Constraint>> *constraints() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Constraint>> *>(VT_CONSTRAINTS);
   }
-  /// The representation used for the constraint coefficients.
+  /// Optional: The representation used for the constraint coefficients, if non-default.
   const FieldElementRepresentation *representation() const {
     return GetPointer<const FieldElementRepresentation *>(VT_REPRESENTATION);
   }
@@ -555,70 +556,71 @@ struct R1CSChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct R1CSChunkBuilder {
+struct R1CSConstraintsBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Constraint>>> constraints) {
-    fbb_.AddOffset(R1CSChunk::VT_CONSTRAINTS, constraints);
+    fbb_.AddOffset(R1CSConstraints::VT_CONSTRAINTS, constraints);
   }
   void add_representation(flatbuffers::Offset<FieldElementRepresentation> representation) {
-    fbb_.AddOffset(R1CSChunk::VT_REPRESENTATION, representation);
+    fbb_.AddOffset(R1CSConstraints::VT_REPRESENTATION, representation);
   }
-  explicit R1CSChunkBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit R1CSConstraintsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  R1CSChunkBuilder &operator=(const R1CSChunkBuilder &);
-  flatbuffers::Offset<R1CSChunk> Finish() {
+  R1CSConstraintsBuilder &operator=(const R1CSConstraintsBuilder &);
+  flatbuffers::Offset<R1CSConstraints> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<R1CSChunk>(end);
+    auto o = flatbuffers::Offset<R1CSConstraints>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<R1CSChunk> CreateR1CSChunk(
+inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraints(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Constraint>>> constraints = 0,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0) {
-  R1CSChunkBuilder builder_(_fbb);
+  R1CSConstraintsBuilder builder_(_fbb);
   builder_.add_representation(representation);
   builder_.add_constraints(constraints);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<R1CSChunk> CreateR1CSChunkDirect(
+inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraintsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<flatbuffers::Offset<Constraint>> *constraints = nullptr,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0) {
   auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<Constraint>>(*constraints) : 0;
-  return Gadget::CreateR1CSChunk(
+  return Gadget::CreateR1CSConstraints(
       _fbb,
       constraints__,
       representation);
 }
 
-/// Response after the instantiation is complete.
+/// Response after all R1CSConstraints have been sent.
 struct R1CSResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_FREE_VARIABLE_ID = 4,
+    VT_FREE_VARIABLE_ID_AFTER = 4,
     VT_INFO = 6,
     VT_ERROR = 8
   };
+  /// First variable ID free after the gadget call.
   /// A variable ID greater than all IDs allocated by the gadget.
-  uint64_t free_variable_id() const {
-    return GetField<uint64_t>(VT_FREE_VARIABLE_ID, 0);
+  uint64_t free_variable_id_after() const {
+    return GetField<uint64_t>(VT_FREE_VARIABLE_ID_AFTER, 0);
   }
-  /// Any info that may be useful to the calling parent.
+  /// Optional: Any info that may be useful to the calling parent.
   const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
   }
-  /// An error message. Null if no error.
+  /// Optional: An error message. Null if no error.
   const flatbuffers::String *error() const {
     return GetPointer<const flatbuffers::String *>(VT_ERROR);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID) &&
+           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID_AFTER) &&
            VerifyOffset(verifier, VT_INFO) &&
            verifier.VerifyVector(info()) &&
            verifier.VerifyVectorOfTables(info()) &&
@@ -631,8 +633,8 @@ struct R1CSResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct R1CSResponseBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_free_variable_id(uint64_t free_variable_id) {
-    fbb_.AddElement<uint64_t>(R1CSResponse::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+  void add_free_variable_id_after(uint64_t free_variable_id_after) {
+    fbb_.AddElement<uint64_t>(R1CSResponse::VT_FREE_VARIABLE_ID_AFTER, free_variable_id_after, 0);
   }
   void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info) {
     fbb_.AddOffset(R1CSResponse::VT_INFO, info);
@@ -654,11 +656,11 @@ struct R1CSResponseBuilder {
 
 inline flatbuffers::Offset<R1CSResponse> CreateR1CSResponse(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_after = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0,
     flatbuffers::Offset<flatbuffers::String> error = 0) {
   R1CSResponseBuilder builder_(_fbb);
-  builder_.add_free_variable_id(free_variable_id);
+  builder_.add_free_variable_id_after(free_variable_id_after);
   builder_.add_error(error);
   builder_.add_info(info);
   return builder_.Finish();
@@ -666,14 +668,14 @@ inline flatbuffers::Offset<R1CSResponse> CreateR1CSResponse(
 
 inline flatbuffers::Offset<R1CSResponse> CreateR1CSResponseDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_after = 0,
     const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr,
     const char *error = nullptr) {
   auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<CustomKeyValue>>(*info) : 0;
   auto error__ = error ? _fbb.CreateString(error) : 0;
   return Gadget::CreateR1CSResponse(
       _fbb,
-      free_variable_id,
+      free_variable_id_after,
       info__,
       error__);
 }
@@ -695,11 +697,11 @@ struct AssignmentsRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint8_t> *incoming_elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_INCOMING_ELEMENTS);
   }
-  /// The representation used for the incoming_elements.
+  /// Optional: The representation used for the incoming_elements, if non-default.
   const FieldElementRepresentation *representation() const {
     return GetPointer<const FieldElementRepresentation *>(VT_REPRESENTATION);
   }
-  /// Any info that may be useful to the gadget to compute its assignments.
+  /// Optional: Any info that may be useful to the gadget to compute its assignments.
   const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *witness() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_WITNESS);
   }
@@ -776,8 +778,8 @@ inline flatbuffers::Offset<AssignmentsRequest> CreateAssignmentsRequestDirect(
 }
 
 /// Report local and outgoing assignments computed by the gadget.
-/// There may be one or more chunks.
-struct AssignmentsChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+/// To send to the stream of assigned variables.
+struct AssignedVariables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VARIABLE_IDS = 4,
     VT_ELEMENTS = 6,
@@ -791,7 +793,7 @@ struct AssignmentsChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint8_t> *elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_ELEMENTS);
   }
-  /// The representation used for the elements.
+  /// Optional: The representation used for the elements, if non-default.
   const FieldElementRepresentation *representation() const {
     return GetPointer<const FieldElementRepresentation *>(VT_REPRESENTATION);
   }
@@ -807,90 +809,91 @@ struct AssignmentsChunk FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct AssignmentsChunkBuilder {
+struct AssignedVariablesBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids) {
-    fbb_.AddOffset(AssignmentsChunk::VT_VARIABLE_IDS, variable_ids);
+    fbb_.AddOffset(AssignedVariables::VT_VARIABLE_IDS, variable_ids);
   }
   void add_elements(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> elements) {
-    fbb_.AddOffset(AssignmentsChunk::VT_ELEMENTS, elements);
+    fbb_.AddOffset(AssignedVariables::VT_ELEMENTS, elements);
   }
   void add_representation(flatbuffers::Offset<FieldElementRepresentation> representation) {
-    fbb_.AddOffset(AssignmentsChunk::VT_REPRESENTATION, representation);
+    fbb_.AddOffset(AssignedVariables::VT_REPRESENTATION, representation);
   }
-  explicit AssignmentsChunkBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit AssignedVariablesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  AssignmentsChunkBuilder &operator=(const AssignmentsChunkBuilder &);
-  flatbuffers::Offset<AssignmentsChunk> Finish() {
+  AssignedVariablesBuilder &operator=(const AssignedVariablesBuilder &);
+  flatbuffers::Offset<AssignedVariables> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<AssignmentsChunk>(end);
+    auto o = flatbuffers::Offset<AssignedVariables>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<AssignmentsChunk> CreateAssignmentsChunk(
+inline flatbuffers::Offset<AssignedVariables> CreateAssignedVariables(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> elements = 0,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0) {
-  AssignmentsChunkBuilder builder_(_fbb);
+  AssignedVariablesBuilder builder_(_fbb);
   builder_.add_representation(representation);
   builder_.add_elements(elements);
   builder_.add_variable_ids(variable_ids);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<AssignmentsChunk> CreateAssignmentsChunkDirect(
+inline flatbuffers::Offset<AssignedVariables> CreateAssignedVariablesDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint64_t> *variable_ids = nullptr,
     const std::vector<uint8_t> *elements = nullptr,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0) {
   auto variable_ids__ = variable_ids ? _fbb.CreateVector<uint64_t>(*variable_ids) : 0;
   auto elements__ = elements ? _fbb.CreateVector<uint8_t>(*elements) : 0;
-  return Gadget::CreateAssignmentsChunk(
+  return Gadget::CreateAssignedVariables(
       _fbb,
       variable_ids__,
       elements__,
       representation);
 }
 
-/// Response after all assignments have been reported.
+/// Response after all AssignedVariables have been sent.
 struct AssignmentsResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_FREE_VARIABLE_ID = 4,
+    VT_FREE_VARIABLE_ID_AFTER = 4,
     VT_OUTGOING_ELEMENTS = 6,
     VT_REPRESENTATION = 8,
     VT_INFO = 10,
     VT_ERROR = 12
   };
-  /// A variable ID greater than all IDs allocated by the instance.
-  uint64_t free_variable_id() const {
-    return GetField<uint64_t>(VT_FREE_VARIABLE_ID, 0);
+  /// First variable ID free after the gadget call.
+  /// A variable ID greater than all IDs allocated by the gadget.
+  uint64_t free_variable_id_after() const {
+    return GetField<uint64_t>(VT_FREE_VARIABLE_ID_AFTER, 0);
   }
   /// The values that the gadget assigned to `instance.outgoing_variable_ids`.
-  /// Intentionally redundant with AssignmentsChunk to allow handling
+  /// Intentionally redundant with AssignedVariables to allow handling
   /// the outgoing variables separately from the bulk of local variables assignments.
   const flatbuffers::Vector<uint8_t> *outgoing_elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_OUTGOING_ELEMENTS);
   }
-  /// The representation used for the outgoingAssignments.
+  /// Optional: The representation used for the outgoingAssignments, if non-default.
   const FieldElementRepresentation *representation() const {
     return GetPointer<const FieldElementRepresentation *>(VT_REPRESENTATION);
   }
-  /// Any info that may be useful to the calling parent.
+  /// Optional: Any info that may be useful to the calling parent.
   const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
   }
-  /// An error message. Null if no error.
+  /// Optional: An error message. Null if no error.
   const flatbuffers::String *error() const {
     return GetPointer<const flatbuffers::String *>(VT_ERROR);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID) &&
+           VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID_AFTER) &&
            VerifyOffset(verifier, VT_OUTGOING_ELEMENTS) &&
            verifier.VerifyVector(outgoing_elements()) &&
            VerifyOffset(verifier, VT_REPRESENTATION) &&
@@ -907,8 +910,8 @@ struct AssignmentsResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
 struct AssignmentsResponseBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_free_variable_id(uint64_t free_variable_id) {
-    fbb_.AddElement<uint64_t>(AssignmentsResponse::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+  void add_free_variable_id_after(uint64_t free_variable_id_after) {
+    fbb_.AddElement<uint64_t>(AssignmentsResponse::VT_FREE_VARIABLE_ID_AFTER, free_variable_id_after, 0);
   }
   void add_outgoing_elements(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> outgoing_elements) {
     fbb_.AddOffset(AssignmentsResponse::VT_OUTGOING_ELEMENTS, outgoing_elements);
@@ -936,13 +939,13 @@ struct AssignmentsResponseBuilder {
 
 inline flatbuffers::Offset<AssignmentsResponse> CreateAssignmentsResponse(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_after = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> outgoing_elements = 0,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0,
     flatbuffers::Offset<flatbuffers::String> error = 0) {
   AssignmentsResponseBuilder builder_(_fbb);
-  builder_.add_free_variable_id(free_variable_id);
+  builder_.add_free_variable_id_after(free_variable_id_after);
   builder_.add_error(error);
   builder_.add_info(info);
   builder_.add_representation(representation);
@@ -952,7 +955,7 @@ inline flatbuffers::Offset<AssignmentsResponse> CreateAssignmentsResponse(
 
 inline flatbuffers::Offset<AssignmentsResponse> CreateAssignmentsResponseDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t free_variable_id = 0,
+    uint64_t free_variable_id_after = 0,
     const std::vector<uint8_t> *outgoing_elements = nullptr,
     flatbuffers::Offset<FieldElementRepresentation> representation = 0,
     const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr,
@@ -962,7 +965,7 @@ inline flatbuffers::Offset<AssignmentsResponse> CreateAssignmentsResponseDirect(
   auto error__ = error ? _fbb.CreateString(error) : 0;
   return Gadget::CreateAssignmentsResponse(
       _fbb,
-      free_variable_id,
+      free_variable_id_after,
       outgoing_elements__,
       representation,
       info__,
@@ -1053,7 +1056,7 @@ struct FieldElementRepresentation FLATBUFFERS_FINAL_CLASS : private flatbuffers:
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
-  /// The size of the representation of an element in bytes.
+  /// Optional: The size of the representation of an element in bytes, if fixed-size.
   uint32_t size() const {
     return GetField<uint32_t>(VT_SIZE, 0);
   }
@@ -1120,26 +1123,26 @@ struct StructuredConnection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
     VT_NAME = 8,
     VT_INFO = 10
   };
-  const flatbuffers::Vector<uint64_t> *variable_count() const {
-    return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_VARIABLE_COUNT);
+  /// How many variables make up this connection.
+  uint64_t variable_count() const {
+    return GetField<uint64_t>(VT_VARIABLE_COUNT, 0);
   }
-  /// Optionally recursive type.
-  /// If used, the field `variable_ids` must be null.
+  /// Optional: recursive type.
+  /// The inner structures describe subsequent segments of the variables array.
   const flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>> *structures() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>> *>(VT_STRUCTURES);
   }
-  /// Name of the connection.
+  /// Optional: Name of the connection.
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
-  /// Any custom information.
+  /// Optional: Any custom information.
   const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_VARIABLE_COUNT) &&
-           verifier.VerifyVector(variable_count()) &&
+           VerifyField<uint64_t>(verifier, VT_VARIABLE_COUNT) &&
            VerifyOffset(verifier, VT_STRUCTURES) &&
            verifier.VerifyVector(structures()) &&
            verifier.VerifyVectorOfTables(structures()) &&
@@ -1155,8 +1158,8 @@ struct StructuredConnection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
 struct StructuredConnectionBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_variable_count(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_count) {
-    fbb_.AddOffset(StructuredConnection::VT_VARIABLE_COUNT, variable_count);
+  void add_variable_count(uint64_t variable_count) {
+    fbb_.AddElement<uint64_t>(StructuredConnection::VT_VARIABLE_COUNT, variable_count, 0);
   }
   void add_structures(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>>> structures) {
     fbb_.AddOffset(StructuredConnection::VT_STRUCTURES, structures);
@@ -1181,31 +1184,30 @@ struct StructuredConnectionBuilder {
 
 inline flatbuffers::Offset<StructuredConnection> CreateStructuredConnection(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_count = 0,
+    uint64_t variable_count = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>>> structures = 0,
     flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0) {
   StructuredConnectionBuilder builder_(_fbb);
+  builder_.add_variable_count(variable_count);
   builder_.add_info(info);
   builder_.add_name(name);
   builder_.add_structures(structures);
-  builder_.add_variable_count(variable_count);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<StructuredConnection> CreateStructuredConnectionDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<uint64_t> *variable_count = nullptr,
+    uint64_t variable_count = 0,
     const std::vector<flatbuffers::Offset<StructuredConnection>> *structures = nullptr,
     const char *name = nullptr,
     const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr) {
-  auto variable_count__ = variable_count ? _fbb.CreateVector<uint64_t>(*variable_count) : 0;
   auto structures__ = structures ? _fbb.CreateVector<flatbuffers::Offset<StructuredConnection>>(*structures) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<CustomKeyValue>>(*info) : 0;
   return Gadget::CreateStructuredConnection(
       _fbb,
-      variable_count__,
+      variable_count,
       structures__,
       name__,
       info__);
@@ -1419,8 +1421,8 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       auto ptr = reinterpret_cast<const R1CSRequest *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_R1CSChunk: {
-      auto ptr = reinterpret_cast<const R1CSChunk *>(obj);
+    case Message_R1CSConstraints: {
+      auto ptr = reinterpret_cast<const R1CSConstraints *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_R1CSResponse: {
@@ -1431,8 +1433,8 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       auto ptr = reinterpret_cast<const AssignmentsRequest *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_AssignmentsChunk: {
-      auto ptr = reinterpret_cast<const AssignmentsChunk *>(obj);
+    case Message_AssignedVariables: {
+      auto ptr = reinterpret_cast<const AssignedVariables *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_AssignmentsResponse: {
