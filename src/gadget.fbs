@@ -18,6 +18,8 @@ table Root {
 }
 
 root_type Root;
+file_identifier "zkco";
+file_extension "zkco";
 
 
 // == Types ==
@@ -219,10 +221,10 @@ table GadgetDescription {
     /// Use in other request to select a gadget.
     gadget_name           :string;
 
-    // Describe the structure of the incoming array of variables.
+    /// Describe the structure of the incoming array of variables.
     incoming_connection :StructuredConnection;
 
-    // Describe the structure of the outgoing array of variables.
+    /// Describe the structure of the outgoing array of variables.
     outgoing_connection :StructuredConnection;
 
     /// The representations of field elements supported by this gadget.

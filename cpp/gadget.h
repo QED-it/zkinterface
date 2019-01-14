@@ -8,13 +8,11 @@ extern "C" {
 
 typedef bool (*gadget_callback_t)(
         void *context,
-        char *response,
-        uint64_t response_len
+        char *response
 );
 
 bool gadget_request(
         char *request,
-        uint64_t request_len,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,

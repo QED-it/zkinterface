@@ -51,10 +51,10 @@ bool assignments_request(
                 builder.CreateVector(elements));
 
         auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
-        builder.Finish(root);
+        builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != NULL) {
-            result_stream_callback(result_stream_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+            result_stream_callback(result_stream_context, (char *) builder.GetBufferPointer());
         }
     }
 
@@ -67,10 +67,10 @@ bool assignments_request(
                 free_variable_id_after);
 
         auto root = CreateRoot(builder, Message_AssignmentsResponse, response.Union());
-        builder.Finish(root);
+        builder.FinishSizePrefixed(root);
 
         if (response_callback != NULL) {
-            return response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+            return response_callback(response_context, (char *) builder.GetBufferPointer());
         }
     }
 
@@ -95,10 +95,10 @@ bool descriptions_request(
     );
 
     auto root = CreateRoot(builder, Message_GadgetsDescriptionResponse, response.Union());
-    builder.Finish(root);
+    builder.FinishSizePrefixed(root);
 
     if (response_callback != NULL) {
-        return response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+        return response_callback(response_context, (char *) builder.GetBufferPointer());
     }
 
     return true;
@@ -107,7 +107,6 @@ bool descriptions_request(
 
 bool gadget_request(
         char *request_ptr,
-        uint64_t /*request_len*/,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -115,7 +114,8 @@ bool gadget_request(
         gadget_callback_t response_callback,
         void *response_context
 ) {
-    auto root = GetRoot(request_ptr);
+    auto root = GetSizePrefixedRoot(request_ptr);
+
     switch (root->message_type()) {
 
         case Message_GadgetsDescriptionRequest:

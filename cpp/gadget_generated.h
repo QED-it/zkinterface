@@ -1228,9 +1228,11 @@ struct GadgetDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *gadget_name() const {
     return GetPointer<const flatbuffers::String *>(VT_GADGET_NAME);
   }
+  /// Describe the structure of the incoming array of variables.
   const StructuredConnection *incoming_connection() const {
     return GetPointer<const StructuredConnection *>(VT_INCOMING_CONNECTION);
   }
+  /// Describe the structure of the outgoing array of variables.
   const StructuredConnection *outgoing_connection() const {
     return GetPointer<const StructuredConnection *>(VT_OUTGOING_CONNECTION);
   }
@@ -1465,26 +1467,39 @@ inline const Gadget::Root *GetSizePrefixedRoot(const void *buf) {
   return flatbuffers::GetSizePrefixedRoot<Gadget::Root>(buf);
 }
 
+inline const char *RootIdentifier() {
+  return "zkco";
+}
+
+inline bool RootBufferHasIdentifier(const void *buf) {
+  return flatbuffers::BufferHasIdentifier(
+      buf, RootIdentifier());
+}
+
 inline bool VerifyRootBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<Gadget::Root>(nullptr);
+  return verifier.VerifyBuffer<Gadget::Root>(RootIdentifier());
 }
 
 inline bool VerifySizePrefixedRootBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<Gadget::Root>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<Gadget::Root>(RootIdentifier());
+}
+
+inline const char *RootExtension() {
+  return "zkco";
 }
 
 inline void FinishRootBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<Gadget::Root> root) {
-  fbb.Finish(root);
+  fbb.Finish(root, RootIdentifier());
 }
 
 inline void FinishSizePrefixedRootBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<Gadget::Root> root) {
-  fbb.FinishSizePrefixed(root);
+  fbb.FinishSizePrefixed(root, RootIdentifier());
 }
 
 }  // namespace Gadget

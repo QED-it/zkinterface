@@ -16,23 +16,29 @@ pub mod gadget_generated;
 extern "C" {
     fn gadget_request(
         request: *const u8,
-        request_len: u64,
-        result_stream_callback: extern fn(context_ptr: *mut CallbackContext, result: *const u8, result_len: u64) -> bool,
+        result_stream_callback: extern fn(context_ptr: *mut CallbackContext, result: *const u8) -> bool,
         result_stream_context: *mut CallbackContext,
-        response_callback: extern fn(context_ptr: *mut CallbackContext, response: *const u8, response_len: u64) -> bool,
+        response_callback: extern fn(context_ptr: *mut CallbackContext, response: *const u8) -> bool,
         response_context: *mut CallbackContext,
     ) -> bool;
 }
 
+// Read a size prefix (4 bytes, little-endian).
+fn read_size_prefix(ptr: *const u8) -> u32 {
+    let buf = unsafe { slice::from_raw_parts(ptr, 4) };
+    ((buf[0] as u32) << 0) | ((buf[1] as u32) << 8) | ((buf[2] as u32) << 16) | ((buf[3] as u32) << 24)
+}
 
 // Bring arguments from C calls back into the type system.
 fn from_c<'a, CTX>(
     context_ptr: *mut CTX,
     response: *const u8,
-    response_len: u64,
 ) -> (&'a mut CTX, &'a [u8]) {
     let context = unsafe { &mut *context_ptr };
+
+    let response_len = read_size_prefix(response) + 4;
     let buf = unsafe { slice::from_raw_parts(response, response_len as usize) };
+
     (context, buf)
 }
 
@@ -47,9 +53,9 @@ extern "C"
 fn result_stream_callback_c(
     context_ptr: *mut CallbackContext,
     result_ptr: *const u8,
-    result_len: u64,
 ) -> bool {
-    let (context, buf) = from_c(context_ptr, result_ptr, result_len);
+    let (context, buf) = from_c(context_ptr, result_ptr);
+
     context.result_stream.push(Vec::from(buf));
     true
 }
@@ -59,9 +65,9 @@ extern "C"
 fn response_callback_c(
     context_ptr: *mut CallbackContext,
     response_ptr: *const u8,
-    response_len: u64,
 ) -> bool {
-    let (context, buf) = from_c(context_ptr, response_ptr, response_len);
+    let (context, buf) = from_c(context_ptr, response_ptr);
+
     context.response = Some(Vec::from(buf));
     true
 }
@@ -77,7 +83,6 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
     let ok = unsafe {
         gadget_request(
             message_ptr,
-            message_buf.len() as u64,
             result_stream_callback_c,
             &mut context as *mut _ as *mut CallbackContext,
             response_callback_c,
@@ -96,7 +101,7 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
 fn test_gadget_request() {
     use self::flatbuffers::FlatBufferBuilder;
     use self::gadget_generated::gadget::{
-        get_root_as_root, Root, RootArgs, Message,
+        get_size_prefixed_root_as_root, Root, RootArgs, Message,
         AssignmentsRequest, AssignmentsRequestArgs,
         GadgetInstance, GadgetInstanceArgs,
     };
@@ -132,7 +137,7 @@ fn test_gadget_request() {
             message: Some(request.as_union_value()),
         });
 
-        builder.finish(root, None);
+        builder.finish_size_prefixed(root, None);
         let buf = builder.finished_data();
 
         call_gadget(&buf).unwrap()
@@ -146,7 +151,8 @@ fn test_gadget_request() {
 
     {
         let buf = &assign_ctx.result_stream[0];
-        let root = get_root_as_root(buf);
+
+        let root = get_size_prefixed_root_as_root(buf);
         let assigned_variables = root.message_as_assigned_variables().unwrap();
         let var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
         let elements = assigned_variables.elements().unwrap();
@@ -170,7 +176,7 @@ fn test_gadget_request() {
     }
     {
         let buf = &assign_ctx.response.unwrap();
-        let root = get_root_as_root(buf);
+        let root = get_size_prefixed_root_as_root(buf);
         let response = root.message_as_assignments_response().unwrap();
         println!("Free variable id after the call: {}", response.free_variable_id_after());
         assert!(response.free_variable_id_after() == 103 + 2);

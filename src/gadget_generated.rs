@@ -1583,10 +1583,12 @@ impl<'a> GadgetDescription<'a> {
   pub fn gadget_name(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetDescription::VT_GADGET_NAME, None)
   }
+  /// Describe the structure of the incoming array of variables.
   #[inline]
   pub fn incoming_connection(&self) -> Option<StructuredConnection<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetDescription::VT_INCOMING_CONNECTION, None)
   }
+  /// Describe the structure of the outgoing array of variables.
   #[inline]
   pub fn outgoing_connection(&self) -> Option<StructuredConnection<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetDescription::VT_OUTGOING_CONNECTION, None)
@@ -1811,16 +1813,30 @@ pub fn get_size_prefixed_root_as_root<'a>(buf: &'a [u8]) -> Root<'a> {
   flatbuffers::get_size_prefixed_root::<Root<'a>>(buf)
 }
 
+pub const ROOT_IDENTIFIER: &'static str = "zkco";
+
+#[inline]
+pub fn root_buffer_has_identifier(buf: &[u8]) -> bool {
+  return flatbuffers::buffer_has_identifier(buf, ROOT_IDENTIFIER, false);
+}
+
+#[inline]
+pub fn root_size_prefixed_buffer_has_identifier(buf: &[u8]) -> bool {
+  return flatbuffers::buffer_has_identifier(buf, ROOT_IDENTIFIER, true);
+}
+
+pub const ROOT_EXTENSION: &'static str = "zkco";
+
 #[inline]
 pub fn finish_root_buffer<'a, 'b>(
     fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
     root: flatbuffers::WIPOffset<Root<'a>>) {
-  fbb.finish(root, None);
+  fbb.finish(root, Some(ROOT_IDENTIFIER));
 }
 
 #[inline]
 pub fn finish_size_prefixed_root_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<Root<'a>>) {
-  fbb.finish_size_prefixed(root, None);
+  fbb.finish_size_prefixed(root, Some(ROOT_IDENTIFIER));
 }
 }  // pub mod Gadget
 
