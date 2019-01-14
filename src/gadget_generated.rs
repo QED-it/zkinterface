@@ -16,17 +16,19 @@ pub mod gadget {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Message {
   NONE = 0,
-  R1CSRequest = 1,
-  R1CSChunk = 2,
-  R1CSResponse = 3,
-  AssignmentsRequest = 4,
-  AssignmentsChunk = 5,
-  AssignmentsResponse = 6,
+  GadgetsDescriptionRequest = 1,
+  GadgetsDescriptionResponse = 2,
+  R1CSRequest = 3,
+  R1CSChunk = 4,
+  R1CSResponse = 5,
+  AssignmentsRequest = 6,
+  AssignmentsChunk = 7,
+  AssignmentsResponse = 8,
 
 }
 
 const ENUM_MIN_MESSAGE: u8 = 0;
-const ENUM_MAX_MESSAGE: u8 = 6;
+const ENUM_MAX_MESSAGE: u8 = 8;
 
 impl<'a> flatbuffers::Follow<'a> for Message {
   type Inner = Self;
@@ -60,8 +62,10 @@ impl flatbuffers::Push for Message {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE:[Message; 7] = [
+const ENUM_VALUES_MESSAGE:[Message; 9] = [
   Message::NONE,
+  Message::GadgetsDescriptionRequest,
+  Message::GadgetsDescriptionResponse,
   Message::R1CSRequest,
   Message::R1CSChunk,
   Message::R1CSResponse,
@@ -71,8 +75,10 @@ const ENUM_VALUES_MESSAGE:[Message; 7] = [
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE:[&'static str; 7] = [
+const ENUM_NAMES_MESSAGE:[&'static str; 9] = [
     "NONE",
+    "GadgetsDescriptionRequest",
+    "GadgetsDescriptionResponse",
     "R1CSRequest",
     "R1CSChunk",
     "R1CSResponse",
@@ -132,6 +138,26 @@ impl<'a> Root<'a> {
   pub fn message(&self) -> Option<flatbuffers::Table<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Table<'a>>>(Root::VT_MESSAGE, None)
   }
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_gadgets_description_request(&'a self) -> Option<GadgetsDescriptionRequest> {
+    if self.message_type() == Message::GadgetsDescriptionRequest {
+      self.message().map(|u| GadgetsDescriptionRequest::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_gadgets_description_response(&'a self) -> Option<GadgetsDescriptionResponse> {
+    if self.message_type() == Message::GadgetsDescriptionResponse {
+      self.message().map(|u| GadgetsDescriptionResponse::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
   #[inline]
   #[allow(non_snake_case)]
   pub fn message_as_r1csrequest(&'a self) -> Option<R1CSRequest> {
@@ -1504,15 +1530,15 @@ impl<'a: 'b, 'b> StructuredConnectionBuilder<'a, 'b> {
 
 /// A description of the types that a gadget expects.
 /// Used to provide type safety.
-pub enum TypeDescriptionOffset {}
+pub enum GadgetDescriptionOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct TypeDescription<'a> {
+pub struct GadgetDescription<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for TypeDescription<'a> {
-    type Inner = TypeDescription<'a>;
+impl<'a> flatbuffers::Follow<'a> for GadgetDescription<'a> {
+    type Inner = GadgetDescription<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1521,85 +1547,251 @@ impl<'a> flatbuffers::Follow<'a> for TypeDescription<'a> {
     }
 }
 
-impl<'a> TypeDescription<'a> {
+impl<'a> GadgetDescription<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        TypeDescription {
+        GadgetDescription {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args TypeDescriptionArgs<'args>) -> flatbuffers::WIPOffset<TypeDescription<'bldr>> {
-      let mut builder = TypeDescriptionBuilder::new(_fbb);
-      if let Some(x) = args.representation { builder.add_representation(x); }
+        args: &'args GadgetDescriptionArgs<'args>) -> flatbuffers::WIPOffset<GadgetDescription<'bldr>> {
+      let mut builder = GadgetDescriptionBuilder::new(_fbb);
+      if let Some(x) = args.info { builder.add_info(x); }
+      if let Some(x) = args.supported_representations { builder.add_supported_representations(x); }
       if let Some(x) = args.outgoing_connection { builder.add_outgoing_connection(x); }
       if let Some(x) = args.incoming_connection { builder.add_incoming_connection(x); }
+      if let Some(x) = args.gadget_name { builder.add_gadget_name(x); }
       builder.finish()
     }
 
-    pub const VT_INCOMING_CONNECTION: flatbuffers::VOffsetT = 4;
-    pub const VT_OUTGOING_CONNECTION: flatbuffers::VOffsetT = 6;
-    pub const VT_REPRESENTATION: flatbuffers::VOffsetT = 8;
+    pub const VT_GADGET_NAME: flatbuffers::VOffsetT = 4;
+    pub const VT_INCOMING_CONNECTION: flatbuffers::VOffsetT = 6;
+    pub const VT_OUTGOING_CONNECTION: flatbuffers::VOffsetT = 8;
+    pub const VT_SUPPORTED_REPRESENTATIONS: flatbuffers::VOffsetT = 10;
+    pub const VT_INFO: flatbuffers::VOffsetT = 12;
 
+  /// Name of the gadget.
+  /// Use in other request to select a gadget.
+  #[inline]
+  pub fn gadget_name(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetDescription::VT_GADGET_NAME, None)
+  }
   #[inline]
   pub fn incoming_connection(&self) -> Option<StructuredConnection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(TypeDescription::VT_INCOMING_CONNECTION, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetDescription::VT_INCOMING_CONNECTION, None)
   }
   #[inline]
   pub fn outgoing_connection(&self) -> Option<StructuredConnection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(TypeDescription::VT_OUTGOING_CONNECTION, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>(GadgetDescription::VT_OUTGOING_CONNECTION, None)
   }
-  /// The representation used for the incoming_elements.
+  /// The representations of field elements supported by this gadget.
   #[inline]
-  pub fn representation(&self) -> Option<FieldElementRepresentation<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>(TypeDescription::VT_REPRESENTATION, None)
+  pub fn supported_representations(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a>>>>>(GadgetDescription::VT_SUPPORTED_REPRESENTATIONS, None)
+  }
+  /// Any custom information.
+  #[inline]
+  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetDescription::VT_INFO, None)
   }
 }
 
-pub struct TypeDescriptionArgs<'a> {
+pub struct GadgetDescriptionArgs<'a> {
+    pub gadget_name: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub incoming_connection: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
     pub outgoing_connection: Option<flatbuffers::WIPOffset<StructuredConnection<'a >>>,
-    pub representation: Option<flatbuffers::WIPOffset<FieldElementRepresentation<'a >>>,
+    pub supported_representations: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<FieldElementRepresentation<'a >>>>>,
+    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
 }
-impl<'a> Default for TypeDescriptionArgs<'a> {
+impl<'a> Default for GadgetDescriptionArgs<'a> {
     #[inline]
     fn default() -> Self {
-        TypeDescriptionArgs {
+        GadgetDescriptionArgs {
+            gadget_name: None,
             incoming_connection: None,
             outgoing_connection: None,
-            representation: None,
+            supported_representations: None,
+            info: None,
         }
     }
 }
-pub struct TypeDescriptionBuilder<'a: 'b, 'b> {
+pub struct GadgetDescriptionBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> TypeDescriptionBuilder<'a, 'b> {
+impl<'a: 'b, 'b> GadgetDescriptionBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_gadget_name(&mut self, gadget_name: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetDescription::VT_GADGET_NAME, gadget_name);
+  }
   #[inline]
   pub fn add_incoming_connection(&mut self, incoming_connection: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(TypeDescription::VT_INCOMING_CONNECTION, incoming_connection);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(GadgetDescription::VT_INCOMING_CONNECTION, incoming_connection);
   }
   #[inline]
   pub fn add_outgoing_connection(&mut self, outgoing_connection: flatbuffers::WIPOffset<StructuredConnection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(TypeDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StructuredConnection>>(GadgetDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
   }
   #[inline]
-  pub fn add_representation(&mut self, representation: flatbuffers::WIPOffset<FieldElementRepresentation<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<FieldElementRepresentation>>(TypeDescription::VT_REPRESENTATION, representation);
+  pub fn add_supported_representations(&mut self, supported_representations: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<FieldElementRepresentation<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetDescription::VT_SUPPORTED_REPRESENTATIONS, supported_representations);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> TypeDescriptionBuilder<'a, 'b> {
+  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<CustomKeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetDescription::VT_INFO, info);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetDescriptionBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    TypeDescriptionBuilder {
+    GadgetDescriptionBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<TypeDescription<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GadgetDescription<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum GadgetsDescriptionRequestOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct GadgetsDescriptionRequest<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GadgetsDescriptionRequest<'a> {
+    type Inner = GadgetsDescriptionRequest<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> GadgetsDescriptionRequest<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        GadgetsDescriptionRequest {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        _args: &'args GadgetsDescriptionRequestArgs) -> flatbuffers::WIPOffset<GadgetsDescriptionRequest<'bldr>> {
+      let mut builder = GadgetsDescriptionRequestBuilder::new(_fbb);
+      builder.finish()
+    }
+
+}
+
+pub struct GadgetsDescriptionRequestArgs {
+}
+impl<'a> Default for GadgetsDescriptionRequestArgs {
+    #[inline]
+    fn default() -> Self {
+        GadgetsDescriptionRequestArgs {
+        }
+    }
+}
+pub struct GadgetsDescriptionRequestBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> GadgetsDescriptionRequestBuilder<'a, 'b> {
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetsDescriptionRequestBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    GadgetsDescriptionRequestBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GadgetsDescriptionRequest<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum GadgetsDescriptionResponseOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct GadgetsDescriptionResponse<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for GadgetsDescriptionResponse<'a> {
+    type Inner = GadgetsDescriptionResponse<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> GadgetsDescriptionResponse<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        GadgetsDescriptionResponse {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args GadgetsDescriptionResponseArgs<'args>) -> flatbuffers::WIPOffset<GadgetsDescriptionResponse<'bldr>> {
+      let mut builder = GadgetsDescriptionResponseBuilder::new(_fbb);
+      if let Some(x) = args.gadgets { builder.add_gadgets(x); }
+      builder.finish()
+    }
+
+    pub const VT_GADGETS: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn gadgets(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>>>(GadgetsDescriptionResponse::VT_GADGETS, None)
+  }
+}
+
+pub struct GadgetsDescriptionResponseArgs<'a> {
+    pub gadgets: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<GadgetDescription<'a >>>>>,
+}
+impl<'a> Default for GadgetsDescriptionResponseArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        GadgetsDescriptionResponseArgs {
+            gadgets: None,
+        }
+    }
+}
+pub struct GadgetsDescriptionResponseBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> GadgetsDescriptionResponseBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_gadgets(&mut self, gadgets: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<GadgetDescription<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetsDescriptionResponse::VT_GADGETS, gadgets);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetsDescriptionResponseBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    GadgetsDescriptionResponseBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<GadgetsDescriptionResponse<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }

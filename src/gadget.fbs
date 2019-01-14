@@ -1,6 +1,9 @@
 namespace Gadget;
 
 union Message {
+    GadgetsDescriptionRequest,
+    GadgetsDescriptionResponse,
+
     R1CSRequest,
     R1CSChunk,
     R1CSResponse,
@@ -179,7 +182,7 @@ table FieldElementRepresentation {
 // == Type Safety Concept ==
 //
 // The interface uses flat array of variables,
-// because it is the lowest common denomitor and
+// because it is the lowest common denominator and
 // is simple to implement in all situations.
 //
 // Typing information is provided as an overlay that describes the variables.
@@ -207,13 +210,30 @@ table StructuredConnection {
 
 /// A description of the types that a gadget expects.
 /// Used to provide type safety.
-table TypeDescription {
+table GadgetDescription {
+    /// Name of the gadget.
+    /// Use in other request to select a gadget.
+    gadget_name           :string;
+
     // Describe the structure of the incoming array of variables.
     incoming_connection :StructuredConnection;
 
     // Describe the structure of the outgoing array of variables.
     outgoing_connection :StructuredConnection;
 
-    /// The representation used for the incoming_elements.
-    representation      :FieldElementRepresentation;
+    /// The representations of field elements supported by this gadget.
+    supported_representations      :[FieldElementRepresentation];
+
+    /// Any custom information.
+    info           :[CustomKeyValue];
+}
+
+// == Messages for type safety ==
+
+table GadgetsDescriptionRequest {
+
+}
+
+table GadgetsDescriptionResponse {
+    gadgets :[GadgetDescription];
 }

@@ -34,23 +34,31 @@ struct FieldElementRepresentation;
 
 struct StructuredConnection;
 
-struct TypeDescription;
+struct GadgetDescription;
+
+struct GadgetsDescriptionRequest;
+
+struct GadgetsDescriptionResponse;
 
 enum Message {
   Message_NONE = 0,
-  Message_R1CSRequest = 1,
-  Message_R1CSChunk = 2,
-  Message_R1CSResponse = 3,
-  Message_AssignmentsRequest = 4,
-  Message_AssignmentsChunk = 5,
-  Message_AssignmentsResponse = 6,
+  Message_GadgetsDescriptionRequest = 1,
+  Message_GadgetsDescriptionResponse = 2,
+  Message_R1CSRequest = 3,
+  Message_R1CSChunk = 4,
+  Message_R1CSResponse = 5,
+  Message_AssignmentsRequest = 6,
+  Message_AssignmentsChunk = 7,
+  Message_AssignmentsResponse = 8,
   Message_MIN = Message_NONE,
   Message_MAX = Message_AssignmentsResponse
 };
 
-inline const Message (&EnumValuesMessage())[7] {
+inline const Message (&EnumValuesMessage())[9] {
   static const Message values[] = {
     Message_NONE,
+    Message_GadgetsDescriptionRequest,
+    Message_GadgetsDescriptionResponse,
     Message_R1CSRequest,
     Message_R1CSChunk,
     Message_R1CSResponse,
@@ -64,6 +72,8 @@ inline const Message (&EnumValuesMessage())[7] {
 inline const char * const *EnumNamesMessage() {
   static const char * const names[] = {
     "NONE",
+    "GadgetsDescriptionRequest",
+    "GadgetsDescriptionResponse",
     "R1CSRequest",
     "R1CSChunk",
     "R1CSResponse",
@@ -83,6 +93,14 @@ inline const char *EnumNameMessage(Message e) {
 
 template<typename T> struct MessageTraits {
   static const Message enum_value = Message_NONE;
+};
+
+template<> struct MessageTraits<GadgetsDescriptionRequest> {
+  static const Message enum_value = Message_GadgetsDescriptionRequest;
+};
+
+template<> struct MessageTraits<GadgetsDescriptionResponse> {
+  static const Message enum_value = Message_GadgetsDescriptionResponse;
 };
 
 template<> struct MessageTraits<R1CSRequest> {
@@ -124,6 +142,12 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetPointer<const void *>(VT_MESSAGE);
   }
   template<typename T> const T *message_as() const;
+  const GadgetsDescriptionRequest *message_as_GadgetsDescriptionRequest() const {
+    return message_type() == Message_GadgetsDescriptionRequest ? static_cast<const GadgetsDescriptionRequest *>(message()) : nullptr;
+  }
+  const GadgetsDescriptionResponse *message_as_GadgetsDescriptionResponse() const {
+    return message_type() == Message_GadgetsDescriptionResponse ? static_cast<const GadgetsDescriptionResponse *>(message()) : nullptr;
+  }
   const R1CSRequest *message_as_R1CSRequest() const {
     return message_type() == Message_R1CSRequest ? static_cast<const R1CSRequest *>(message()) : nullptr;
   }
@@ -150,6 +174,14 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.EndTable();
   }
 };
+
+template<> inline const GadgetsDescriptionRequest *Root::message_as<GadgetsDescriptionRequest>() const {
+  return message_as_GadgetsDescriptionRequest();
+}
+
+template<> inline const GadgetsDescriptionResponse *Root::message_as<GadgetsDescriptionResponse>() const {
+  return message_as_GadgetsDescriptionResponse();
+}
 
 template<> inline const R1CSRequest *Root::message_as<R1CSRequest>() const {
   return message_as_R1CSRequest();
@@ -1181,74 +1213,207 @@ inline flatbuffers::Offset<StructuredConnection> CreateStructuredConnectionDirec
 
 /// A description of the types that a gadget expects.
 /// Used to provide type safety.
-struct TypeDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct GadgetDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_INCOMING_CONNECTION = 4,
-    VT_OUTGOING_CONNECTION = 6,
-    VT_REPRESENTATION = 8
+    VT_GADGET_NAME = 4,
+    VT_INCOMING_CONNECTION = 6,
+    VT_OUTGOING_CONNECTION = 8,
+    VT_SUPPORTED_REPRESENTATIONS = 10,
+    VT_INFO = 12
   };
+  /// Name of the gadget.
+  /// Use in other request to select a gadget.
+  const flatbuffers::String *gadget_name() const {
+    return GetPointer<const flatbuffers::String *>(VT_GADGET_NAME);
+  }
   const StructuredConnection *incoming_connection() const {
     return GetPointer<const StructuredConnection *>(VT_INCOMING_CONNECTION);
   }
   const StructuredConnection *outgoing_connection() const {
     return GetPointer<const StructuredConnection *>(VT_OUTGOING_CONNECTION);
   }
-  /// The representation used for the incoming_elements.
-  const FieldElementRepresentation *representation() const {
-    return GetPointer<const FieldElementRepresentation *>(VT_REPRESENTATION);
+  /// The representations of field elements supported by this gadget.
+  const flatbuffers::Vector<flatbuffers::Offset<FieldElementRepresentation>> *supported_representations() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<FieldElementRepresentation>> *>(VT_SUPPORTED_REPRESENTATIONS);
+  }
+  /// Any custom information.
+  const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_GADGET_NAME) &&
+           verifier.VerifyString(gadget_name()) &&
            VerifyOffset(verifier, VT_INCOMING_CONNECTION) &&
            verifier.VerifyTable(incoming_connection()) &&
            VerifyOffset(verifier, VT_OUTGOING_CONNECTION) &&
            verifier.VerifyTable(outgoing_connection()) &&
-           VerifyOffset(verifier, VT_REPRESENTATION) &&
-           verifier.VerifyTable(representation()) &&
+           VerifyOffset(verifier, VT_SUPPORTED_REPRESENTATIONS) &&
+           verifier.VerifyVector(supported_representations()) &&
+           verifier.VerifyVectorOfTables(supported_representations()) &&
+           VerifyOffset(verifier, VT_INFO) &&
+           verifier.VerifyVector(info()) &&
+           verifier.VerifyVectorOfTables(info()) &&
            verifier.EndTable();
   }
 };
 
-struct TypeDescriptionBuilder {
+struct GadgetDescriptionBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_gadget_name(flatbuffers::Offset<flatbuffers::String> gadget_name) {
+    fbb_.AddOffset(GadgetDescription::VT_GADGET_NAME, gadget_name);
+  }
   void add_incoming_connection(flatbuffers::Offset<StructuredConnection> incoming_connection) {
-    fbb_.AddOffset(TypeDescription::VT_INCOMING_CONNECTION, incoming_connection);
+    fbb_.AddOffset(GadgetDescription::VT_INCOMING_CONNECTION, incoming_connection);
   }
   void add_outgoing_connection(flatbuffers::Offset<StructuredConnection> outgoing_connection) {
-    fbb_.AddOffset(TypeDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
+    fbb_.AddOffset(GadgetDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
   }
-  void add_representation(flatbuffers::Offset<FieldElementRepresentation> representation) {
-    fbb_.AddOffset(TypeDescription::VT_REPRESENTATION, representation);
+  void add_supported_representations(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FieldElementRepresentation>>> supported_representations) {
+    fbb_.AddOffset(GadgetDescription::VT_SUPPORTED_REPRESENTATIONS, supported_representations);
   }
-  explicit TypeDescriptionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info) {
+    fbb_.AddOffset(GadgetDescription::VT_INFO, info);
+  }
+  explicit GadgetDescriptionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  TypeDescriptionBuilder &operator=(const TypeDescriptionBuilder &);
-  flatbuffers::Offset<TypeDescription> Finish() {
+  GadgetDescriptionBuilder &operator=(const GadgetDescriptionBuilder &);
+  flatbuffers::Offset<GadgetDescription> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<TypeDescription>(end);
+    auto o = flatbuffers::Offset<GadgetDescription>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<TypeDescription> CreateTypeDescription(
+inline flatbuffers::Offset<GadgetDescription> CreateGadgetDescription(
     flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> gadget_name = 0,
     flatbuffers::Offset<StructuredConnection> incoming_connection = 0,
     flatbuffers::Offset<StructuredConnection> outgoing_connection = 0,
-    flatbuffers::Offset<FieldElementRepresentation> representation = 0) {
-  TypeDescriptionBuilder builder_(_fbb);
-  builder_.add_representation(representation);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<FieldElementRepresentation>>> supported_representations = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0) {
+  GadgetDescriptionBuilder builder_(_fbb);
+  builder_.add_info(info);
+  builder_.add_supported_representations(supported_representations);
   builder_.add_outgoing_connection(outgoing_connection);
   builder_.add_incoming_connection(incoming_connection);
+  builder_.add_gadget_name(gadget_name);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<GadgetDescription> CreateGadgetDescriptionDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *gadget_name = nullptr,
+    flatbuffers::Offset<StructuredConnection> incoming_connection = 0,
+    flatbuffers::Offset<StructuredConnection> outgoing_connection = 0,
+    const std::vector<flatbuffers::Offset<FieldElementRepresentation>> *supported_representations = nullptr,
+    const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr) {
+  auto gadget_name__ = gadget_name ? _fbb.CreateString(gadget_name) : 0;
+  auto supported_representations__ = supported_representations ? _fbb.CreateVector<flatbuffers::Offset<FieldElementRepresentation>>(*supported_representations) : 0;
+  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<CustomKeyValue>>(*info) : 0;
+  return Gadget::CreateGadgetDescription(
+      _fbb,
+      gadget_name__,
+      incoming_connection,
+      outgoing_connection,
+      supported_representations__,
+      info__);
+}
+
+struct GadgetsDescriptionRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct GadgetsDescriptionRequestBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit GadgetsDescriptionRequestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  GadgetsDescriptionRequestBuilder &operator=(const GadgetsDescriptionRequestBuilder &);
+  flatbuffers::Offset<GadgetsDescriptionRequest> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<GadgetsDescriptionRequest>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<GadgetsDescriptionRequest> CreateGadgetsDescriptionRequest(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  GadgetsDescriptionRequestBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct GadgetsDescriptionResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_GADGETS = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>> *gadgets() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>> *>(VT_GADGETS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_GADGETS) &&
+           verifier.VerifyVector(gadgets()) &&
+           verifier.VerifyVectorOfTables(gadgets()) &&
+           verifier.EndTable();
+  }
+};
+
+struct GadgetsDescriptionResponseBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_gadgets(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>>> gadgets) {
+    fbb_.AddOffset(GadgetsDescriptionResponse::VT_GADGETS, gadgets);
+  }
+  explicit GadgetsDescriptionResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  GadgetsDescriptionResponseBuilder &operator=(const GadgetsDescriptionResponseBuilder &);
+  flatbuffers::Offset<GadgetsDescriptionResponse> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<GadgetsDescriptionResponse>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<GadgetsDescriptionResponse> CreateGadgetsDescriptionResponse(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>>> gadgets = 0) {
+  GadgetsDescriptionResponseBuilder builder_(_fbb);
+  builder_.add_gadgets(gadgets);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<GadgetsDescriptionResponse> CreateGadgetsDescriptionResponseDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<GadgetDescription>> *gadgets = nullptr) {
+  auto gadgets__ = gadgets ? _fbb.CreateVector<flatbuffers::Offset<GadgetDescription>>(*gadgets) : 0;
+  return Gadget::CreateGadgetsDescriptionResponse(
+      _fbb,
+      gadgets__);
 }
 
 inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type) {
   switch (type) {
     case Message_NONE: {
       return true;
+    }
+    case Message_GadgetsDescriptionRequest: {
+      auto ptr = reinterpret_cast<const GadgetsDescriptionRequest *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Message_GadgetsDescriptionResponse: {
+      auto ptr = reinterpret_cast<const GadgetsDescriptionResponse *>(obj);
+      return verifier.VerifyTable(ptr);
     }
     case Message_R1CSRequest: {
       auto ptr = reinterpret_cast<const R1CSRequest *>(obj);

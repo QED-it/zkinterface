@@ -10,9 +10,8 @@ using namespace Gadget;
 typedef uint64_t VariableId;
 
 
-bool gadget_request(
-        char *request_ptr,
-        uint64_t request_len,
+bool assignments_request(
+        const AssignmentsRequest *request,
         gadget_handle_response_t chunk_callback,
         void *chunk_context,
         gadget_handle_response_t response_callback,
@@ -21,12 +20,9 @@ bool gadget_request(
     // Read the request.
     uint64_t free_variable_id;
     {
-        auto root = GetRoot(request_ptr);
-        assert(root->message_type() == Message_AssignmentsRequest);
-        auto request = root->message_as_AssignmentsRequest();
         auto instance = request->instance();
         free_variable_id = instance->free_variable_id();
-        cout << "C++ got request: len=" << request_len << " bytes"
+        cout << "C++ got request"
              << ", name=" << instance->gadget_name()->str()
              << ", free_variable_id="
              << free_variable_id << endl;
@@ -70,9 +66,63 @@ bool gadget_request(
         builder.Finish(root);
 
         if (response_callback != NULL) {
-            response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+            return response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
         }
     }
 
     return true;
+}
+
+
+bool descriptions_request(
+        gadget_handle_response_t response_callback,
+        void *response_context
+) {
+    flatbuffers::FlatBufferBuilder builder;
+
+    auto description = CreateGadgetDescription(
+            builder,
+            builder.CreateString("test")
+    );
+
+    auto response = CreateGadgetsDescriptionResponse(
+            builder,
+            builder.CreateVector(&description, 1)
+    );
+
+    auto root = CreateRoot(builder, Message_GadgetsDescriptionResponse, response.Union());
+    builder.Finish(root);
+
+    if (response_callback != NULL) {
+        return response_callback(response_context, (char *) builder.GetBufferPointer(), builder.GetSize());
+    }
+
+    return true;
+}
+
+
+bool gadget_request(
+        char *request_ptr,
+        uint64_t request_len,
+        gadget_handle_response_t chunk_callback,
+        void *chunk_context,
+        gadget_handle_response_t response_callback,
+        void *response_context
+) {
+    auto root = GetRoot(request_ptr);
+    switch (root->message_type()) {
+
+        case Message_GadgetsDescriptionRequest:
+            return descriptions_request(response_callback, response_context);
+
+        case Message_AssignmentsRequest:
+            return assignments_request(
+                    root->message_as_AssignmentsRequest(),
+                    chunk_callback, chunk_context,
+                    response_callback, response_context
+            );
+
+        default:
+            return false; // Error, unknown request.
+    }
 }
