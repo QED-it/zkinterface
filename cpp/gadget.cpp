@@ -11,7 +11,7 @@ typedef uint64_t VariableId;
 
 
 bool assignments_request(
-        const AssignmentsRequest *request,
+        const AssignmentRequest *request,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -45,10 +45,12 @@ bool assignments_request(
                 8, 7, 6, // Second element.
         };
 
-        auto assigned_variables = CreateAssignedVariables(
+        auto values = CreateVariableValues(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
+
+        auto assigned_variables = CreateAssignedVariables(builder, values);
 
         auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
         builder.FinishSizePrefixed(root);
@@ -62,11 +64,11 @@ bool assignments_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateAssignmentsResponse(
+        auto response = CreateAssignmentResponse(
                 builder,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_AssignmentsResponse, response.Union());
+        auto root = CreateRoot(builder, Message_AssignmentResponse, response.Union());
         builder.FinishSizePrefixed(root);
 
         if (response_callback != NULL) {
@@ -121,9 +123,9 @@ bool gadget_request(
         case Message_GadgetsDescriptionRequest:
             return descriptions_request(response_callback, response_context);
 
-        case Message_AssignmentsRequest:
+        case Message_AssignmentRequest:
             return assignments_request(
-                    root->message_as_AssignmentsRequest(),
+                    root->message_as_AssignmentRequest(),
                     result_stream_callback, result_stream_context,
                     response_callback, response_context
             );

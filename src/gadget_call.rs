@@ -102,7 +102,7 @@ fn test_gadget_request() {
     use self::flatbuffers::FlatBufferBuilder;
     use self::gadget_generated::gadget::{
         get_size_prefixed_root_as_root, Root, RootArgs, Message,
-        AssignmentsRequest, AssignmentsRequestArgs,
+        AssignmentRequest, AssignmentRequestArgs,
         GadgetInstance, GadgetInstanceArgs,
     };
 
@@ -122,18 +122,18 @@ fn test_gadget_request() {
             incoming_variable_ids: Some(in_ids),
             outgoing_variable_ids: Some(out_ids),
             free_variable_id_before: 103,
-            parameters: None,
+            field_order: None,
+            configuration: None,
         });
 
-        let request = AssignmentsRequest::create(builder, &AssignmentsRequestArgs {
+        let request = AssignmentRequest::create(builder, &AssignmentRequestArgs {
             instance: Some(instance),
             incoming_elements: None,
-            representation: None,
             witness: None,
         });
 
         let root = Root::create(builder, &RootArgs {
-            message_type: Message::AssignmentsRequest,
+            message_type: Message::AssignmentRequest,
             message: Some(request.as_union_value()),
         });
 
@@ -154,8 +154,9 @@ fn test_gadget_request() {
 
         let root = get_size_prefixed_root_as_root(buf);
         let assigned_variables = root.message_as_assigned_variables().unwrap();
-        let var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
-        let elements = assigned_variables.elements().unwrap();
+        let values = assigned_variables.values().unwrap();
+        let var_ids = values.variable_ids().unwrap().safe_slice();
+        let elements = values.elements().unwrap();
 
         let element_count = var_ids.len() as usize;
         let element_size = 3 as usize;
@@ -177,7 +178,7 @@ fn test_gadget_request() {
     {
         let buf = &assign_ctx.response.unwrap();
         let root = get_size_prefixed_root_as_root(buf);
-        let response = root.message_as_assignments_response().unwrap();
+        let response = root.message_as_assignment_response().unwrap();
         println!("Free variable id after the call: {}", response.free_variable_id_after());
         assert!(response.free_variable_id_after() == 103 + 2);
     }

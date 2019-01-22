@@ -8,9 +8,9 @@ union Message {
     R1CSConstraints,
     R1CSResponse,
 
-    AssignmentsRequest,
+    AssignmentRequest,
     AssignedVariables,
-    AssignmentsResponse,
+    AssignmentResponse,
 }
 
 table Root {
@@ -23,52 +23,83 @@ file_extension "zkco";
 
 
 // == Types ==
-
-// Variable ID = uint64
+//
+// === Variable ID = uint64
+//
 // Unique within a constraint system.
 // Zero is a reserved special value.
+//
+// === BigInt = [ubyte]
+//
+// Big integers are represented as canonical little-endian byte arrays.
+// Multiple big integers can be concatenated in a single array.
+//
+// Evolution plan:
+// If a different representation of elements is to be supported in the future,
+// it should use new fields, and omit the current canonical fields.
+// This will allow past implementations to detect whether they are compatible.
+//
 
-/// The terms in a R1CS linear combination.
-table LinearCombination {
-    // The IDs of the variables to constrain.
-    variable_ids :[uint64];
+/// Concrete variable values.
+/// Used for linear combinations and assignments.
+table VariableValues {
+    /// The IDs of the variables being assigned to.
+    variable_ids   :[uint64];
 
-    /// Contiguous constant coefficient representations in the same order as variable_ids.
-    coefficients :[ubyte];
+    /// Field Elements assigned to variables.
+    /// Contiguous BigInts in the same order as variable_ids.
+    ///
+    /// An element representation should be the same size as `instance.field_order`.
+    /// A smaller size may be used as an optimization. Truncated bytes are zeros.
+    ///
+    /// element size = elements.length / variable_ids.length
+    elements       :[ubyte];
 }
 
-/// A low-level R1CS constraint between variables.
-/// Targets the generic mechanisms that build circuits.
-/// Intended to be sent in sequences.
+/// An R1CS constraint between variables.
 table Constraint {
     // (A) * (B) = (C)
-    a :LinearCombination;
-    b :LinearCombination;
-    c :LinearCombination;
+    linear_combination_a :VariableValues;
+    linear_combination_b :VariableValues;
+    linear_combination_c :VariableValues;
 }
 
-/// An instance of a gadget as part of a circuit.
+/// Description of a particular instance of a gadget.
 table GadgetInstance {
     /// Which gadget to instantiate.
     /// Allows a library to provide multiple gadgets.
     gadget_name             :string;
 
-    /// Variables allocated by the caller to use as connections to the gadget.
-    /// Incoming variables are assigned by the calling parent.
+    /// Incoming Variables to use as connections to the gadget.
+    /// Allocated by the caller.
+    /// Assigned by the caller in `AssignmentRequest.incoming_elements`.
     incoming_variable_ids   :[uint64];
 
-    /// Variables allocated by the caller to use as connections to the gadget.
-    /// Outgoing variables are assigned by the called gadget.
-    /// There may be no outgoing variables if the gadget represents a pure assertion.
+    /// Outgoing Variables to use as connections to the gadget.
+    /// There may be no Outgoing Variables if the gadget is a pure assertion.
+    /// Allocated by the caller.
+    /// Assigned by the called gadget in `AssignmentResponse.outgoing_elements`.
     outgoing_variable_ids   :[uint64];
 
-    /// First free variable ID before the call.
-    /// The gadget can allocate IDs greater or equal.
+    /// First free Variable ID before the call.
+    /// The gadget can allocate new Variable IDs starting with this one.
     free_variable_id_before :uint64;
 
-    /// Optional: Any parameter that may influence the instance behavior.
+    /// The order of the field used by the current system.
+    /// A BigInt.
+    field_order             :[ubyte];
+
+    /// Optional: Any static parameter that may influence the instance construction.
     /// Parameters can be standard, conventional, or specific to a gadget.
-    parameters              :[CustomKeyValue];
+    /// Example: the depth of a Merkle tree.
+    /// Counter-example: the Merkle authentication path is not configuration (rather witness).
+    configuration           :[CustomKeyValue];
+}
+
+/// Generic key-value for custom attributes.
+table CustomKeyValue {
+    key   :string;
+    value :[ubyte];
 }
 
 
@@ -77,7 +108,7 @@ table GadgetInstance {
 /// Request to build an instance.
 table R1CSRequest {
     /// All details necessary to construct the instance.
-    /// The same instance parameter must be provided in the corresponding AssignmentsRequest.
+    /// The same instance parameter must be provided in the corresponding AssignmentRequest.
     instance :GadgetInstance;
 }
 
@@ -85,9 +116,6 @@ table R1CSRequest {
 /// To send to the stream of constraints.
 table R1CSConstraints {
     constraints    :[Constraint];
-
-    /// Optional: The representation used for the constraint coefficients, if non-default.
-    representation :FieldElementRepresentation;
 }
 
 /// Response after all R1CSConstraints have been sent.
@@ -96,10 +124,10 @@ table R1CSResponse {
     /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id_after :uint64;
 
-    /// Optional: Any info that may be useful to the calling parent.
+    /// Optional: Any info that may be useful to the caller.
     info                   :[CustomKeyValue];
 
-    /// Optional: An error message. Null if no error.
+    /// Optional: An error message. Omitted if no errors.
     error                  :string;
 }
 
@@ -107,80 +135,44 @@ table R1CSResponse {
 // == Messages for Proving ==
 
 /// Request assignments computed from a witness.
-table AssignmentsRequest {
+table AssignmentRequest {
     /// All details necessary to construct the instance.
     /// The same instance parameter must be provided as in the corresponding R1CSRequest.
     instance          :GadgetInstance;
 
-    /// The values that the parent assigned to `instance.incoming_variable_ids`.
+    /// The values that the caller assigned to Incoming Variables.
+    /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
     incoming_elements :[ubyte];
 
-    /// Optional: The representation used for the incoming_elements, if non-default.
-    representation    :FieldElementRepresentation;
-
     /// Optional: Any info that may be useful to the gadget to compute its assignments.
+    /// Example: Merkle authentication path.
     witness           :[CustomKeyValue];
 }
 
 /// Report local and outgoing assignments computed by the gadget.
 /// To send to the stream of assigned variables.
 table AssignedVariables {
-    /// The IDs of the variables being assigned to.
-    variable_ids   :[uint64];
-
-    /// Contiguous element representations in the same order as variable_ids.
-    elements       :[ubyte];
-
-    /// Optional: The representation used for the elements, if non-default.
-    representation :FieldElementRepresentation;
+    values :VariableValues;
 }
 
 /// Response after all AssignedVariables have been sent.
-table AssignmentsResponse {
+table AssignmentResponse {
     /// First variable ID free after the gadget call.
     /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id_after :uint64;
 
-    /// The values that the gadget assigned to `instance.outgoing_variable_ids`.
+    /// The values that the gadget assigned to outgoing variables, if any.
+    /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
+    ///
     /// Intentionally redundant with AssignedVariables to allow handling
     /// the outgoing variables separately from the bulk of local variables assignments.
     outgoing_elements      :[ubyte];
 
-    /// Optional: The representation used for the outgoingAssignments, if non-default.
-    representation         :FieldElementRepresentation;
-
-    /// Optional: Any info that may be useful to the calling parent.
+    /// Optional: Any info that may be useful to the caller.
     info                   :[CustomKeyValue];
 
     /// Optional: An error message. Null if no error.
     error                  :string;
-}
-
-
-// == Flexibility Concept ==
-
-/// Generic key-value for miscellaneous attributes.
-table CustomKeyValue {
-    key   :string;
-    value :[ubyte];
-}
-
-/// Description of the representation or encoding of field elements.
-/// All messages that transmit field elements should include it.
-/// If omitted, assume the recommended representation:
-/// name = "little-endian"
-/// size = 32 bytes
-///
-/// There are two ways to use this information:
-/// - Simply check it, and return an error if the representation is incorrect.
-/// - Or write generic code that converts automatically when necessary.
-///
-table FieldElementRepresentation {
-    /// The well-known name of the representation.
-    name :string;
-
-    /// Optional: The size of the representation of an element in bytes, if fixed-size.
-    size :uint32;
 }
 
 
@@ -226,9 +218,6 @@ table GadgetDescription {
 
     /// Describe the structure of the outgoing array of variables.
     outgoing_connection :StructuredConnection;
-
-    /// The representations of field elements supported by this gadget.
-    supported_representations      :[FieldElementRepresentation];
 
     /// Any custom information.
     info           :[CustomKeyValue];
