@@ -1,5 +1,5 @@
-#ifndef RUST_GADGET_H
-#define RUST_GADGET_H
+#ifndef GADGET_H
+#define GADGET_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,4 +26,4 @@ bool gadget_request(
 } // extern "C"
 #endif
 
-#endif //RUST_GADGET_H
+#endif //GADGET_H

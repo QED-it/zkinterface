@@ -9,7 +9,7 @@ fn main() {
         "--rust",
         "--cpp",
         "-o", "src/",
-        "src/gadget.fbs",
+        "../gadget.fbs",
     ]).output() {
         Ok(flatc) => {
             if !
@@ -21,7 +21,7 @@ fn main() {
 
             rename(
                 Path::new("src").join("gadget_generated.h"),
-                Path::new("cpp").join("gadget_generated.h"),
+                Path::new("..").join("cpp").join("gadget_generated.h"),
             ).expect("Failed to rename");
         }
         Err(_) => {
@@ -32,7 +32,7 @@ fn main() {
     cc::Build::new()
         .cpp(true)
         .flag("-std=c++14")
-        .file("cpp/gadget.cpp")
+        .file("../cpp/gadget.cpp")
         .compile("cpp_gadget");
 }
 
