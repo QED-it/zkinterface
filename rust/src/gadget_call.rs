@@ -3,14 +3,8 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-extern crate flatbuffers;
 
 use std::slice;
-
-#[allow(non_snake_case)]
-#[path = "./gadget_generated.rs"]
-pub mod gadget_generated;
-
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -99,8 +93,8 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
 
 #[test]
 fn test_gadget_request() {
-    use self::flatbuffers::FlatBufferBuilder;
-    use self::gadget_generated::gadget::{
+    use flatbuffers::FlatBufferBuilder;
+    use gadget_generated::gadget::{
         get_size_prefixed_root_as_root, Root, RootArgs, Message,
         AssignmentRequest, AssignmentRequestArgs,
         GadgetInstance, GadgetInstanceArgs,
