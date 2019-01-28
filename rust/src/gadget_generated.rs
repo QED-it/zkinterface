@@ -140,7 +140,7 @@ impl<'a> Root<'a> {
   }
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadgets_description_request(&'a self) -> Option<GadgetsDescriptionRequest> {
+  pub fn message_as_gadgets_description_request(&self) -> Option<GadgetsDescriptionRequest<'a>> {
     if self.message_type() == Message::GadgetsDescriptionRequest {
       self.message().map(|u| GadgetsDescriptionRequest::init_from_table(u))
     } else {
@@ -150,7 +150,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadgets_description_response(&'a self) -> Option<GadgetsDescriptionResponse> {
+  pub fn message_as_gadgets_description_response(&self) -> Option<GadgetsDescriptionResponse<'a>> {
     if self.message_type() == Message::GadgetsDescriptionResponse {
       self.message().map(|u| GadgetsDescriptionResponse::init_from_table(u))
     } else {
@@ -160,7 +160,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csrequest(&'a self) -> Option<R1CSRequest> {
+  pub fn message_as_r1csrequest(&self) -> Option<R1CSRequest<'a>> {
     if self.message_type() == Message::R1CSRequest {
       self.message().map(|u| R1CSRequest::init_from_table(u))
     } else {
@@ -170,7 +170,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csconstraints(&'a self) -> Option<R1CSConstraints> {
+  pub fn message_as_r1csconstraints(&self) -> Option<R1CSConstraints<'a>> {
     if self.message_type() == Message::R1CSConstraints {
       self.message().map(|u| R1CSConstraints::init_from_table(u))
     } else {
@@ -180,7 +180,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csresponse(&'a self) -> Option<R1CSResponse> {
+  pub fn message_as_r1csresponse(&self) -> Option<R1CSResponse<'a>> {
     if self.message_type() == Message::R1CSResponse {
       self.message().map(|u| R1CSResponse::init_from_table(u))
     } else {
@@ -190,7 +190,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assignment_request(&'a self) -> Option<AssignmentRequest> {
+  pub fn message_as_assignment_request(&self) -> Option<AssignmentRequest<'a>> {
     if self.message_type() == Message::AssignmentRequest {
       self.message().map(|u| AssignmentRequest::init_from_table(u))
     } else {
@@ -200,7 +200,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assigned_variables(&'a self) -> Option<AssignedVariables> {
+  pub fn message_as_assigned_variables(&self) -> Option<AssignedVariables<'a>> {
     if self.message_type() == Message::AssignedVariables {
       self.message().map(|u| AssignedVariables::init_from_table(u))
     } else {
@@ -210,7 +210,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assignment_response(&'a self) -> Option<AssignmentResponse> {
+  pub fn message_as_assignment_response(&self) -> Option<AssignmentResponse<'a>> {
     if self.message_type() == Message::AssignmentResponse {
       self.message().map(|u| AssignmentResponse::init_from_table(u))
     } else {

@@ -1,7 +1,7 @@
 extern crate cc;
 
-use std::path::Path;
 use std::fs::rename;
+use std::path::Path;
 use std::process::Command;
 
 fn main() {
@@ -19,10 +19,30 @@ fn main() {
                        String::from_utf8_lossy(&flatc.stderr));
             }
 
+            // Move C++ file.
             rename(
                 Path::new("src").join("gadget_generated.h"),
                 Path::new("..").join("cpp").join("gadget_generated.h"),
             ).expect("Failed to rename");
+
+            // Fix an issue in generated code.
+            // The lifetime 'a should be on the return value, not on &self.
+            // Published at https://github.com/google/flatbuffers/pull/5140
+            {
+                let file = &Path::new("src").join("gadget_generated.rs");
+                let code = std::fs::read_to_string(file).expect("could not read file");
+
+                let re = regex::Regex::new(
+                    r"pub fn (\w+)_as_(\w+)\(&'a self\) -> Option<(\w+)> \{"
+                ).unwrap();
+
+                let fixed = re.replace_all(
+                    &code,
+                    r"pub fn ${1}_as_${2}(&self) -> Option<${3}<'a>> {",
+                ).to_string();
+
+                std::fs::write(file, fixed).expect("could not write file");
+            }
         }
         Err(_) => {
             println!("cargo:warning=Install FlatBuffers (flatc) if you modify `gadget.fbs`. Code was not regenerated.");

@@ -3,10 +3,12 @@ name = "zkstandard"
 version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
 build = "build.rs"
+links = "zkstandard"
 
 [dependencies]
 libloading = "0.5.0"
 flatbuffers = "0.5.0"
 
 [build-dependencies]
+regex = "1"
 cc = "1.0.28"
