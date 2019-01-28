@@ -3,8 +3,15 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-
+use flatbuffers::FlatBufferBuilder;
+use gadget_generated::gadget::{
+    AssignedVariables, AssignmentRequest,
+    AssignmentRequestArgs, AssignmentResponse,
+    GadgetInstance, GadgetInstanceArgs,
+    get_size_prefixed_root_as_root, Message, Root, RootArgs,
+};
 use std::slice;
+use std::slice::Iter;
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -34,12 +41,6 @@ fn from_c<'a, CTX>(
     let buf = unsafe { slice::from_raw_parts(response, response_len as usize) };
 
     (context, buf)
-}
-
-
-pub struct CallbackContext {
-    result_stream: Vec<Vec<u8>>,
-    response: Option<Vec<u8>>,
 }
 
 /// Collect the stream of results into the context.
@@ -78,9 +79,9 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
         gadget_request(
             message_ptr,
             result_stream_callback_c,
-            &mut context as *mut _ as *mut CallbackContext,
+            &mut context as *mut CallbackContext,
             response_callback_c,
-            &mut context as *mut _ as *mut CallbackContext,
+            &mut context as *mut CallbackContext,
         )
     };
 
@@ -90,52 +91,119 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
     }
 }
 
+pub struct CallbackContext {
+    pub result_stream: Vec<Vec<u8>>,
+    pub response: Option<Vec<u8>>,
+}
 
-#[test]
-fn test_gadget_request() {
-    use flatbuffers::FlatBufferBuilder;
-    use gadget_generated::gadget::{
-        get_size_prefixed_root_as_root, Root, RootArgs, Message,
-        AssignmentRequest, AssignmentRequestArgs,
-        GadgetInstance, GadgetInstanceArgs,
-    };
+pub struct AssignedVariable<'a> {
+    pub id: u64,
+    pub element: &'a [u8],
+}
 
-    let builder = &mut FlatBufferBuilder::new_with_capacity(1024);
+pub struct AssignedVariablesIterator<'a> {
+    // Iterate over messages.
+    messages_iter: Iter<'a, Vec<u8>>,
 
-    let assign_ctx = {
-        let gadget_name = builder.create_string("sha256");
+    // Iterate over variables in the current message.
+    var_ids: &'a [u64],
+    elements: &'a [u8],
+    next_element: usize,
+}
 
-        let in_ids = builder.create_vector(&[
-            100, 101 as u64]); // Some input variables.
+impl<'a> Iterator for AssignedVariablesIterator<'a> {
+    type Item = AssignedVariable<'a>;
 
-        let out_ids = builder.create_vector(&[
-            102 as u64]); // Some output variable.
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.next_element >= self.var_ids.len() {
+            // Grab the next message, or terminate if none.
+            let buf: &[u8] = self.messages_iter.next()?;
 
-        let instance = GadgetInstance::create(builder, &GadgetInstanceArgs {
-            gadget_name: Some(gadget_name),
-            incoming_variable_ids: Some(in_ids),
-            outgoing_variable_ids: Some(out_ids),
+            // Parse the message, or fail if invalid.
+            let message = get_size_prefixed_root_as_root(buf);
+            let assigned_variables = message.message_as_assigned_variables().unwrap();
+            let values = assigned_variables.values().unwrap();
+
+            // Start iterating the elements of the current message.
+            self.var_ids = values.variable_ids().unwrap().safe_slice();
+            self.elements = values.elements().unwrap();
+            self.next_element = 0;
+        }
+
+        let stride = self.elements.len() / self.var_ids.len();
+        if stride == 0 { panic!("Empty elements data."); }
+
+        let i = self.next_element;
+        self.next_element += 1;
+
+        Some(AssignedVariable {
+            id: self.var_ids[i],
+            element: &self.elements[stride * i..stride * (i + 1)],
+        })
+    }
+    // TODO: Replace unwrap and panic with Result.
+}
+
+impl CallbackContext {
+    pub fn iter_assignment(&self) -> AssignedVariablesIterator {
+        AssignedVariablesIterator {
+            messages_iter: self.result_stream.iter(),
+            var_ids: &[],
+            elements: &[],
+            next_element: 0,
+        }
+    }
+
+    pub fn assignment_response(&self) -> Option<AssignmentResponse> {
+        let buf = self.response.as_ref()?;
+        let message = get_size_prefixed_root_as_root(buf);
+        message.message_as_assignment_response()
+    }
+}
+
+
+pub fn make_assignment_request(name: &str, in_var_ids: &[u64], out_var_ids: &[u64]) -> CallbackContext {
+    let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
+
+    let instance = {
+        let i = GadgetInstanceArgs {
+            gadget_name: Some(builder.create_string(name)),
+            incoming_variable_ids: Some(builder.create_vector(in_var_ids)),
+            outgoing_variable_ids: Some(builder.create_vector(out_var_ids)),
             free_variable_id_before: 103,
             field_order: None,
             configuration: None,
-        });
-
-        let request = AssignmentRequest::create(builder, &AssignmentRequestArgs {
-            instance: Some(instance),
-            incoming_elements: None,
-            witness: None,
-        });
-
-        let root = Root::create(builder, &RootArgs {
-            message_type: Message::AssignmentRequest,
-            message: Some(request.as_union_value()),
-        });
-
-        builder.finish_size_prefixed(root, None);
-        let buf = builder.finished_data();
-
-        call_gadget(&buf).unwrap()
+        };
+        GadgetInstance::create(builder, &i)
     };
+
+    let request = AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
+        instance: Some(instance),
+        incoming_elements: None,
+        witness: None,
+    });
+
+    let message = Root::create(&mut builder, &RootArgs {
+        message_type: Message::AssignmentRequest,
+        message: Some(request.as_union_value()),
+    });
+
+    builder.finish_size_prefixed(message, None);
+    let buf = builder.finished_data();
+
+    let response = call_gadget(&buf).unwrap();
+
+    response
+}
+
+
+#[test]
+fn test_gadget_request() {
+    let assign_ctx = make_assignment_request(
+        "sha256",
+        &[100, 101 as u64], // Some input variables.
+        &[102 as u64], // Some output variable.
+    );
 
     println!("Rust received {} results and {} parent response.",
              assign_ctx.result_stream.len(),
@@ -144,35 +212,24 @@ fn test_gadget_request() {
     assert!(assign_ctx.response.is_some());
 
     {
-        let buf = &assign_ctx.result_stream[0];
-
-        let root = get_size_prefixed_root_as_root(buf);
-        let assigned_variables = root.message_as_assigned_variables().unwrap();
-        let values = assigned_variables.values().unwrap();
-        let var_ids = values.variable_ids().unwrap().safe_slice();
-        let elements = values.elements().unwrap();
-
-        let element_count = var_ids.len() as usize;
-        let element_size = 3 as usize;
-        assert_eq!(elements.len(), element_count * element_size);
+        let assignment: Vec<AssignedVariable> = assign_ctx.iter_assignment().collect();
+        let element_count = assignment.len();
+        let element_size = assignment[0].element.len();
+        assert_eq!(element_count, 2);
+        assert_eq!(element_size, 3);
 
         println!("Got {} assigned_variables", element_count);
-        for (i, var_id) in var_ids.iter().enumerate() {
-            let element = &elements[i * element_size..(i + 1) * element_size];
-            println!("{} = {:?}", var_id, element);
+        for var in assignment.iter() {
+            println!("{} = {:?}", var.id, var.element);
         }
 
-        assert_eq!(var_ids[0], 103 + 0); // First gadget-allocated variable.
-        assert_eq!(var_ids[1], 103 + 1); // Second "
-        assert_eq!(elements, &[
-            10, 11, 12, // First element.
-            8, 7, 6, // Second element.
-        ]);
+        assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
+        assert_eq!(assignment[1].id, 103 + 1); // Second "
+        assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
+        assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
     }
     {
-        let buf = &assign_ctx.response.unwrap();
-        let root = get_size_prefixed_root_as_root(buf);
-        let response = root.message_as_assignment_response().unwrap();
+        let response = assign_ctx.assignment_response().unwrap();
         println!("Free variable id after the call: {}", response.free_variable_id_after());
         assert!(response.free_variable_id_after() == 103 + 2);
     }
