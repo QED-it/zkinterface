@@ -5,8 +5,7 @@
 
 use flatbuffers::FlatBufferBuilder;
 use gadget_generated::gadget::{
-    AssignedVariables, AssignmentRequest,
-    AssignmentRequestArgs, AssignmentResponse,
+    AssignmentRequest, AssignmentRequestArgs, AssignmentResponse,
     GadgetInstance, GadgetInstanceArgs,
     get_size_prefixed_root_as_root, Message, Root, RootArgs,
 };
@@ -96,6 +95,25 @@ pub struct CallbackContext {
     pub response: Option<Vec<u8>>,
 }
 
+pub struct AssignmentContext(CallbackContext);
+
+impl AssignmentContext {
+    pub fn iter_assignment(&self) -> AssignedVariablesIterator {
+        AssignedVariablesIterator {
+            messages_iter: self.0.result_stream.iter(),
+            var_ids: &[],
+            elements: &[],
+            next_element: 0,
+        }
+    }
+
+    pub fn assignment_response(&self) -> Option<AssignmentResponse> {
+        let buf = self.0.response.as_ref()?;
+        let message = get_size_prefixed_root_as_root(buf);
+        message.message_as_assignment_response()
+    }
+}
+
 pub struct AssignedVariable<'a> {
     pub id: u64,
     pub element: &'a [u8],
@@ -144,34 +162,25 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
     // TODO: Replace unwrap and panic with Result.
 }
 
-impl CallbackContext {
-    pub fn iter_assignment(&self) -> AssignedVariablesIterator {
-        AssignedVariablesIterator {
-            messages_iter: self.result_stream.iter(),
-            var_ids: &[],
-            elements: &[],
-            next_element: 0,
-        }
-    }
-
-    pub fn assignment_response(&self) -> Option<AssignmentResponse> {
-        let buf = self.response.as_ref()?;
-        let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_assignment_response()
-    }
+pub struct InstanceDescription<'a> {
+    pub gadget_name: &'a str,
+    pub incoming_variable_ids: &'a [u64],
+    pub outgoing_variable_ids: Option<&'a [u64]>,
+    pub free_variable_id_before: u64,
+    pub field_order: Option<&'a [u8]>,
+    //pub configuration: Option<HashMap<String, &'a [u8]>>,
 }
 
-
-pub fn make_assignment_request(name: &str, in_var_ids: &[u64], out_var_ids: &[u64]) -> CallbackContext {
+pub fn make_assignment_request(instance: &InstanceDescription) -> AssignmentContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let instance = {
         let i = GadgetInstanceArgs {
-            gadget_name: Some(builder.create_string(name)),
-            incoming_variable_ids: Some(builder.create_vector(in_var_ids)),
-            outgoing_variable_ids: Some(builder.create_vector(out_var_ids)),
-            free_variable_id_before: 103,
-            field_order: None,
+            gadget_name: Some(builder.create_string(instance.gadget_name)),
+            incoming_variable_ids: Some(builder.create_vector(instance.incoming_variable_ids)),
+            outgoing_variable_ids: instance.outgoing_variable_ids.map(|s| builder.create_vector(s)),
+            free_variable_id_before: instance.free_variable_id_before,
+            field_order: instance.field_order.map(|s| builder.create_vector(s)),
             configuration: None,
         };
         GadgetInstance::create(builder, &i)
@@ -193,36 +202,39 @@ pub fn make_assignment_request(name: &str, in_var_ids: &[u64], out_var_ids: &[u6
 
     let response = call_gadget(&buf).unwrap();
 
-    response
+    AssignmentContext(response)
 }
 
 
 #[test]
 fn test_gadget_request() {
-    let assign_ctx = make_assignment_request(
-        "sha256",
-        &[100, 101 as u64], // Some input variables.
-        &[102 as u64], // Some output variable.
-    );
+    let instance = InstanceDescription {
+        gadget_name: "sha256",
+        incoming_variable_ids: &[100, 101 as u64], // Some input variables.
+        outgoing_variable_ids: Some(&[102 as u64]), // Some output variable.
+        free_variable_id_before: 103,
+        field_order: None,
+    };
+
+    let assign_ctx = make_assignment_request(&instance);
 
     println!("Rust received {} results and {} parent response.",
-             assign_ctx.result_stream.len(),
-             if assign_ctx.response.is_some() { "a" } else { "no" });
-    assert!(assign_ctx.result_stream.len() == 1);
-    assert!(assign_ctx.response.is_some());
+             assign_ctx.0.result_stream.len(),
+             if assign_ctx.0.response.is_some() { "a" } else { "no" });
+
+    assert!(assign_ctx.0.result_stream.len() == 1);
+    assert!(assign_ctx.0.response.is_some());
 
     {
         let assignment: Vec<AssignedVariable> = assign_ctx.iter_assignment().collect();
-        let element_count = assignment.len();
-        let element_size = assignment[0].element.len();
-        assert_eq!(element_count, 2);
-        assert_eq!(element_size, 3);
 
-        println!("Got {} assigned_variables", element_count);
+        println!("Got assigned_variables:", );
         for var in assignment.iter() {
             println!("{} = {:?}", var.id, var.element);
         }
 
+        assert_eq!(assignment.len(), 2);
+        assert_eq!(assignment[0].element.len(), 3);
         assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
         assert_eq!(assignment[1].id, 103 + 1); // Second "
         assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
