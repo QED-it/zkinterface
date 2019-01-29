@@ -544,7 +544,7 @@ impl<'a> GadgetInstance<'a> {
   /// Example: the depth of a Merkle tree.
   /// Counter-example: the Merkle authentication path is not configuration (rather witness).
   #[inline]
-  pub fn configuration(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetInstance::VT_CONFIGURATION, None)
   }
 }
@@ -820,7 +820,7 @@ impl<'a> R1CSConstraints<'a> {
     pub const VT_CONSTRAINTS: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn constraints(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
+  pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
   }
 }
@@ -908,7 +908,7 @@ impl<'a> R1CSResponse<'a> {
   }
   /// Optional: Any info that may be useful to the caller.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(R1CSResponse::VT_INFO, None)
   }
   /// Optional: An error message. Omitted if no errors.
@@ -1020,7 +1020,7 @@ impl<'a> AssignmentRequest<'a> {
   /// Optional: Any info that may be useful to the gadget to compute its assignments.
   /// Example: Merkle authentication path.
   #[inline]
-  pub fn witness(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn witness(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentRequest::VT_WITNESS, None)
   }
 }
@@ -1209,7 +1209,7 @@ impl<'a> AssignmentResponse<'a> {
   }
   /// Optional: Any info that may be useful to the caller.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentResponse::VT_INFO, None)
   }
   /// Optional: An error message. Null if no error.
@@ -1326,7 +1326,7 @@ impl<'a> StructuredConnection<'a> {
   /// Optional: recursive type.
   /// The inner structures describe subsequent segments of the variables array.
   #[inline]
-  pub fn structures(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
+  pub fn structures(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>>>(StructuredConnection::VT_STRUCTURES, None)
   }
   /// Optional: Name of the connection.
@@ -1336,7 +1336,7 @@ impl<'a> StructuredConnection<'a> {
   }
   /// Optional: Any custom information.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(StructuredConnection::VT_INFO, None)
   }
 }
@@ -1455,7 +1455,7 @@ impl<'a> GadgetDescription<'a> {
   }
   /// Any custom information.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetDescription::VT_INFO, None)
   }
 }
@@ -1612,7 +1612,7 @@ impl<'a> GadgetsDescriptionResponse<'a> {
     pub const VT_GADGETS: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn gadgets(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>> {
+  pub fn gadgets(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>>>(GadgetsDescriptionResponse::VT_GADGETS, None)
   }
 }

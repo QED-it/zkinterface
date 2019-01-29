@@ -35,13 +35,20 @@ fn main() {
                 let re = regex::Regex::new(
                     r"pub fn (\w+)_as_(\w+)\(&'a self\) -> Option<(\w+)> \{"
                 ).unwrap();
-
                 let fixed = re.replace_all(
                     &code,
                     r"pub fn ${1}_as_${2}(&self) -> Option<${3}<'a>> {",
                 ).to_string();
 
-                std::fs::write(file, fixed).expect("could not write file");
+                let re2 = regex::Regex::new(
+                    r"\(&self\) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<"
+                ).unwrap();
+                let fixed2 = re2.replace_all(
+                    &fixed,
+                    r"(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<",
+                ).to_string();
+
+                std::fs::write(file, fixed2).expect("could not write file");
             }
         }
         Err(_) => {
