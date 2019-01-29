@@ -4,13 +4,9 @@
 // @date 2019
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use gadget_generated::gadget::{
-    AssignmentRequest, AssignmentRequestArgs, AssignmentResponse,
-    GadgetInstance, GadgetInstanceArgs,
-    get_size_prefixed_root_as_root, Message, Root, RootArgs,
-};
+use gadget_generated::gadget::{GadgetInstance, GadgetInstanceArgs};
 use std::slice;
-use std::slice::Iter;
+
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -95,73 +91,6 @@ pub struct CallbackContext {
     pub response: Option<Vec<u8>>,
 }
 
-pub struct AssignmentContext(CallbackContext);
-
-impl AssignmentContext {
-    pub fn iter_assignment(&self) -> AssignedVariablesIterator {
-        AssignedVariablesIterator {
-            messages_iter: self.0.result_stream.iter(),
-            var_ids: &[],
-            elements: &[],
-            next_element: 0,
-        }
-    }
-
-    pub fn response(&self) -> Option<AssignmentResponse> {
-        let buf = self.0.response.as_ref()?;
-        let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_assignment_response()
-    }
-}
-
-pub struct AssignedVariable<'a> {
-    pub id: u64,
-    pub element: &'a [u8],
-}
-
-pub struct AssignedVariablesIterator<'a> {
-    // Iterate over messages.
-    messages_iter: Iter<'a, Vec<u8>>,
-
-    // Iterate over variables in the current message.
-    var_ids: &'a [u64],
-    elements: &'a [u8],
-    next_element: usize,
-}
-
-impl<'a> Iterator for AssignedVariablesIterator<'a> {
-    type Item = AssignedVariable<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.next_element >= self.var_ids.len() {
-            // Grab the next message, or terminate if none.
-            let buf: &[u8] = self.messages_iter.next()?;
-
-            // Parse the message, or fail if invalid.
-            let message = get_size_prefixed_root_as_root(buf);
-            let assigned_variables = message.message_as_assigned_variables().unwrap();
-            let values = assigned_variables.values().unwrap();
-
-            // Start iterating the elements of the current message.
-            self.var_ids = values.variable_ids().unwrap().safe_slice();
-            self.elements = values.elements().unwrap();
-            self.next_element = 0;
-        }
-
-        let stride = self.elements.len() / self.var_ids.len();
-        if stride == 0 { panic!("Empty elements data."); }
-
-        let i = self.next_element;
-        self.next_element += 1;
-
-        Some(AssignedVariable {
-            id: self.var_ids[i],
-            element: &self.elements[stride * i..stride * (i + 1)],
-        })
-    }
-    // TODO: Replace unwrap and panic with Result.
-}
-
 pub struct InstanceDescription<'a> {
     pub gadget_name: &'a str,
     pub incoming_variable_ids: &'a [u64],
@@ -186,33 +115,11 @@ impl<'a> InstanceDescription<'a> {
     }
 }
 
-pub fn make_assignment_request(instance: &InstanceDescription) -> AssignmentContext {
-    let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
-
-    let instance = instance.build(&mut builder);
-
-    let request = AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
-        instance: Some(instance),
-        incoming_elements: None,
-        witness: None,
-    });
-
-    let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::AssignmentRequest,
-        message: Some(request.as_union_value()),
-    });
-
-    builder.finish_size_prefixed(message, None);
-    let buf = builder.finished_data();
-
-    let response = call_gadget(&buf).unwrap();
-
-    AssignmentContext(response)
-}
-
 
 #[test]
 fn test_gadget_request() {
+    use assignment_request::make_assignment_request;
+
     let instance = InstanceDescription {
         gadget_name: "sha256",
         incoming_variable_ids: &[100, 101 as u64], // Some input variables.
@@ -231,7 +138,7 @@ fn test_gadget_request() {
     assert!(assign_ctx.0.response.is_some());
 
     {
-        let assignment: Vec<AssignedVariable> = assign_ctx.iter_assignment().collect();
+        let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
 
         println!("Got assigned_variables:", );
         for var in assignment.iter() {

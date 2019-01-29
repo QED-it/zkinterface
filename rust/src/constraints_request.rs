@@ -1,17 +1,22 @@
-use flatbuffers;
+use assignment_request::AssignedVariable;
 use flatbuffers::FlatBufferBuilder;
-use gadget_call::AssignedVariable;
-use gadget_call::call_gadget;
-use gadget_call::CallbackContext;
-use gadget_call::InstanceDescription;
-use gadget_generated::gadget;
-use gadget_generated::gadget::{
-    get_size_prefixed_root_as_root, Message, R1CSRequest,
-    R1CSRequestArgs, R1CSResponse, Root, RootArgs,
+use gadget_call::{
+    call_gadget,
+    CallbackContext,
+    InstanceDescription,
 };
-use gadget_generated::gadget::VariableValues;
+use gadget_generated::gadget::{
+    self,
+    get_size_prefixed_root_as_root,
+    Message,
+    R1CSRequest,
+    R1CSRequestArgs,
+    R1CSResponse,
+    Root,
+    RootArgs,
+    VariableValues,
+};
 use std::slice::Iter;
-
 
 pub fn make_constants_request(instance: &InstanceDescription) -> R1CSContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
@@ -36,7 +41,7 @@ pub fn make_constants_request(instance: &InstanceDescription) -> R1CSContext {
 }
 
 
-pub struct R1CSContext(CallbackContext);
+pub struct R1CSContext(pub CallbackContext);
 
 impl R1CSContext {
     pub fn iter_constraints(&self) -> R1CSIterator {
