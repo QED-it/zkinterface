@@ -18,7 +18,7 @@ use gadget_generated::gadget::{
 };
 use std::slice::Iter;
 
-pub fn make_constants_request(instance: &InstanceDescription) -> R1CSContext {
+pub fn make_r1cs_request(instance: &InstanceDescription) -> R1CSContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let instance = instance.build(&mut builder);
@@ -62,6 +62,7 @@ impl R1CSContext {
 
 type Term<'a> = AssignedVariable<'a>;
 
+#[derive(Debug)]
 pub struct Constraint<'a> {
     pub a: Vec<Term<'a>>,
     pub b: Vec<Term<'a>>,

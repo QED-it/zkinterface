@@ -118,7 +118,9 @@ impl<'a> InstanceDescription<'a> {
 
 #[test]
 fn test_gadget_request() {
+    use r1cs_request::make_r1cs_request;
     use assignment_request::make_assignment_request;
+    println!();
 
     let instance = InstanceDescription {
         gadget_name: "sha256",
@@ -128,7 +130,27 @@ fn test_gadget_request() {
         field_order: None,
     };
 
-    let assign_ctx = make_assignment_request(&instance);
+    let r1cs_ctx = make_r1cs_request(&instance);
+
+    println!("Rust received {} results and {} parent response.",
+             r1cs_ctx.0.result_stream.len(),
+             if r1cs_ctx.0.response.is_some() { "a" } else { "no" });
+
+    println!("Got constraints:");
+    for c in r1cs_ctx.iter_constraints() {
+        println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
+    }
+
+    let free_variable_id_after = r1cs_ctx.response().unwrap().free_variable_id_after();
+    println!("Free variable id after the call: {}", free_variable_id_after);
+    assert!(free_variable_id_after == 103 + 2);
+
+    println!();
+
+    let mut in_elements = Vec::<&[u8]>::new();
+    in_elements.push(&[4, 5, 6]);
+    in_elements.push(&[4, 5, 6]);
+    let assign_ctx = make_assignment_request(&instance, in_elements);
 
     println!("Rust received {} results and {} parent response.",
              assign_ctx.0.result_stream.len(),
@@ -140,7 +162,7 @@ fn test_gadget_request() {
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
 
-        println!("Got assigned_variables:", );
+        println!("Got assigned_variables:");
         for var in assignment.iter() {
             println!("{} = {:?}", var.id, var.element);
         }
@@ -151,10 +173,11 @@ fn test_gadget_request() {
         assert_eq!(assignment[1].id, 103 + 1); // Second "
         assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
         assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
+
+        let free_variable_id_after2 = assign_ctx.response().unwrap().free_variable_id_after();
+        println!("Free variable id after the call: {}", free_variable_id_after2);
+        assert!(free_variable_id_after2 == 103 + 2);
+        assert!(free_variable_id_after2 == free_variable_id_after);
     }
-    {
-        let response = assign_ctx.response().unwrap();
-        println!("Free variable id after the call: {}", response.free_variable_id_after());
-        assert!(response.free_variable_id_after() == 103 + 2);
-    }
+    println!();
 }

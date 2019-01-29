@@ -1,4 +1,3 @@
-use std::slice::Iter;
 use flatbuffers::FlatBufferBuilder;
 use gadget_call::{
     call_gadget,
@@ -14,6 +13,7 @@ use gadget_generated::gadget::{
     Root,
     RootArgs,
 };
+use std::slice::Iter;
 
 pub struct AssignmentContext(pub CallbackContext);
 
@@ -34,6 +34,7 @@ impl AssignmentContext {
     }
 }
 
+#[derive(Debug)]
 pub struct AssignedVariable<'a> {
     pub id: u64,
     pub element: &'a [u8],
@@ -82,14 +83,26 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
     // TODO: Replace unwrap and panic with Result.
 }
 
-pub fn make_assignment_request(instance: &InstanceDescription) -> AssignmentContext {
+pub fn make_assignment_request(
+    instance: &InstanceDescription,
+    incoming_elements: Vec<&[u8]>,
+) -> AssignmentContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let instance = instance.build(&mut builder);
 
+    let size = incoming_elements.len() * incoming_elements[0].len();
+    builder.start_vector::<u8>(size);
+    for e in incoming_elements.iter().rev() {
+        for i in (0..e.len()).rev() {
+            builder.push(e[i]);
+        }
+    }
+    let incoming_bytes = builder.end_vector(incoming_elements.len());
+
     let request = AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
         instance: Some(instance),
-        incoming_elements: None,
+        incoming_elements: Some(incoming_bytes),
         witness: None,
     });
 
