@@ -3,7 +3,7 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-use flatbuffers::FlatBufferBuilder;
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use gadget_generated::gadget::{
     AssignmentRequest, AssignmentRequestArgs, AssignmentResponse,
     GadgetInstance, GadgetInstanceArgs,
@@ -107,7 +107,7 @@ impl AssignmentContext {
         }
     }
 
-    pub fn assignment_response(&self) -> Option<AssignmentResponse> {
+    pub fn response(&self) -> Option<AssignmentResponse> {
         let buf = self.0.response.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
         message.message_as_assignment_response()
@@ -168,23 +168,28 @@ pub struct InstanceDescription<'a> {
     pub outgoing_variable_ids: Option<&'a [u64]>,
     pub free_variable_id_before: u64,
     pub field_order: Option<&'a [u8]>,
-    //pub configuration: Option<HashMap<String, &'a [u8]>>,
+    //pub configuration: Option<Vec<(String, &'a [u8])>>,
+}
+
+impl<'a> InstanceDescription<'a> {
+    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
+        let i = GadgetInstanceArgs {
+            gadget_name: Some(builder.create_string(self.gadget_name)),
+            incoming_variable_ids: Some(builder.create_vector(self.incoming_variable_ids)),
+            outgoing_variable_ids: self.outgoing_variable_ids.map(|s| builder.create_vector(s)),
+            free_variable_id_before: self.free_variable_id_before,
+            field_order: self.field_order.map(|s| builder.create_vector(s)),
+            configuration: None,
+        };
+        GadgetInstance::create(builder, &i)
+    }
 }
 
 pub fn make_assignment_request(instance: &InstanceDescription) -> AssignmentContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
-    let instance = {
-        let i = GadgetInstanceArgs {
-            gadget_name: Some(builder.create_string(instance.gadget_name)),
-            incoming_variable_ids: Some(builder.create_vector(instance.incoming_variable_ids)),
-            outgoing_variable_ids: instance.outgoing_variable_ids.map(|s| builder.create_vector(s)),
-            free_variable_id_before: instance.free_variable_id_before,
-            field_order: instance.field_order.map(|s| builder.create_vector(s)),
-            configuration: None,
-        };
-        GadgetInstance::create(builder, &i)
-    };
+    let instance = instance.build(&mut builder);
 
     let request = AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
         instance: Some(instance),
@@ -241,7 +246,7 @@ fn test_gadget_request() {
         assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
     }
     {
-        let response = assign_ctx.assignment_response().unwrap();
+        let response = assign_ctx.response().unwrap();
         println!("Free variable id after the call: {}", response.free_variable_id_after());
         assert!(response.free_variable_id_after() == 103 + 2);
     }
