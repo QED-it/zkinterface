@@ -91,24 +91,25 @@ pub struct CallbackContext {
     pub response: Option<Vec<u8>>,
 }
 
-pub struct InstanceDescription<'a> {
-    pub gadget_name: &'a str,
-    pub incoming_variable_ids: &'a [u64],
-    pub outgoing_variable_ids: Option<&'a [u64]>,
+#[derive(Clone, Debug)]
+pub struct InstanceDescription {
+    pub gadget_name: String,
+    pub incoming_variable_ids: Vec<u64>,
+    pub outgoing_variable_ids: Option<Vec<u64>>,
     pub free_variable_id_before: u64,
-    pub field_order: Option<&'a [u8]>,
+    pub field_order: Option<Vec<u8>>,
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
-impl<'a> InstanceDescription<'a> {
+impl InstanceDescription {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
         let i = GadgetInstanceArgs {
-            gadget_name: Some(builder.create_string(self.gadget_name)),
-            incoming_variable_ids: Some(builder.create_vector(self.incoming_variable_ids)),
-            outgoing_variable_ids: self.outgoing_variable_ids.map(|s| builder.create_vector(s)),
+            gadget_name: Some(builder.create_string(&self.gadget_name)),
+            incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
+            outgoing_variable_ids: self.outgoing_variable_ids.as_ref().map(|s| builder.create_vector(s)),
             free_variable_id_before: self.free_variable_id_before,
-            field_order: self.field_order.map(|s| builder.create_vector(s)),
+            field_order: self.field_order.as_ref().map(|s| builder.create_vector(s)),
             configuration: None,
         };
         GadgetInstance::create(builder, &i)
@@ -123,9 +124,9 @@ fn test_gadget_request() {
     println!();
 
     let instance = InstanceDescription {
-        gadget_name: "sha256",
-        incoming_variable_ids: &[100, 101 as u64], // Some input variables.
-        outgoing_variable_ids: Some(&[102 as u64]), // Some output variable.
+        gadget_name: "sha256".to_string(),
+        incoming_variable_ids: vec![100, 101], // Some input variables.
+        outgoing_variable_ids: Some(vec![102]), // Some output variable.
         free_variable_id_before: 103,
         field_order: None,
     };
@@ -147,17 +148,18 @@ fn test_gadget_request() {
 
     println!();
 
-    let mut in_elements = Vec::<&[u8]>::new();
-    in_elements.push(&[4, 5, 6]);
-    in_elements.push(&[4, 5, 6]);
-    let assign_ctx = make_assignment_request(&instance, in_elements);
+    let in_elements = vec![
+        &[4, 5, 6 as u8] as &[u8],
+        &[4, 5, 6],
+    ];
+    let assign_ctx = make_assignment_request(instance, in_elements);
 
     println!("Rust received {} results and {} parent response.",
-             assign_ctx.0.result_stream.len(),
-             if assign_ctx.0.response.is_some() { "a" } else { "no" });
+             assign_ctx.ctx.result_stream.len(),
+             if assign_ctx.ctx.response.is_some() { "a" } else { "no" });
 
-    assert!(assign_ctx.0.result_stream.len() == 1);
-    assert!(assign_ctx.0.response.is_some());
+    assert!(assign_ctx.ctx.result_stream.len() == 1);
+    assert!(assign_ctx.ctx.response.is_some());
 
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
@@ -178,6 +180,9 @@ fn test_gadget_request() {
         println!("Free variable id after the call: {}", free_variable_id_after2);
         assert!(free_variable_id_after2 == 103 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
+
+        let out_vars = assign_ctx.outgoing_assigned_variables();
+        println!("{:?}", out_vars);
     }
     println!();
 }

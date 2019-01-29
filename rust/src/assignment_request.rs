@@ -15,12 +15,15 @@ use gadget_generated::gadget::{
 };
 use std::slice::Iter;
 
-pub struct AssignmentContext(pub CallbackContext);
+pub struct AssignmentContext {
+    pub instance: InstanceDescription,
+    pub ctx: CallbackContext,
+}
 
 impl AssignmentContext {
     pub fn iter_assignment(&self) -> AssignedVariablesIterator {
         AssignedVariablesIterator {
-            messages_iter: self.0.result_stream.iter(),
+            messages_iter: self.ctx.result_stream.iter(),
             var_ids: &[],
             elements: &[],
             next_element: 0,
@@ -28,9 +31,26 @@ impl AssignmentContext {
     }
 
     pub fn response(&self) -> Option<AssignmentResponse> {
-        let buf = self.0.response.as_ref()?;
+        let buf = self.ctx.response.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
         message.message_as_assignment_response()
+    }
+
+    pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
+        let var_ids = self.instance.outgoing_variable_ids.as_ref()?;
+        let elements = self.response()?.outgoing_elements()?;
+
+        let stride = elements.len() / var_ids.len();
+        if stride == 0 { panic!("Empty elements data."); }
+
+        let assigned = (0..var_ids.len()).map(|i|
+            AssignedVariable {
+                id: var_ids[i],
+                element: &elements[stride * i..stride * (i + 1)],
+            }
+        ).collect();
+
+        Some(assigned)
     }
 }
 
@@ -84,27 +104,28 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
 }
 
 pub fn make_assignment_request(
-    instance: &InstanceDescription,
+    instance: InstanceDescription,
     incoming_elements: Vec<&[u8]>,
 ) -> AssignmentContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
-    let instance = instance.build(&mut builder);
-
     let size = incoming_elements.len() * incoming_elements[0].len();
     builder.start_vector::<u8>(size);
-    for e in incoming_elements.iter().rev() {
-        for i in (0..e.len()).rev() {
-            builder.push(e[i]);
+    for element in incoming_elements.iter().rev() {
+        for i in (0..element.len()).rev() {
+            builder.push(element[i]);
         }
     }
     let incoming_bytes = builder.end_vector(incoming_elements.len());
 
-    let request = AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
-        instance: Some(instance),
-        incoming_elements: Some(incoming_bytes),
-        witness: None,
-    });
+    let request = {
+        let i = instance.build(&mut builder);
+        AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
+            instance: Some(i),
+            incoming_elements: Some(incoming_bytes),
+            witness: None,
+        })
+    };
 
     let message = Root::create(&mut builder, &RootArgs {
         message_type: Message::AssignmentRequest,
@@ -114,7 +135,7 @@ pub fn make_assignment_request(
     builder.finish_size_prefixed(message, None);
     let buf = builder.finished_data();
 
-    let response = call_gadget(&buf).unwrap();
+    let ctx = call_gadget(&buf).unwrap();
 
-    AssignmentContext(response)
+    AssignmentContext { instance, ctx }
 }
