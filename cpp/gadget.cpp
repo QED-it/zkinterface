@@ -30,7 +30,7 @@ bool r1cs_request(
              << free_variable_id_before << endl;
     }
 
-    // Send an assignment.
+    // Send constraints.
     uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
