@@ -13,31 +13,28 @@
         \begin{itemize}
 			\item By using a protoboard-like method for shared memory allocation, and thus preventing double-copying the data unnecessarily.
 			\item By parametrizing the function calls to the different components so to take advantage of the specific context underlying those components.
-			\item By using FlatBuffers, an efficient cross platform serialization library for different languages. This tool allows us to ???
-        \end{itemize}
+			\item By using FlatBuffers, an efficient cross platform serialization library for different languages. This tool allows us to easily write ad-hoc parsers from scratch and has a very low overhead in shared memory, which can be used in regular function calls. 
+		\end{itemize}
+		
+		
         
         The two main purposes of the interface are the computations of the \emph{instance reduction}, which generates a portable circuit or constraint system, and the \emph{witness reduction}, which assigns values to the variables allocated in the instance reduction. We have designed the interface so that each of these two processes actually use the same exact routine, except with different message types.
 
         Essentially, as seen in Figure \ref{flow}, the caller of the interface can be both an application or a component that requires a sub-component, an abstraction that helps make the interface minimal. Say I want to compute a proof of set membership by using a Merkle Tree of hashes. Then, the flow is the following:
         \begin{enumerate} 
-            \item the application will call the Merkle Tree component that exists in some front-end framework,
-            \item for every hash computation needed to generate the path, the Merkle Tree will itself call a hasher component, possibly from a different framework,
-            \item the hash component will allocate in memory the constraints and variables (or make the assignments if it was called for the witness reduction),
-            \item the Merkle Tree component is oblivious to the local variables that the hasher allocates, it simply cares about the input message and the outpud digest of the hasher.
-            \item similarly, the Merkle Tree component allocates its constraints and variables
-            \item this component will allocate the constraints and variables in the standard R1CS format to some shared memory (or optionally to some output file)
-            \item values
+            \item The application will call the Merkle Tree component that exists in some front-end framework, which starts allocating in memory the variables and constraints in the standard R1CS format.
+            \item For every hash computation needed to generate the path, the Merkle Tree will itself call a hasher sub-component, possibly from a different framework, by passing it the parameters, including the next free memory slot for allocating the hash constraints and variables.
+            \item The hash component will then allocate in memory the constraints and variables, to which the Merkle Tree component is oblivious (except the shared input / outputs: the input message and the output hash digest).
+            \item Specifically, for each call to the hash component, the input message is given as part of the request and the hash component sends the hash digest as part of the response. The rest of the variables are locally dealt with by the hash component but are shared in memory by all the components.
         \end{enumerate}
         
-        here talk about how that specific routine of calling gadgets from gadgets and what visibility of the variables each gadget has. 
+        Note how the routine can be re-used by the witness reduction and deterministically assign the values to the respective variables in memory. Moreover, if needed, the constraint system can be outputed as a file containing a static rank-1 constraint system. One objection to using this routine design is that the component at the top level (i.e.: the Merkle Tree) cannot is waiting for the response of the sub-component (i.e.: the hasher component). This can have a cost in the efficiency of the circuit generation if we imagine a long enough chain of sub-calls that would cause a quadratic overhead. This is unlikely to happen in the current set of applications and circuits. \dtodo{Please check that this is true}
 		
 			\begin{figure}[h!]
 				\includegraphics[width=\linewidth]{routine.png}
 				\caption{The flow of interaction between existing libraries and the interface}
 				\label{flow}
 			\end{figure}
-		
-			here talk about the different levels in word doc
 
 		\paragraph{Instance reduction.} 
 		
@@ -58,7 +55,19 @@
 		
 		
 		\subsection{Specification}
-		
+        
+        \paragraph{Interface Definition.}
+        
+        \paragraph{Request Call.}
+
+        \paragraph{Callee Response.}
+
+        \paragraph{Memory Allocation.}
+
+        \paragraph{FlatBuffers.}
+
+        \paragraph{Standard Format.}
+
 		*use of flatboard
 		
 		- semantics; planned parametrization of the semantics.

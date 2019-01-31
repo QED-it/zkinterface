@@ -8,10 +8,18 @@
 	\usepackage{xcolor}
 	\usepackage{hyperref}
 	\usepackage{graphicx}
+	\usepackage{todonotes}
 	
 	%\usepackage{sagetex}
 	
-	
+	\newcommand\dnote[1]{\textcolor{red}{#1}}
+	\newcommand\enote[1]{\textcolor{blue}{#1}}
+	\newcommand\anote[1]{\textcolor{green}{#1}}
+
+	\newcommand\dtodo[1]{\todo[color=red!20]{#1}}
+	\newcommand\atodo[1]{\todo[color=green!20]{#1}}
+	\newcommand\etodo[1]{\todo[color=blue!20]{#1}}
+
 	\def\boxit#1{%
 		\smash{\color{red}\fboxrule=1pt\relax\fboxsep=-2pt\llap{\rlap{\fbox{\strut\makebox[#1]{}}}~}}\ignorespaces
 	}
@@ -32,8 +40,16 @@
 			
 		%\end{abstract}
 		
+		
+		\anote{Aurel - anote} //
+		\dnote{Daniel - dnote} //
+		\enote{Eran - enote} //
+
+		\todototoc
+		\listoftodos
+
 		\section{Introduction}
-		Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is extensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first workshop. One of the requirements is to create a compiler of statements to be proven into a native low-level representation of the proving system.
+		Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is 	here talk about the different levels in word docextensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first workshop. One of the requirements is to create a compiler of statements to be proven into a native low-level representation of the proving system.
 		
 		There are several trade-offs one can consider when designing general-purpose (front-end) compilers, lending to distinct frameworks, APIs, generality, etc. Today, existing compilers are implemented to work best with their corresponding (back-end) proving system (somemetimes more than one). For a comprehensive list of front-ends and back-ends, you can go to \href{https://zkp.science}{zkp.science}. 
 		
@@ -42,24 +58,32 @@
 		Generally, the compilers can output intermediary files and configurations, yet are used for a specific back-end. In practice this means there is no portability between proving systems and compilers. We aim to solve this issue by creating a community standard proposal for the ZKProof effort around constraint system formatting. We build upon the work done at the first ZKProof workshop, see the file format suggested and the further topics laid out. 
 		
 		In essence, we design and implement a standard rank-1 constraint system (R1CS) interface between front-ends and back-ends. Our design encompasses programmable instance and witness reductions, while capturing the underlying semantics, such as the scalar field or the depth of the merkle tree, among others.
+
+		\dtodo{Review the introduction}
 		
 		\paragraph{Background.} Zero-knowledge allow a prover to convince a verifier of the validity of some statement. In practice, these statements can be large and difficult to build, which is why developers usually build smaller components that are re-usable with different statements; these components are sometimes called ``gadgets". One can compose the different 
 		
 		
 		\paragraph{Terminology}
-		The following list is in accordance to the terminology established in the 1st ZKProof Workshop.
+		The following list is in accordance to the terminology established in the 1st ZKProof Workshop. \anote{I have to review something}
 		
-		\begin{itemize}
-			\item Parameter
-			\item Argument
-			\item Circuit
-			\item Component (gadget)
-			\item Script
-			\item Witness
-			\item Shared Inputs / Outputs
-			\item Local Inputs / Outputs
-			
-		\end{itemize}
+		\anote{fix terminology around document to be consistent (use functional language - call and return)}
+		
+		\begin{description}
+			\item [Interface] The standard way to communicate between the caller and callee
+			\item [Caller] The application that calls a component. 
+			\item [Callee] The component that is being called by the caller.
+			\item [Component] A function that defines a specific computation. A sub-component is a component that is called by another component.
+			\item [Configuration] Any static parameter that influences the construction of the component. 
+			\item [Instance] A specific call to the component with a given configuration and given input variables.
+			\item [Instance Input Variables] Variables provided by the caller to the callee.
+			\item [Instance Local Variables] Variables used by the implementation of a specific component and not used by other components.
+			\item [Instance Output Variables] Variables provided by the callee to the caller.
+			\item [Input Values] Values that are assigned to the input variables by the caller.
+			\item [Output Values] Values that are assigned to the output variables by the callee.
+			\item [Instance reduction]
+			\item [Witness reduction]
+		\end{description}
 		
 		
 		\paragraph{Challenges and limitations}
@@ -74,15 +98,19 @@
 		
 		\paragraph{Scope.} We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
 		
-		We propose to standardize the following:
-		\begin{itemize}
-			\item A file format for rank-1 constraint systems
-			\item A messaging interface  for generic communication between frameworks
-			\item A C API for interoperability
-		\end{itemize}
-		
-		This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written.  
-		
+		The standard that we propose can be seen in three different levels:
+		\begin{enumerate}
+			\item The first level defines 
+			\begin{itemize}
+				\item standard messages and their serialization that the caller and callee exchange, 
+				\item an R1CS file format for the instance and 
+				\item a file format for the assignments.
+			\end{itemize}
+			\item The second level defines a simple C API that allows for the exchange of messages.
+			\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
+		\end{enumerate}
+
+		This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written. However, it is important to point that any such framework could use the proposed interface.
 		
 		\paragraph{Motivation and Previous work.} There is currently no other tool for combining zero knowledge front-ends to any back-end without creating a specific pair-wise interface. If you are a developer who has a favorite compiler to write constraints, with zkInterface, you can also chose your favorite implementation of any proving system. zkInterface can be seen as a common way to communicate between different zero-knowledge systems, as exemplified below.
 		
