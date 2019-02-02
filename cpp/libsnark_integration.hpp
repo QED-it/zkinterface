@@ -12,11 +12,13 @@
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
 using namespace Gadget;
+using flatbuffers::FlatBufferBuilder;
 
 using std::vector;
 using namespace libsnark;
 using libff::bigint;
 using libff::alt_bn128_r_limbs;
+using libff::bit_vector;
 
 typedef libff::Fr<libff::alt_bn128_pp> FieldT;
 
@@ -50,26 +52,39 @@ void into_le(const bigint<alt_bn128_r_limbs> num, uint8_t *out, size_t length) {
     }
 }
 
+// Bytes to Bit Vector.
+bit_vector to_bit_vector(const uint8_t *elements, size_t num_elements, size_t element_size) {
+    bit_vector bits(num_elements);
+
+    for (size_t i = 0; i < num_elements; i++) {
+        auto num = from_le(
+                elements + element_size * i,
+                element_size);
+        bits[i] = (num == 1);
+    }
+    return bits;
+}
+
 
 // ==== Helpers to report the content of a protoboard ====
 
-size_t bytes_per_element = 32;
+size_t fieldt_size = 32;
 
 
-void r1cs_constraints_from_protoboard(const protoboard<FieldT> &pb) {
-    flatbuffers::FlatBufferBuilder builder;
+FlatBufferBuilder serialize_constraints_from_protoboard(const protoboard<FieldT> &pb) {
+    FlatBufferBuilder builder;
 
     /** Closure: add a row of a matrix */
     auto make_lc = [&](const vector<libsnark::linear_term<FieldT>> &terms) {
         vector<uint64_t> variable_ids(terms.size());
-        vector<uint8_t> coeffs(terms.size() * bytes_per_element);
+        vector<uint8_t> coeffs(fieldt_size * terms.size());
 
         for (size_t i = 0; i < terms.size(); i++) {
             variable_ids[i] = terms[i].index;
             into_le(
                     terms[i].coeff.as_bigint(),
-                    coeffs.data() + i * bytes_per_element,
-                    bytes_per_element);
+                    coeffs.data() + fieldt_size * i,
+                    fieldt_size);
         }
 
         return CreateVariableValues(
@@ -94,25 +109,24 @@ void r1cs_constraints_from_protoboard(const protoboard<FieldT> &pb) {
 
     auto root = CreateRoot(builder, Message_R1CSConstraints, r1csConstraints.Union());
     builder.FinishSizePrefixed(root);
-
-    auto buf = (char *) builder.GetBufferPointer();
+    return builder;
 }
 
 
-void assignment_from_protoboard(const protoboard<FieldT> &pb) {
-    flatbuffers::FlatBufferBuilder builder;
+FlatBufferBuilder serialize_assignment_from_protoboard(const protoboard<FieldT> &pb) {
+    FlatBufferBuilder builder;
 
     auto num_vars = pb.num_variables();
 
     vector<uint64_t> variable_ids(num_vars);
-    vector<uint8_t> elements(num_vars * bytes_per_element);
+    vector<uint8_t> elements(fieldt_size * num_vars);
 
     for (size_t id = 0; id < num_vars; ++id) {
         variable_ids[id] = id;
         into_le(
                 pb.val(id).as_bigint(),
-                elements.data() + id * bytes_per_element,
-                bytes_per_element);
+                elements.data() + fieldt_size * id,
+                fieldt_size);
     }
 
     auto values = CreateVariableValues(
@@ -124,36 +138,94 @@ void assignment_from_protoboard(const protoboard<FieldT> &pb) {
 
     auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
     builder.FinishSizePrefixed(root);
-
-    auto buf = (char *) builder.GetBufferPointer();
+    return builder;
 }
 
 
-// == Testing ==
+// == Example ==
 
-protoboard<FieldT> example_gadget() {
+bool sha256_gadget_call(
+        unsigned char *request_buf,
+        gadget_callback_t result_stream_callback,
+        void *result_stream_context,
+        gadget_callback_t response_callback,
+        void *response_context
+) {
+    auto root = GetSizePrefixedRoot(request_buf);
+    const GadgetInstance *instance;
+    const AssignmentRequest *assignment_request;
+
+    switch (root->message_type()) {
+        default:
+            return false;
+
+        case Message_R1CSRequest:
+            instance = root->message_as_R1CSRequest()->instance();
+
+        case Message_AssignmentRequest:
+            assignment_request = root->message_as_AssignmentRequest();
+            instance = assignment_request->instance();
+    }
+
     libff::alt_bn128_pp::init_public_params();
     protoboard<FieldT> pb;
 
     digest_variable<FieldT> left(pb, 256, "left");
     digest_variable<FieldT> right(pb, 256, "right");
     digest_variable<FieldT> output(pb, 256, "output");
+    pb.set_input_sizes(left.bits.size() + right.bits.size() + output.bits.size());
 
-    sha256_two_to_one_hash_gadget<FieldT> f(pb, left, right, output, "f");
-    return pb;
-}
+    sha256_two_to_one_hash_gadget<FieldT> sha(pb, left, right, output, "f");
 
-bool example_assignment_request(
-        const AssignmentRequest *request,
-        gadget_callback_t result_stream_callback,
-        void *result_stream_context,
-        gadget_callback_t response_callback,
-        void *response_context
-) {
-    // gadget = example_gadget()
-    // Set inputs.
-    // generate witness.
-    // assignment_from_protoboard.
+    // Witness reduction.
+    auto iv = instance->incoming_variable_ids();
+    auto ie = assignment_request->incoming_elements();
+    auto element_size = ie->size() / iv->size();
+    size_t half_inputs = iv->size() / 2;
+
+    const uint8_t *left_data = ie->data();
+    bit_vector left_bits = to_bit_vector(left_data, half_inputs, element_size);
+    left.generate_r1cs_witness(left_bits);
+
+    const uint8_t *right_data = left_data + element_size * half_inputs;
+    bit_vector right_bits = to_bit_vector(right_data, half_inputs, element_size);
+    right.generate_r1cs_witness(right_bits);
+
+    sha.generate_r1cs_witness();
+
+    // Report full assignment.
+    auto assignment_builder = serialize_assignment_from_protoboard(pb);
+    if (result_stream_callback != NULL) {
+        result_stream_callback(result_stream_context, assignment_builder.GetBufferPointer());
+    }
+
+    // Return digest bits.
+    {
+        FlatBufferBuilder builder;
+
+        vector<FieldT> out_vals = output.bits.get_vals(pb);
+        vector<uint8_t> return_elements(fieldt_size * out_vals.size());
+
+        for (size_t i = 0; i < out_vals.size(); ++i) {
+            into_le(
+                    out_vals[i].as_bigint(),
+                    return_elements.data() + fieldt_size * i,
+                    fieldt_size);
+        }
+
+        auto response = CreateAssignmentResponse(
+                builder,
+                pb.num_variables() + 1,
+                builder.CreateVector(return_elements));
+
+        auto root = CreateRoot(builder, Message_AssignmentResponse, response.Union());
+        builder.FinishSizePrefixed(root);
+
+        if (response_callback != NULL) {
+            return response_callback(response_context, builder.GetBufferPointer());
+        }
+    }
+
     return true;
 }
 
