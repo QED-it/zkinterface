@@ -12,3 +12,4 @@ flatbuffers = "0.5.0"
 [build-dependencies]
 regex = "1"
 cc = "1.0.28"
+cmake = "0.1"

@@ -1,8 +1,10 @@
 extern crate cc;
+extern crate cmake;
 
 use std::fs::rename;
 use std::path::Path;
 use std::process::Command;
+
 
 fn main() {
     match Command::new("flatc").args(&[
@@ -56,34 +58,13 @@ fn main() {
         }
     }
 
-    cc::Build::new()
-        .cpp(true)
-        .flag("-std=c++14")
-        .file("../cpp/gadget.cpp")
-        .compile("cpp_gadget");
+    let dst = cmake::Config::new("../cpp").build();
+    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!("cargo:rustc-link-lib=zkcomponent");
+    println!("cargo:rustc-link-lib=stdc++");
+
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    println!("cargo:include={}", out_dir);
+    // Then use the environment variable DEP_ZKSTANDARD_INCLUDE
+    // .include(std::env::var("DEP_ZKSTANDARD_INCLUDE").unwrap())
 }
-
-
-/* Tentative compilation as a shared lib.
-
-let mut cmd = cc::Build::new()
-    .cpp(true)
-    .flag("-std=c++11")
-    .flag("-fPIC")
-    .flag("-shared")
-    .get_compiler()
-    .to_command();
-
-let so = Path::new(out_dir).join("libcpp_gadget.so");
-
-let output = cmd.args(&["cpp/gadget.cpp", "-o", so.to_str().unwrap()])
-    .output().expect("Compilation failed");
-
-println!("cargo:warning=COMPILE: {:?}", cmd);
-println!("cargo:warning=COMPILE status: {}", output.status);
-println!("cargo:warning=COMPILE stdout: {}", String::from_utf8_lossy(&output.stdout));
-println!("cargo:warning=COMPILE stderr: {}", String::from_utf8_lossy(&output.stderr));
-
-println!("cargo:rustc-link-lib=cpp_gadget");
-println!("cargo:rustc-link-search=.");
-*/
