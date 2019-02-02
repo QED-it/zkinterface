@@ -840,8 +840,9 @@ inline flatbuffers::Offset<AssignmentRequest> CreateAssignmentRequestDirect(
       witness__);
 }
 
-/// Report local and outgoing assignments computed by the gadget.
+/// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
+/// Does not include input and output variables.
 struct AssignedVariables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VALUES = 4
@@ -898,9 +899,6 @@ struct AssignmentResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   /// The values that the gadget assigned to outgoing variables, if any.
   /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-  ///
-  /// Intentionally redundant with AssignedVariables to allow handling
-  /// the outgoing variables separately from the bulk of local variables assignments.
   const flatbuffers::Vector<uint8_t> *outgoing_elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_OUTGOING_ELEMENTS);
   }

@@ -1072,8 +1072,9 @@ impl<'a: 'b, 'b> AssignmentRequestBuilder<'a, 'b> {
   }
 }
 
-/// Report local and outgoing assignments computed by the gadget.
+/// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
+/// Does not include input and output variables.
 pub enum AssignedVariablesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -1200,9 +1201,6 @@ impl<'a> AssignmentResponse<'a> {
   }
   /// The values that the gadget assigned to outgoing variables, if any.
   /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-  ///
-  /// Intentionally redundant with AssignedVariables to allow handling
-  /// the outgoing variables separately from the bulk of local variables assignments.
   #[inline]
   pub fn outgoing_elements(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignmentResponse::VT_OUTGOING_ELEMENTS, None).map(|v| v.safe_slice())
