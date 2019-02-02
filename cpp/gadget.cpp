@@ -62,7 +62,7 @@ bool r1cs_request(
         builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != NULL) {
-            result_stream_callback(result_stream_context, (char *) builder.GetBufferPointer());
+            result_stream_callback(result_stream_context, builder.GetBufferPointer());
         }
     }
 
@@ -78,7 +78,7 @@ bool r1cs_request(
         builder.FinishSizePrefixed(root);
 
         if (response_callback != NULL) {
-            return response_callback(response_context, (char *) builder.GetBufferPointer());
+            return response_callback(response_context, builder.GetBufferPointer());
         }
     }
 
@@ -132,7 +132,7 @@ bool assignments_request(
         builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != NULL) {
-            result_stream_callback(result_stream_context, (char *) builder.GetBufferPointer());
+            result_stream_callback(result_stream_context, builder.GetBufferPointer());
         }
     }
 
@@ -148,7 +148,7 @@ bool assignments_request(
         builder.FinishSizePrefixed(root);
 
         if (response_callback != NULL) {
-            return response_callback(response_context, (char *) builder.GetBufferPointer());
+            return response_callback(response_context, builder.GetBufferPointer());
         }
     }
 
@@ -176,7 +176,7 @@ bool descriptions_request(
     builder.FinishSizePrefixed(root);
 
     if (response_callback != NULL) {
-        return response_callback(response_context, (char *) builder.GetBufferPointer());
+        return response_callback(response_context, builder.GetBufferPointer());
     }
 
     return true;
@@ -184,7 +184,7 @@ bool descriptions_request(
 
 
 bool gadget_request(
-        char *request_ptr,
+        unsigned char *request_ptr,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,

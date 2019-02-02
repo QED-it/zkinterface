@@ -98,7 +98,7 @@ pub struct InstanceDescription {
     pub outgoing_variable_ids: Option<Vec<u64>>,
     pub free_variable_id_before: u64,
     pub field_order: Option<Vec<u8>>,
-    //pub configuration: Option<Vec<(String, &'a [u8])>>,
+//pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
 impl InstanceDescription {
@@ -131,11 +131,11 @@ fn test_gadget_request() {
         field_order: None,
     };
 
-    let r1cs_ctx = make_r1cs_request(&instance);
+    let r1cs_ctx = make_r1cs_request(instance.clone());
 
     println!("Rust received {} results and {} parent response.",
-             r1cs_ctx.0.result_stream.len(),
-             if r1cs_ctx.0.response.is_some() { "a" } else { "no" });
+             r1cs_ctx.ctx.result_stream.len(),
+             if r1cs_ctx.ctx.response.is_some() { "a" } else { "no" });
 
     println!("Got constraints:");
     for c in r1cs_ctx.iter_constraints() {

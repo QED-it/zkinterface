@@ -18,14 +18,15 @@ use gadget_generated::gadget::{
 };
 use std::slice::Iter;
 
-pub fn make_r1cs_request(instance: &InstanceDescription) -> R1CSContext {
+pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
-    let instance = instance.build(&mut builder);
-
-    let request = R1CSRequest::create(&mut builder, &R1CSRequestArgs {
-        instance: Some(instance),
-    });
+    let request = {
+        let i = instance.build(&mut builder);
+        R1CSRequest::create(&mut builder, &R1CSRequestArgs {
+            instance: Some(i),
+        })
+    };
 
     let message = Root::create(&mut builder, &RootArgs {
         message_type: Message::R1CSRequest,
@@ -35,18 +36,21 @@ pub fn make_r1cs_request(instance: &InstanceDescription) -> R1CSContext {
     builder.finish_size_prefixed(message, None);
     let buf = builder.finished_data();
 
-    let response = call_gadget(&buf).unwrap();
+    let ctx = call_gadget(&buf).unwrap();
 
-    R1CSContext(response)
+    R1CSContext { instance, ctx }
 }
 
 
-pub struct R1CSContext(pub CallbackContext);
+pub struct R1CSContext {
+    pub instance: InstanceDescription,
+    pub ctx: CallbackContext,
+}
 
 impl R1CSContext {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
-            messages_iter: self.0.result_stream.iter(),
+            messages_iter: self.ctx.result_stream.iter(),
             constraints_count: 0,
             next_constraint: 0,
             constraints: None,
@@ -54,7 +58,7 @@ impl R1CSContext {
     }
 
     pub fn response(&self) -> Option<R1CSResponse> {
-        let buf = self.0.response.as_ref()?;
+        let buf = self.ctx.response.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
         message.message_as_r1csresponse()
     }
