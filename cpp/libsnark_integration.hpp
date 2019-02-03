@@ -142,7 +142,7 @@ FlatBufferBuilder serialize_protoboard_constraints(
 }
 
 
-FlatBufferBuilder serialize_protoboard_assignment(
+FlatBufferBuilder serialize_protoboard_local_assignment(
         const GadgetInstance *instance,
         const protoboard<FieldT> &pb
 ) {
@@ -230,7 +230,7 @@ bool example_gadget_call(
     sha.generate_r1cs_witness();
 
     // Report full assignment.
-    auto assignment_builder = serialize_protoboard_assignment(instance, pb);
+    auto assignment_builder = serialize_protoboard_local_assignment(instance, pb);
     if (result_stream_callback != NULL) {
         result_stream_callback(result_stream_context, assignment_builder.GetBufferPointer());
     }
