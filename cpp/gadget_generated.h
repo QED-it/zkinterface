@@ -759,13 +759,17 @@ inline flatbuffers::Offset<R1CSResponse> CreateR1CSResponseDirect(
 struct AssignmentRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_INSTANCE = 4,
-    VT_INCOMING_ELEMENTS = 6,
-    VT_WITNESS = 8
+    VT_GENERATE_R1CS = 6,
+    VT_INCOMING_ELEMENTS = 8,
+    VT_WITNESS = 10
   };
   /// All details necessary to construct the instance.
   /// The same instance parameter must be provided as in the corresponding R1CSRequest.
   const GadgetInstance *instance() const {
     return GetPointer<const GadgetInstance *>(VT_INSTANCE);
+  }
+  bool generate_r1cs() const {
+    return GetField<uint8_t>(VT_GENERATE_R1CS, 0) != 0;
   }
   /// The values that the caller assigned to Incoming Variables.
   /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
@@ -781,6 +785,7 @@ struct AssignmentRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_INSTANCE) &&
            verifier.VerifyTable(instance()) &&
+           VerifyField<uint8_t>(verifier, VT_GENERATE_R1CS) &&
            VerifyOffset(verifier, VT_INCOMING_ELEMENTS) &&
            verifier.VerifyVector(incoming_elements()) &&
            VerifyOffset(verifier, VT_WITNESS) &&
@@ -795,6 +800,9 @@ struct AssignmentRequestBuilder {
   flatbuffers::uoffset_t start_;
   void add_instance(flatbuffers::Offset<GadgetInstance> instance) {
     fbb_.AddOffset(AssignmentRequest::VT_INSTANCE, instance);
+  }
+  void add_generate_r1cs(bool generate_r1cs) {
+    fbb_.AddElement<uint8_t>(AssignmentRequest::VT_GENERATE_R1CS, static_cast<uint8_t>(generate_r1cs), 0);
   }
   void add_incoming_elements(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> incoming_elements) {
     fbb_.AddOffset(AssignmentRequest::VT_INCOMING_ELEMENTS, incoming_elements);
@@ -817,18 +825,21 @@ struct AssignmentRequestBuilder {
 inline flatbuffers::Offset<AssignmentRequest> CreateAssignmentRequest(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<GadgetInstance> instance = 0,
+    bool generate_r1cs = false,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> incoming_elements = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> witness = 0) {
   AssignmentRequestBuilder builder_(_fbb);
   builder_.add_witness(witness);
   builder_.add_incoming_elements(incoming_elements);
   builder_.add_instance(instance);
+  builder_.add_generate_r1cs(generate_r1cs);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<AssignmentRequest> CreateAssignmentRequestDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<GadgetInstance> instance = 0,
+    bool generate_r1cs = false,
     const std::vector<uint8_t> *incoming_elements = nullptr,
     const std::vector<flatbuffers::Offset<CustomKeyValue>> *witness = nullptr) {
   auto incoming_elements__ = incoming_elements ? _fbb.CreateVector<uint8_t>(*incoming_elements) : 0;
@@ -836,6 +847,7 @@ inline flatbuffers::Offset<AssignmentRequest> CreateAssignmentRequestDirect(
   return Gadget::CreateAssignmentRequest(
       _fbb,
       instance,
+      generate_r1cs,
       incoming_elements__,
       witness__);
 }

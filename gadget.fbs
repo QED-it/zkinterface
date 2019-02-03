@@ -140,6 +140,8 @@ table AssignmentRequest {
     /// The same instance parameter must be provided as in the corresponding R1CSRequest.
     instance          :GadgetInstance;
 
+    generate_r1cs     :bool;
+
     /// The values that the caller assigned to Incoming Variables.
     /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
     incoming_elements :[ubyte];

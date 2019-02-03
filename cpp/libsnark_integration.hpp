@@ -71,7 +71,36 @@ bit_vector to_bit_vector(const uint8_t *elements, size_t num_elements, size_t el
 size_t fieldt_size = 32;
 
 
-FlatBufferBuilder serialize_constraints_from_protoboard(const protoboard<FieldT> &pb) {
+/** Convert protoboard index to standard variable ID. */
+uint64_t convert_variable_id(const GadgetInstance *instance, uint64_t index) {
+    // Constant one?
+    if (index == 0) return 0;
+    index -= 1;
+
+    // An input?
+    auto in_ids = instance->incoming_variable_ids();
+    if (index < in_ids->size()) {
+        return in_ids->Get(index);
+    }
+    index -= in_ids->size();
+
+    // An output?
+    auto out_ids = instance->outgoing_variable_ids();
+    if (index < out_ids->size()) {
+        return out_ids->Get(index);
+    }
+    index -= out_ids->size();
+
+    // A local variable.
+    auto free_id = instance->free_variable_id_before();
+    return free_id + index;
+}
+
+
+FlatBufferBuilder serialize_protoboard_constraints(
+        const GadgetInstance *instance,
+        const protoboard<FieldT> &pb
+) {
     FlatBufferBuilder builder;
 
     /** Closure: add a row of a matrix */
@@ -80,7 +109,7 @@ FlatBufferBuilder serialize_constraints_from_protoboard(const protoboard<FieldT>
         vector<uint8_t> coeffs(fieldt_size * terms.size());
 
         for (size_t i = 0; i < terms.size(); i++) {
-            variable_ids[i] = terms[i].index;
+            variable_ids[i] = convert_variable_id(instance, terms[i].index);
             into_le(
                     terms[i].coeff.as_bigint(),
                     coeffs.data() + fieldt_size * i,
@@ -113,19 +142,26 @@ FlatBufferBuilder serialize_constraints_from_protoboard(const protoboard<FieldT>
 }
 
 
-FlatBufferBuilder serialize_assignment_from_protoboard(const protoboard<FieldT> &pb) {
+FlatBufferBuilder serialize_protoboard_assignment(
+        const GadgetInstance *instance,
+        const protoboard<FieldT> &pb
+) {
     FlatBufferBuilder builder;
 
-    auto num_vars = pb.num_variables();
+    size_t all_vars = pb.num_variables();
+    size_t shared_vars = instance->incoming_variable_ids()->size() + instance->outgoing_variable_ids()->size();
+    size_t local_vars = all_vars - shared_vars;
 
-    vector<uint64_t> variable_ids(num_vars);
-    vector<uint8_t> elements(fieldt_size * num_vars);
+    vector<uint64_t> variable_ids(local_vars);
+    vector<uint8_t> elements(fieldt_size * local_vars);
 
-    for (size_t id = 0; id < num_vars; ++id) {
-        variable_ids[id] = id;
+    uint64_t free_id = instance->free_variable_id_before();
+
+    for (size_t index = 0; index < local_vars; ++index) {
+        variable_ids[index] = free_id + index;
         into_le(
-                pb.val(id).as_bigint(),
-                elements.data() + fieldt_size * id,
+                pb.val(1 + shared_vars + index).as_bigint(),
+                elements.data() + fieldt_size * index,
                 fieldt_size);
     }
 
@@ -144,7 +180,7 @@ FlatBufferBuilder serialize_assignment_from_protoboard(const protoboard<FieldT> 
 
 // == Example ==
 
-bool sha256_gadget_call(
+bool example_gadget_call(
         unsigned char *request_buf,
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -194,7 +230,7 @@ bool sha256_gadget_call(
     sha.generate_r1cs_witness();
 
     // Report full assignment.
-    auto assignment_builder = serialize_assignment_from_protoboard(pb);
+    auto assignment_builder = serialize_protoboard_assignment(instance, pb);
     if (result_stream_callback != NULL) {
         result_stream_callback(result_stream_context, assignment_builder.GetBufferPointer());
     }

@@ -79,13 +79,15 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
             let buf: &[u8] = self.messages_iter.next()?;
 
             // Parse the message, or fail if invalid.
-            let message = get_size_prefixed_root_as_root(buf);
-            let assigned_variables = message.message_as_assigned_variables().unwrap();
-            let values = assigned_variables.values().unwrap();
+            let message = get_size_prefixed_root_as_root(buf).message_as_assigned_variables();
+            let assigned_variables = match message {
+                Some(message) => message.values().unwrap(),
+                None => continue,
+            };
 
             // Start iterating the elements of the current message.
-            self.var_ids = values.variable_ids().unwrap().safe_slice();
-            self.elements = values.elements().unwrap();
+            self.var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
+            self.elements = assigned_variables.elements().unwrap();
             self.next_element = 0;
         }
 
@@ -122,6 +124,7 @@ pub fn make_assignment_request(
         let i = instance.build(&mut builder);
         AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
             instance: Some(i),
+            generate_r1cs: false,
             incoming_elements: Some(incoming_bytes),
             witness: None,
         })

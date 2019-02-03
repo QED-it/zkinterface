@@ -92,9 +92,11 @@ impl<'a> Iterator for R1CSIterator<'a> {
             let buf: &[u8] = self.messages_iter.next()?;
 
             // Parse the message, or fail if invalid.
-            let constraints = get_size_prefixed_root_as_root(buf)
-                .message_as_r1csconstraints().unwrap()
-                .constraints().unwrap();
+            let message = get_size_prefixed_root_as_root(buf).message_as_r1csconstraints();
+            let constraints = match message {
+                Some(message) => message.constraints().unwrap(),
+                None => continue,
+            };
 
             // Start iterating the elements of the current message.
             self.constraints_count = constraints.len();

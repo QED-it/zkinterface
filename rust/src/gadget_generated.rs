@@ -998,18 +998,24 @@ impl<'a> AssignmentRequest<'a> {
       if let Some(x) = args.witness { builder.add_witness(x); }
       if let Some(x) = args.incoming_elements { builder.add_incoming_elements(x); }
       if let Some(x) = args.instance { builder.add_instance(x); }
+      builder.add_generate_r1cs(args.generate_r1cs);
       builder.finish()
     }
 
     pub const VT_INSTANCE: flatbuffers::VOffsetT = 4;
-    pub const VT_INCOMING_ELEMENTS: flatbuffers::VOffsetT = 6;
-    pub const VT_WITNESS: flatbuffers::VOffsetT = 8;
+    pub const VT_GENERATE_R1CS: flatbuffers::VOffsetT = 6;
+    pub const VT_INCOMING_ELEMENTS: flatbuffers::VOffsetT = 8;
+    pub const VT_WITNESS: flatbuffers::VOffsetT = 10;
 
   /// All details necessary to construct the instance.
   /// The same instance parameter must be provided as in the corresponding R1CSRequest.
   #[inline]
   pub fn instance(&self) -> Option<GadgetInstance<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<GadgetInstance<'a>>>(AssignmentRequest::VT_INSTANCE, None)
+  }
+  #[inline]
+  pub fn generate_r1cs(&self) -> bool {
+    self._tab.get::<bool>(AssignmentRequest::VT_GENERATE_R1CS, Some(false)).unwrap()
   }
   /// The values that the caller assigned to Incoming Variables.
   /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
@@ -1027,6 +1033,7 @@ impl<'a> AssignmentRequest<'a> {
 
 pub struct AssignmentRequestArgs<'a> {
     pub instance: Option<flatbuffers::WIPOffset<GadgetInstance<'a >>>,
+    pub generate_r1cs: bool,
     pub incoming_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub witness: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
 }
@@ -1035,6 +1042,7 @@ impl<'a> Default for AssignmentRequestArgs<'a> {
     fn default() -> Self {
         AssignmentRequestArgs {
             instance: None,
+            generate_r1cs: false,
             incoming_elements: None,
             witness: None,
         }
@@ -1048,6 +1056,10 @@ impl<'a: 'b, 'b> AssignmentRequestBuilder<'a, 'b> {
   #[inline]
   pub fn add_instance(&mut self, instance: flatbuffers::WIPOffset<GadgetInstance<'b >>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<GadgetInstance>>(AssignmentRequest::VT_INSTANCE, instance);
+  }
+  #[inline]
+  pub fn add_generate_r1cs(&mut self, generate_r1cs: bool) {
+    self.fbb_.push_slot::<bool>(AssignmentRequest::VT_GENERATE_R1CS, generate_r1cs, false);
   }
   #[inline]
   pub fn add_incoming_elements(&mut self, incoming_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
