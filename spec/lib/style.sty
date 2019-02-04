@@ -1,0 +1,81 @@
+% From https://github.com/aytchell/latex-listings-protobuf/tree/09c39676e6afb2af8c7d21ed21a516359c52e27c/
+
+\usepackage{xcolor}
+\usepackage{xcolor-solarized}
+\usepackage{textcomp}
+
+\newcommand{\SetProtoColorsSolarized}{
+  % Colors taken from the 'solarized' color scheme of Ethan Schoonover
+  % (with light background)
+  % http://ethanschoonover.com/solarized
+  \colorlet{proto_basic}{solarized-base00}
+  \colorlet{proto_keyword}{solarized-cyan}
+  \colorlet{proto_type}{solarized-cyan}
+  \colorlet{proto_options}{solarized-cyan}
+  \colorlet{proto_comment}{solarized-base1}
+  \colorlet{proto_string}{solarized-blue}
+  \colorlet{proto_number}{solarized-violet}
+  \colorlet{proto_ident}{solarized-base00}
+  \colorlet{proto_digits}{solarized-violet}
+  \colorlet{proto_background}{solarized-base3}
+}
+
+\newcommand{\SetProtoColorsBlueish}{
+  % Colors inspired by the NASM style of Robin Eklind
+  % https://github.com/mewspring/latex
+  \definecolor{proto_basic}{RGB}{0,0,0}             % black
+  \definecolor{proto_keyword}{RGB}{0,0,0}         % black
+  \definecolor{proto_ident}{RGB}{128,0,0}            % dark red
+  \definecolor{proto_options}{RGB}{128,0,128}       % purple
+  \definecolor{proto_comment}{RGB}{0,128,0}         % dark green
+  \definecolor{proto_string}{RGB}{255,0,0}          % red
+  \definecolor{proto_number}{RGB}{108,113,196}      % violet
+  \definecolor{proto_type}{RGB}{0,0,255}             % blue
+  \definecolor{proto_digits}{RGB}{0,0,128}          % dark blue
+  \definecolor{proto_background}{RGB}{255,255,255}  % white
+}
+
+\newcommand{\SetProtoColorsTomorrow}{
+  % Colors taken from the 'Tomorrow' color scheme of Chris Kempson
+  % https://github.com/chriskempson/tomorrow-theme/blob/master/vim/colors/Tomorrow.vim
+  \definecolor{proto_basic}{RGB}{77, 77, 76}          % dark grey
+  %\definecolor{proto_keyword}{RGB}{245, 135, 31}      % orange
+  \definecolor{proto_keyword}{RGB}{66, 113, 174}      % orange
+  %\definecolor{proto_type}{RGB}{66, 113, 174}         % purple
+  \definecolor{proto_type}{RGB}{200, 40, 41}         % red
+  \definecolor{proto_options}{RGB}{137, 89, 168}
+  %\definecolor{proto_comment}{RGB}{142, 144, 140}     % gray
+  \definecolor{proto_comment}{RGB}{0,0,0}             % black
+  \definecolor{proto_string}{RGB}{113, 140, 0}        % green
+  \definecolor{proto_number}{RGB}{137, 89, 168}
+  %\definecolor{proto_ident}{RGB}{200, 40, 41}         % red
+  \definecolor{proto_ident}{RGB}{0,128,0}           % dark green
+  \definecolor{proto_digits}{RGB}{245, 135, 31}       % orange
+  \definecolor{proto_background}{RGB}{255, 255, 255}  % white
+}
+
+%\SetProtoColorsSolarized{}
+\SetProtoColorsTomorrow{}
+%\SetProtoColorsBlueish{}
+
+\lstdefinestyle{protobuf}{
+  frame=lines,
+  %xleftmargin=\parindent,
+  belowcaptionskip=1\baselineskip,
+  backgroundcolor=\color{proto_background},
+  basicstyle=\color{proto_basic}\footnotesize\ttfamily,
+	keywordstyle=[1]\color{proto_keyword},
+	keywordstyle=[2]\color{proto_type},
+	keywordstyle=[3]\color{proto_options},
+	commentstyle=\color{proto_comment},
+	stringstyle=\color{proto_string},
+  numberstyle=\color{proto_ident}\tiny,
+  identifierstyle=\color{proto_ident}\bfseries,
+	numbers=none, %left,
+	numbersep=5pt,
+	breaklines=false,
+	showstringspaces=false,
+	tabsize=2,
+	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	upquote=true,
+}

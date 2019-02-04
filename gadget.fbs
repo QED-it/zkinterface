@@ -29,7 +29,7 @@ file_extension "zkco";
 // Unique within a constraint system.
 // Zero is a reserved special value.
 //
-// === BigInt = [ubyte]
+// === BigInt
 //
 // Big integers are represented as canonical little-endian byte arrays.
 // Multiple big integers can be concatenated in a single array.
@@ -92,7 +92,7 @@ table GadgetInstance {
     /// Optional: Any static parameter that may influence the instance construction.
     /// Parameters can be standard, conventional, or specific to a gadget.
     /// Example: the depth of a Merkle tree.
-    /// Counter-example: the Merkle authentication path is not configuration (rather witness).
+    /// Counter-example: the Merkle path is not configuration (rather witness).
     configuration           :[CustomKeyValue];
 }
 
@@ -108,7 +108,7 @@ table CustomKeyValue {
 /// Request to build an instance.
 table R1CSRequest {
     /// All details necessary to construct the instance.
-    /// The same instance parameter must be provided in the corresponding AssignmentRequest.
+    /// The same instance must be provided in the corresponding AssignmentRequest.
     instance :GadgetInstance;
 }
 
@@ -137,7 +137,7 @@ table R1CSResponse {
 /// Request assignments computed from a witness.
 table AssignmentRequest {
     /// All details necessary to construct the instance.
-    /// The same instance parameter must be provided as in the corresponding R1CSRequest.
+    /// The same instance must be provided as in the corresponding R1CSRequest.
     instance          :GadgetInstance;
 
     generate_r1cs     :bool;

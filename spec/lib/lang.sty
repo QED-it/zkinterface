@@ -1,0 +1,18 @@
+% Based on https://github.com/aytchell/latex-listings-protobuf/tree/09c39676e6afb2af8c7d21ed21a516359c52e27c/
+
+\lstdefinelanguage[2]{flatbuffers}{%
+    sensitive=true,
+    % Keywords
+    morekeywords={namespace,union,table,struct,root_type,file_identifier,file_extension},
+    % Interpret characters as keywords.
+    otherkeywords={[,],:},
+    % Types
+    morekeywords=[2]{double,float,byte,int32,int64,ubyte,uint32,uint64,bool,string,[,],:},
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]{"}
+}
+\lstalias[]{flatbuffers2}[2]{flatbuffers}
+
+\lstdefinelanguage[3]{flatbuffers}[2]{flatbuffers}{}
+\lstalias[]{flatbuffers3}[3]{flatbuffers}

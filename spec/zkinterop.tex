@@ -9,6 +9,11 @@
 	\usepackage{hyperref}
 	\usepackage{graphicx}
 	\usepackage{todonotes}
+	\usepackage{listings}
+	\usepackage{pxfonts}
+
+	\usepackage{lib/lang}  % include language definition for protobuf
+	\usepackage{lib/style} % include custom style for proto declarations.	
 	
 	%\usepackage{sagetex}
 	
@@ -19,7 +24,6 @@
 	\newcommand\dtodo[1]{\todo[color=red!20]{#1}}
 	\newcommand\atodo[1]{\todo[color=green!20]{#1}}
 	\newcommand\etodo[1]{\todo[color=blue!20]{#1}}
-
 	\def\boxit#1{%
 		\smash{\color{red}\fboxrule=1pt\relax\fboxsep=-2pt\llap{\rlap{\fbox{\strut\makebox[#1]{}}}~}}\ignorespaces
 	}
@@ -73,7 +77,7 @@
 			\item [Interface] The standard way to communicate between the caller and callee
 			\item [Caller] The application that calls a component. 
 			\item [Callee] The component that is being called by the caller.
-			\item [Component] A function that defines a specific computation. A sub-component is a component that is called by another component.
+			\item [Component (Gadget)] A function that defines a specific computation. A sub-component is a component that is called by another component.
 			\item [Configuration] Any static parameter that influences the construction of the component. 
 			\item [Instance] A specific call to the component with a given configuration and given input variables.
 			\item [Instance Input Variables] Variables provided by the caller to the callee.
@@ -127,5 +131,7 @@
 		
 		
 		\input{description.tex}
+
+		\input{specification.tex}
 		
 	\end{document}
