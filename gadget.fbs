@@ -1,16 +1,14 @@
 namespace Gadget;
 
 union Message {
+    R1CSConstraints,
+    AssignedVariables,
+
+    ComponentCall,
+    ComponentReturn,
+
     GadgetsDescriptionRequest,
     GadgetsDescriptionResponse,
-
-    R1CSRequest,
-    R1CSConstraints,
-    R1CSResponse,
-
-    AssignmentRequest,
-    AssignedVariables,
-    AssignmentResponse,
 }
 
 table Root {
@@ -23,13 +21,13 @@ file_extension "zkco";
 
 
 // == Types ==
-//
-// === Variable ID = uint64
+
+// Variable ID = uint64
 //
 // Unique within a constraint system.
 // Zero is a reserved special value.
-//
-// === BigInt
+
+// BigInt
 //
 // Big integers are represented as canonical little-endian byte arrays.
 // Multiple big integers can be concatenated in a single array.
@@ -49,10 +47,13 @@ table VariableValues {
     /// Field Elements assigned to variables.
     /// Contiguous BigInts in the same order as variable_ids.
     ///
-    /// An element representation should be the same size as `instance.field_order`.
-    /// A smaller size may be used as an optimization. Truncated bytes are zeros.
+    /// The field in use is defined in `instance.field_order`.
     ///
-    /// element size = elements.length / variable_ids.length
+    /// The size of an element representation is determined by:
+    ///     element size = elements.length / variable_ids.length
+    ///
+    /// The element representation may be truncated and therefore shorter
+    /// than the canonical representation. Truncated bytes are treated as zeros.
     elements       :[ubyte];
 }
 
@@ -72,13 +73,13 @@ table GadgetInstance {
 
     /// Incoming Variables to use as connections to the gadget.
     /// Allocated by the caller.
-    /// Assigned by the caller in `AssignmentRequest.incoming_elements`.
+    /// Assigned by the caller in `Witness.incoming_elements`.
     incoming_variable_ids   :[uint64];
 
     /// Outgoing Variables to use as connections to the gadget.
     /// There may be no Outgoing Variables if the gadget is a pure assertion.
     /// Allocated by the caller.
-    /// Assigned by the called gadget in `AssignmentResponse.outgoing_elements`.
+    /// Assigned by the called gadget in `ComponentReturn.outgoing_elements`.
     outgoing_variable_ids   :[uint64];
 
     /// First free Variable ID before the call.
@@ -103,52 +104,12 @@ table CustomKeyValue {
 }
 
 
-// == Messages for Instantiation ==
-
-/// Request to build an instance.
-table R1CSRequest {
-    /// All details necessary to construct the instance.
-    /// The same instance must be provided in the corresponding AssignmentRequest.
-    instance :GadgetInstance;
-}
+// == Messages ==
 
 /// Report constraints to be added to the constraints system.
 /// To send to the stream of constraints.
 table R1CSConstraints {
     constraints    :[Constraint];
-}
-
-/// Response after all R1CSConstraints have been sent.
-table R1CSResponse {
-    /// First variable ID free after the gadget call.
-    /// A variable ID greater than all IDs allocated by the gadget.
-    free_variable_id_after :uint64;
-
-    /// Optional: Any info that may be useful to the caller.
-    info                   :[CustomKeyValue];
-
-    /// Optional: An error message. Omitted if no errors.
-    error                  :string;
-}
-
-
-// == Messages for Proving ==
-
-/// Request assignments computed from a witness.
-table AssignmentRequest {
-    /// All details necessary to construct the instance.
-    /// The same instance must be provided as in the corresponding R1CSRequest.
-    instance          :GadgetInstance;
-
-    generate_r1cs     :bool;
-
-    /// The values that the caller assigned to Incoming Variables.
-    /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
-    incoming_elements :[ubyte];
-
-    /// Optional: Any info that may be useful to the gadget to compute its assignments.
-    /// Example: Merkle authentication path.
-    witness           :[CustomKeyValue];
 }
 
 /// Report local assignments computed by the gadget.
@@ -158,21 +119,45 @@ table AssignedVariables {
     values :VariableValues;
 }
 
-/// Response after all AssignedVariables have been sent.
-table AssignmentResponse {
+table ComponentCall {
+    /// All details necessary to construct the instance.
+    /// The same instance must be provided for R1CS and assignment generation.
+    instance            :GadgetInstance;
+
+    /// Whether constraints should be generated.
+    generate_r1cs       :bool;
+
+    /// Whether an assignment should be generated.
+    /// Provide witness values to the component.
+    generate_assignment :Witness;
+}
+
+/// Details necessary to compute an assignment.
+table Witness {
+    /// The values that the caller assigned to Incoming Variables.
+    /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+    incoming_elements :[ubyte];
+
+    /// Optional: Any info that may be useful to the gadget to compute its assignments.
+    /// Example: Merkle authentication path.
+    info              :[CustomKeyValue];
+}
+
+/// Response after all R1CSConstraints or AssignedVariables have been sent.
+table ComponentReturn {
     /// First variable ID free after the gadget call.
     /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id_after :uint64;
-
-    /// The values that the gadget assigned to outgoing variables, if any.
-    /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-    outgoing_elements      :[ubyte];
 
     /// Optional: Any info that may be useful to the caller.
     info                   :[CustomKeyValue];
 
     /// Optional: An error message. Null if no error.
     error                  :string;
+
+    /// The values that the gadget assigned to outgoing variables, if any.
+    /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
+    outgoing_elements      :[ubyte];
 }
 
 

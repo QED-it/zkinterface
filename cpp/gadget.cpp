@@ -11,7 +11,7 @@ typedef uint64_t VariableId;
 
 
 bool r1cs_request(
-        const R1CSRequest *request,
+        const ComponentCall *request,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -35,12 +35,12 @@ bool r1cs_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        vector <uint64_t> variable_ids;
+        vector<uint64_t> variable_ids;
         variable_ids.push_back(free_variable_id_before); // First variable.
         variable_ids.push_back(free_variable_id_before + 1); // Second variable.
         free_variable_id_after = free_variable_id_before + 2;
 
-        vector <uint8_t> elements = {
+        vector<uint8_t> elements = {
                 10, 11, 12, // First coefficient.
                 8, 7, 6, // Second coefficient.
         };
@@ -52,7 +52,7 @@ bool r1cs_request(
 
         auto constraint = CreateConstraint(builder, lc, lc, lc);
 
-        vector <flatbuffers::Offset<Constraint>> constraints;
+        vector<flatbuffers::Offset<Constraint>> constraints;
         constraints.push_back(constraint);
         constraints.push_back(constraint);
 
@@ -61,7 +61,7 @@ bool r1cs_request(
         auto root = CreateRoot(builder, Message_R1CSConstraints, r1csConstraints.Union());
         builder.FinishSizePrefixed(root);
 
-        if (result_stream_callback != NULL) {
+        if (result_stream_callback != nullptr) {
             result_stream_callback(result_stream_context, builder.GetBufferPointer());
         }
     }
@@ -70,14 +70,14 @@ bool r1cs_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateR1CSResponse(
+        auto response = CreateComponentReturn(
                 builder,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_R1CSResponse, response.Union());
+        auto root = CreateRoot(builder, Message_ComponentReturn, response.Union());
         builder.FinishSizePrefixed(root);
 
-        if (response_callback != NULL) {
+        if (response_callback != nullptr) {
             return response_callback(response_context, builder.GetBufferPointer());
         }
     }
@@ -87,7 +87,7 @@ bool r1cs_request(
 
 
 bool assignments_request(
-        const AssignmentRequest *request,
+        const ComponentCall *call,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -95,10 +95,10 @@ bool assignments_request(
         gadget_callback_t response_callback,
         void *response_context
 ) {
-    // Read the request.
+    // Read the call.
     uint64_t free_variable_id_before;
     {
-        auto instance = request->instance();
+        auto instance = call->instance();
         free_variable_id_before = instance->free_variable_id_before();
         cout << "C++ got assignment request"
              << ", name=" << instance->gadget_name()->str()
@@ -111,12 +111,12 @@ bool assignments_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        vector <uint64_t> variable_ids;
+        vector<uint64_t> variable_ids;
         variable_ids.push_back(free_variable_id_before); // First variable.
         variable_ids.push_back(free_variable_id_before + 1); // Second variable.
         free_variable_id_after = free_variable_id_before + 2;
 
-        vector <uint8_t> elements = {
+        vector<uint8_t> elements = {
                 10, 11, 12, // First element.
                 8, 7, 6, // Second element.
         };
@@ -131,7 +131,7 @@ bool assignments_request(
         auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
         builder.FinishSizePrefixed(root);
 
-        if (result_stream_callback != NULL) {
+        if (result_stream_callback != nullptr) {
             result_stream_callback(result_stream_context, builder.GetBufferPointer());
         }
     }
@@ -140,14 +140,14 @@ bool assignments_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateAssignmentResponse(
+        auto response = CreateComponentReturn(
                 builder,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_AssignmentResponse, response.Union());
+        auto root = CreateRoot(builder, Message_ComponentReturn, response.Union());
         builder.FinishSizePrefixed(root);
 
-        if (response_callback != NULL) {
+        if (response_callback != nullptr) {
             return response_callback(response_context, builder.GetBufferPointer());
         }
     }
@@ -175,7 +175,7 @@ bool descriptions_request(
     auto root = CreateRoot(builder, Message_GadgetsDescriptionResponse, response.Union());
     builder.FinishSizePrefixed(root);
 
-    if (response_callback != NULL) {
+    if (response_callback != nullptr) {
         return response_callback(response_context, builder.GetBufferPointer());
     }
 
@@ -194,26 +194,30 @@ bool gadget_request(
 ) {
     auto root = GetSizePrefixedRoot(request_ptr);
 
-    switch (root->message_type()) {
-
-        case Message_GadgetsDescriptionRequest:
-            return descriptions_request(response_callback, response_context);
-
-        case Message_R1CSRequest:
-            return r1cs_request(
-                    root->message_as_R1CSRequest(),
-                    result_stream_callback, result_stream_context,
-                    response_callback, response_context
-            );
-
-        case Message_AssignmentRequest:
-            return assignments_request(
-                    root->message_as_AssignmentRequest(),
-                    result_stream_callback, result_stream_context,
-                    response_callback, response_context
-            );
-
-        default:
-            return false; // Error, unknown request.
+    if (root->message_type() != Message_ComponentCall) {
+        return false; // Error, unknown request.
     }
+
+    auto call = root->message_as_ComponentCall();
+
+    if (call->generate_r1cs()) {
+        bool ok = r1cs_request(
+                call,
+                result_stream_callback, result_stream_context,
+                response_callback, response_context
+        );
+        if (!ok) return false;
+    }
+
+    if (call->generate_assignment() != nullptr) {
+        bool ok = assignments_request(
+                call,
+                result_stream_callback, result_stream_context,
+                response_callback, response_context
+        );
+        if (!ok) return false;
+    }
+
+    return true;
+
 }

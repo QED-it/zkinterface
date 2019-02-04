@@ -7,11 +7,11 @@ use gadget_call::{
 };
 use gadget_generated::gadget::{
     self,
+    ComponentCall,
+    ComponentCallArgs,
+    ComponentReturn,
     get_size_prefixed_root_as_root,
     Message,
-    R1CSRequest,
-    R1CSRequestArgs,
-    R1CSResponse,
     Root,
     RootArgs,
     VariableValues,
@@ -23,13 +23,15 @@ pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
 
     let request = {
         let i = instance.build(&mut builder);
-        R1CSRequest::create(&mut builder, &R1CSRequestArgs {
+        ComponentCall::create(&mut builder, &ComponentCallArgs {
             instance: Some(i),
+            generate_r1cs: true,
+            generate_assignment: None,
         })
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::R1CSRequest,
+        message_type: Message::ComponentCall,
         message: Some(request.as_union_value()),
     });
 
@@ -57,10 +59,10 @@ impl R1CSContext {
         }
     }
 
-    pub fn response(&self) -> Option<R1CSResponse> {
+    pub fn response(&self) -> Option<ComponentReturn> {
         let buf = self.ctx.response.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_r1csresponse()
+        message.message_as_component_return()
     }
 }
 
@@ -133,4 +135,3 @@ impl<'a> Iterator for R1CSIterator<'a> {
     }
     // TODO: Replace unwrap and panic with Result.
 }
-
