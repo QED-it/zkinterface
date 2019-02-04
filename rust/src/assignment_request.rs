@@ -5,13 +5,15 @@ use gadget_call::{
     InstanceDescription,
 };
 use gadget_generated::gadget::{
-    AssignmentRequest,
-    AssignmentRequestArgs,
-    AssignmentResponse,
+    ComponentCall,
+    ComponentCallArgs,
+    ComponentReturn,
     get_size_prefixed_root_as_root,
     Message,
     Root,
     RootArgs,
+    Witness,
+    WitnessArgs,
 };
 use std::slice::Iter;
 
@@ -30,10 +32,10 @@ impl AssignmentContext {
         }
     }
 
-    pub fn response(&self) -> Option<AssignmentResponse> {
+    pub fn response(&self) -> Option<ComponentReturn> {
         let buf = self.ctx.response.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_assignment_response()
+        message.message_as_component_return()
     }
 
     pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
@@ -122,16 +124,19 @@ pub fn make_assignment_request(
 
     let request = {
         let i = instance.build(&mut builder);
-        AssignmentRequest::create(&mut builder, &AssignmentRequestArgs {
+        let witness = Witness::create(&mut builder, &WitnessArgs {
+            incoming_elements: Some(incoming_bytes),
+            info: None,
+        });
+        ComponentCall::create(&mut builder, &ComponentCallArgs {
             instance: Some(i),
             generate_r1cs: false,
-            incoming_elements: Some(incoming_bytes),
-            witness: None,
+            generate_assignment: Some(witness),
         })
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::AssignmentRequest,
+        message_type: Message::ComponentCall,
         message: Some(request.as_union_value()),
     });
 
