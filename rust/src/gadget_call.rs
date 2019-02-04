@@ -3,13 +3,9 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-extern crate flatbuffers;
-
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
+use gadget_generated::gadget::{GadgetInstance, GadgetInstanceArgs};
 use std::slice;
-
-#[allow(non_snake_case)]
-#[path = "./gadget_generated.rs"]
-pub mod gadget_generated;
 
 
 #[allow(improper_ctypes)]
@@ -40,12 +36,6 @@ fn from_c<'a, CTX>(
     let buf = unsafe { slice::from_raw_parts(response, response_len as usize) };
 
     (context, buf)
-}
-
-
-pub struct CallbackContext {
-    result_stream: Vec<Vec<u8>>,
-    response: Option<Vec<u8>>,
 }
 
 /// Collect the stream of results into the context.
@@ -84,9 +74,9 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
         gadget_request(
             message_ptr,
             result_stream_callback_c,
-            &mut context as *mut _ as *mut CallbackContext,
+            &mut context as *mut CallbackContext,
             response_callback_c,
-            &mut context as *mut _ as *mut CallbackContext,
+            &mut context as *mut CallbackContext,
         )
     };
 
@@ -96,90 +86,103 @@ pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
     }
 }
 
+pub struct CallbackContext {
+    pub result_stream: Vec<Vec<u8>>,
+    pub response: Option<Vec<u8>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct InstanceDescription {
+    pub gadget_name: String,
+    pub incoming_variable_ids: Vec<u64>,
+    pub outgoing_variable_ids: Option<Vec<u64>>,
+    pub free_variable_id_before: u64,
+    pub field_order: Option<Vec<u8>>,
+//pub configuration: Option<Vec<(String, &'a [u8])>>,
+}
+
+impl InstanceDescription {
+    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
+        let i = GadgetInstanceArgs {
+            gadget_name: Some(builder.create_string(&self.gadget_name)),
+            incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
+            outgoing_variable_ids: self.outgoing_variable_ids.as_ref().map(|s| builder.create_vector(s)),
+            free_variable_id_before: self.free_variable_id_before,
+            field_order: self.field_order.as_ref().map(|s| builder.create_vector(s)),
+            configuration: None,
+        };
+        GadgetInstance::create(builder, &i)
+    }
+}
+
 
 #[test]
 fn test_gadget_request() {
-    use self::flatbuffers::FlatBufferBuilder;
-    use self::gadget_generated::gadget::{
-        get_size_prefixed_root_as_root, Root, RootArgs, Message,
-        AssignmentRequest, AssignmentRequestArgs,
-        GadgetInstance, GadgetInstanceArgs,
+    use r1cs_request::make_r1cs_request;
+    use assignment_request::make_assignment_request;
+    println!();
+
+    let instance = InstanceDescription {
+        gadget_name: "sha256".to_string(),
+        incoming_variable_ids: vec![100, 101], // Some input variables.
+        outgoing_variable_ids: Some(vec![102]), // Some output variable.
+        free_variable_id_before: 103,
+        field_order: None,
     };
 
-    let builder = &mut FlatBufferBuilder::new_with_capacity(1024);
-
-    let assign_ctx = {
-        let gadget_name = builder.create_string("sha256");
-
-        let in_ids = builder.create_vector(&[
-            100, 101 as u64]); // Some input variables.
-
-        let out_ids = builder.create_vector(&[
-            102 as u64]); // Some output variable.
-
-        let instance = GadgetInstance::create(builder, &GadgetInstanceArgs {
-            gadget_name: Some(gadget_name),
-            incoming_variable_ids: Some(in_ids),
-            outgoing_variable_ids: Some(out_ids),
-            free_variable_id_before: 103,
-            field_order: None,
-            configuration: None,
-        });
-
-        let request = AssignmentRequest::create(builder, &AssignmentRequestArgs {
-            instance: Some(instance),
-            incoming_elements: None,
-            witness: None,
-        });
-
-        let root = Root::create(builder, &RootArgs {
-            message_type: Message::AssignmentRequest,
-            message: Some(request.as_union_value()),
-        });
-
-        builder.finish_size_prefixed(root, None);
-        let buf = builder.finished_data();
-
-        call_gadget(&buf).unwrap()
-    };
+    let r1cs_ctx = make_r1cs_request(instance.clone());
 
     println!("Rust received {} results and {} parent response.",
-             assign_ctx.result_stream.len(),
-             if assign_ctx.response.is_some() { "a" } else { "no" });
-    assert!(assign_ctx.result_stream.len() == 1);
-    assert!(assign_ctx.response.is_some());
+             r1cs_ctx.ctx.result_stream.len(),
+             if r1cs_ctx.ctx.response.is_some() { "a" } else { "no" });
+
+    println!("Got constraints:");
+    for c in r1cs_ctx.iter_constraints() {
+        println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
+    }
+
+    let free_variable_id_after = r1cs_ctx.response().unwrap().free_variable_id_after();
+    println!("Free variable id after the call: {}", free_variable_id_after);
+    assert!(free_variable_id_after == 103 + 2);
+
+    println!();
+
+    let in_elements = vec![
+        &[4, 5, 6 as u8] as &[u8],
+        &[4, 5, 6],
+    ];
+    let assign_ctx = make_assignment_request(instance, in_elements);
+
+    println!("Rust received {} results and {} parent response.",
+             assign_ctx.ctx.result_stream.len(),
+             if assign_ctx.ctx.response.is_some() { "a" } else { "no" });
+
+    assert!(assign_ctx.ctx.result_stream.len() == 1);
+    assert!(assign_ctx.ctx.response.is_some());
 
     {
-        let buf = &assign_ctx.result_stream[0];
+        let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
 
-        let root = get_size_prefixed_root_as_root(buf);
-        let assigned_variables = root.message_as_assigned_variables().unwrap();
-        let values = assigned_variables.values().unwrap();
-        let var_ids = values.variable_ids().unwrap().safe_slice();
-        let elements = values.elements().unwrap();
-
-        let element_count = var_ids.len() as usize;
-        let element_size = 3 as usize;
-        assert_eq!(elements.len(), element_count * element_size);
-
-        println!("Got {} assigned_variables", element_count);
-        for (i, var_id) in var_ids.iter().enumerate() {
-            let element = &elements[i * element_size..(i + 1) * element_size];
-            println!("{} = {:?}", var_id, element);
+        println!("Got assigned_variables:");
+        for var in assignment.iter() {
+            println!("{} = {:?}", var.id, var.element);
         }
 
-        assert_eq!(var_ids[0], 103 + 0); // First gadget-allocated variable.
-        assert_eq!(var_ids[1], 103 + 1); // Second "
-        assert_eq!(elements, &[
-            10, 11, 12, // First element.
-            8, 7, 6, // Second element.
-        ]);
+        assert_eq!(assignment.len(), 2);
+        assert_eq!(assignment[0].element.len(), 3);
+        assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
+        assert_eq!(assignment[1].id, 103 + 1); // Second "
+        assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
+        assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
+
+        let free_variable_id_after2 = assign_ctx.response().unwrap().free_variable_id_after();
+        println!("Free variable id after the call: {}", free_variable_id_after2);
+        assert!(free_variable_id_after2 == 103 + 2);
+        assert!(free_variable_id_after2 == free_variable_id_after);
+
+        let out_vars = assign_ctx.outgoing_assigned_variables();
+        println!("{:?}", out_vars);
     }
-    {
-        let buf = &assign_ctx.response.unwrap();
-        let root = get_size_prefixed_root_as_root(buf);
-        let response = root.message_as_assignment_response().unwrap();
-        println!("Free variable id after the call: {}", response.free_variable_id_after());
-        assert!(response.free_variable_id_after() == 103 + 2);
-    }
+    println!();
 }

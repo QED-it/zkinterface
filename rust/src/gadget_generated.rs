@@ -140,7 +140,7 @@ impl<'a> Root<'a> {
   }
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadgets_description_request(&'a self) -> Option<GadgetsDescriptionRequest> {
+  pub fn message_as_gadgets_description_request(&self) -> Option<GadgetsDescriptionRequest<'a>> {
     if self.message_type() == Message::GadgetsDescriptionRequest {
       self.message().map(|u| GadgetsDescriptionRequest::init_from_table(u))
     } else {
@@ -150,7 +150,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadgets_description_response(&'a self) -> Option<GadgetsDescriptionResponse> {
+  pub fn message_as_gadgets_description_response(&self) -> Option<GadgetsDescriptionResponse<'a>> {
     if self.message_type() == Message::GadgetsDescriptionResponse {
       self.message().map(|u| GadgetsDescriptionResponse::init_from_table(u))
     } else {
@@ -160,7 +160,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csrequest(&'a self) -> Option<R1CSRequest> {
+  pub fn message_as_r1csrequest(&self) -> Option<R1CSRequest<'a>> {
     if self.message_type() == Message::R1CSRequest {
       self.message().map(|u| R1CSRequest::init_from_table(u))
     } else {
@@ -170,7 +170,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csconstraints(&'a self) -> Option<R1CSConstraints> {
+  pub fn message_as_r1csconstraints(&self) -> Option<R1CSConstraints<'a>> {
     if self.message_type() == Message::R1CSConstraints {
       self.message().map(|u| R1CSConstraints::init_from_table(u))
     } else {
@@ -180,7 +180,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csresponse(&'a self) -> Option<R1CSResponse> {
+  pub fn message_as_r1csresponse(&self) -> Option<R1CSResponse<'a>> {
     if self.message_type() == Message::R1CSResponse {
       self.message().map(|u| R1CSResponse::init_from_table(u))
     } else {
@@ -190,7 +190,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assignment_request(&'a self) -> Option<AssignmentRequest> {
+  pub fn message_as_assignment_request(&self) -> Option<AssignmentRequest<'a>> {
     if self.message_type() == Message::AssignmentRequest {
       self.message().map(|u| AssignmentRequest::init_from_table(u))
     } else {
@@ -200,7 +200,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assigned_variables(&'a self) -> Option<AssignedVariables> {
+  pub fn message_as_assigned_variables(&self) -> Option<AssignedVariables<'a>> {
     if self.message_type() == Message::AssignedVariables {
       self.message().map(|u| AssignedVariables::init_from_table(u))
     } else {
@@ -210,7 +210,7 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assignment_response(&'a self) -> Option<AssignmentResponse> {
+  pub fn message_as_assignment_response(&self) -> Option<AssignmentResponse<'a>> {
     if self.message_type() == Message::AssignmentResponse {
       self.message().map(|u| AssignmentResponse::init_from_table(u))
     } else {
@@ -544,7 +544,7 @@ impl<'a> GadgetInstance<'a> {
   /// Example: the depth of a Merkle tree.
   /// Counter-example: the Merkle authentication path is not configuration (rather witness).
   #[inline]
-  pub fn configuration(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetInstance::VT_CONFIGURATION, None)
   }
 }
@@ -820,7 +820,7 @@ impl<'a> R1CSConstraints<'a> {
     pub const VT_CONSTRAINTS: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn constraints(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
+  pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
   }
 }
@@ -908,7 +908,7 @@ impl<'a> R1CSResponse<'a> {
   }
   /// Optional: Any info that may be useful to the caller.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(R1CSResponse::VT_INFO, None)
   }
   /// Optional: An error message. Omitted if no errors.
@@ -998,18 +998,24 @@ impl<'a> AssignmentRequest<'a> {
       if let Some(x) = args.witness { builder.add_witness(x); }
       if let Some(x) = args.incoming_elements { builder.add_incoming_elements(x); }
       if let Some(x) = args.instance { builder.add_instance(x); }
+      builder.add_generate_r1cs(args.generate_r1cs);
       builder.finish()
     }
 
     pub const VT_INSTANCE: flatbuffers::VOffsetT = 4;
-    pub const VT_INCOMING_ELEMENTS: flatbuffers::VOffsetT = 6;
-    pub const VT_WITNESS: flatbuffers::VOffsetT = 8;
+    pub const VT_GENERATE_R1CS: flatbuffers::VOffsetT = 6;
+    pub const VT_INCOMING_ELEMENTS: flatbuffers::VOffsetT = 8;
+    pub const VT_WITNESS: flatbuffers::VOffsetT = 10;
 
   /// All details necessary to construct the instance.
   /// The same instance parameter must be provided as in the corresponding R1CSRequest.
   #[inline]
   pub fn instance(&self) -> Option<GadgetInstance<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<GadgetInstance<'a>>>(AssignmentRequest::VT_INSTANCE, None)
+  }
+  #[inline]
+  pub fn generate_r1cs(&self) -> bool {
+    self._tab.get::<bool>(AssignmentRequest::VT_GENERATE_R1CS, Some(false)).unwrap()
   }
   /// The values that the caller assigned to Incoming Variables.
   /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
@@ -1020,13 +1026,14 @@ impl<'a> AssignmentRequest<'a> {
   /// Optional: Any info that may be useful to the gadget to compute its assignments.
   /// Example: Merkle authentication path.
   #[inline]
-  pub fn witness(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn witness(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentRequest::VT_WITNESS, None)
   }
 }
 
 pub struct AssignmentRequestArgs<'a> {
     pub instance: Option<flatbuffers::WIPOffset<GadgetInstance<'a >>>,
+    pub generate_r1cs: bool,
     pub incoming_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub witness: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<CustomKeyValue<'a >>>>>,
 }
@@ -1035,6 +1042,7 @@ impl<'a> Default for AssignmentRequestArgs<'a> {
     fn default() -> Self {
         AssignmentRequestArgs {
             instance: None,
+            generate_r1cs: false,
             incoming_elements: None,
             witness: None,
         }
@@ -1048,6 +1056,10 @@ impl<'a: 'b, 'b> AssignmentRequestBuilder<'a, 'b> {
   #[inline]
   pub fn add_instance(&mut self, instance: flatbuffers::WIPOffset<GadgetInstance<'b >>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<GadgetInstance>>(AssignmentRequest::VT_INSTANCE, instance);
+  }
+  #[inline]
+  pub fn add_generate_r1cs(&mut self, generate_r1cs: bool) {
+    self.fbb_.push_slot::<bool>(AssignmentRequest::VT_GENERATE_R1CS, generate_r1cs, false);
   }
   #[inline]
   pub fn add_incoming_elements(&mut self, incoming_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
@@ -1072,8 +1084,9 @@ impl<'a: 'b, 'b> AssignmentRequestBuilder<'a, 'b> {
   }
 }
 
-/// Report local and outgoing assignments computed by the gadget.
+/// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
+/// Does not include input and output variables.
 pub enum AssignedVariablesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -1200,16 +1213,13 @@ impl<'a> AssignmentResponse<'a> {
   }
   /// The values that the gadget assigned to outgoing variables, if any.
   /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-  ///
-  /// Intentionally redundant with AssignedVariables to allow handling
-  /// the outgoing variables separately from the bulk of local variables assignments.
   #[inline]
   pub fn outgoing_elements(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(AssignmentResponse::VT_OUTGOING_ELEMENTS, None).map(|v| v.safe_slice())
   }
   /// Optional: Any info that may be useful to the caller.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(AssignmentResponse::VT_INFO, None)
   }
   /// Optional: An error message. Null if no error.
@@ -1326,7 +1336,7 @@ impl<'a> StructuredConnection<'a> {
   /// Optional: recursive type.
   /// The inner structures describe subsequent segments of the variables array.
   #[inline]
-  pub fn structures(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
+  pub fn structures(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StructuredConnection<'a>>>>>(StructuredConnection::VT_STRUCTURES, None)
   }
   /// Optional: Name of the connection.
@@ -1336,7 +1346,7 @@ impl<'a> StructuredConnection<'a> {
   }
   /// Optional: Any custom information.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(StructuredConnection::VT_INFO, None)
   }
 }
@@ -1455,7 +1465,7 @@ impl<'a> GadgetDescription<'a> {
   }
   /// Any custom information.
   #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<CustomKeyValue<'a>>>>>(GadgetDescription::VT_INFO, None)
   }
 }
@@ -1612,7 +1622,7 @@ impl<'a> GadgetsDescriptionResponse<'a> {
     pub const VT_GADGETS: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn gadgets(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>> {
+  pub fn gadgets(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<GadgetDescription<'a>>>>>(GadgetsDescriptionResponse::VT_GADGETS, None)
   }
 }
