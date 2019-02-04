@@ -156,33 +156,6 @@ bool assignments_request(
 }
 
 
-bool descriptions_request(
-        gadget_callback_t response_callback,
-        void *response_context
-) {
-    flatbuffers::FlatBufferBuilder builder;
-
-    auto description = CreateGadgetDescription(
-            builder,
-            builder.CreateString("test")
-    );
-
-    auto response = CreateGadgetsDescriptionResponse(
-            builder,
-            builder.CreateVector(&description, 1)
-    );
-
-    auto root = CreateRoot(builder, Message_GadgetsDescriptionResponse, response.Union());
-    builder.FinishSizePrefixed(root);
-
-    if (response_callback != nullptr) {
-        return response_callback(response_context, builder.GetBufferPointer());
-    }
-
-    return true;
-}
-
-
 bool gadget_request(
         unsigned char *request_ptr,
 
@@ -219,5 +192,4 @@ bool gadget_request(
     }
 
     return true;
-
 }

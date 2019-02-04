@@ -28,35 +28,23 @@ struct Witness;
 
 struct ComponentReturn;
 
-struct StructuredConnection;
-
-struct GadgetDescription;
-
-struct GadgetsDescriptionRequest;
-
-struct GadgetsDescriptionResponse;
-
 enum Message {
   Message_NONE = 0,
   Message_R1CSConstraints = 1,
   Message_AssignedVariables = 2,
   Message_ComponentCall = 3,
   Message_ComponentReturn = 4,
-  Message_GadgetsDescriptionRequest = 5,
-  Message_GadgetsDescriptionResponse = 6,
   Message_MIN = Message_NONE,
-  Message_MAX = Message_GadgetsDescriptionResponse
+  Message_MAX = Message_ComponentReturn
 };
 
-inline const Message (&EnumValuesMessage())[7] {
+inline const Message (&EnumValuesMessage())[5] {
   static const Message values[] = {
     Message_NONE,
     Message_R1CSConstraints,
     Message_AssignedVariables,
     Message_ComponentCall,
-    Message_ComponentReturn,
-    Message_GadgetsDescriptionRequest,
-    Message_GadgetsDescriptionResponse
+    Message_ComponentReturn
   };
   return values;
 }
@@ -68,15 +56,13 @@ inline const char * const *EnumNamesMessage() {
     "AssignedVariables",
     "ComponentCall",
     "ComponentReturn",
-    "GadgetsDescriptionRequest",
-    "GadgetsDescriptionResponse",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessage(Message e) {
-  if (e < Message_NONE || e > Message_GadgetsDescriptionResponse) return "";
+  if (e < Message_NONE || e > Message_ComponentReturn) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamesMessage()[index];
 }
@@ -99,14 +85,6 @@ template<> struct MessageTraits<ComponentCall> {
 
 template<> struct MessageTraits<ComponentReturn> {
   static const Message enum_value = Message_ComponentReturn;
-};
-
-template<> struct MessageTraits<GadgetsDescriptionRequest> {
-  static const Message enum_value = Message_GadgetsDescriptionRequest;
-};
-
-template<> struct MessageTraits<GadgetsDescriptionResponse> {
-  static const Message enum_value = Message_GadgetsDescriptionResponse;
 };
 
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
@@ -136,12 +114,6 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const ComponentReturn *message_as_ComponentReturn() const {
     return message_type() == Message_ComponentReturn ? static_cast<const ComponentReturn *>(message()) : nullptr;
   }
-  const GadgetsDescriptionRequest *message_as_GadgetsDescriptionRequest() const {
-    return message_type() == Message_GadgetsDescriptionRequest ? static_cast<const GadgetsDescriptionRequest *>(message()) : nullptr;
-  }
-  const GadgetsDescriptionResponse *message_as_GadgetsDescriptionResponse() const {
-    return message_type() == Message_GadgetsDescriptionResponse ? static_cast<const GadgetsDescriptionResponse *>(message()) : nullptr;
-  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_MESSAGE_TYPE) &&
@@ -165,14 +137,6 @@ template<> inline const ComponentCall *Root::message_as<ComponentCall>() const {
 
 template<> inline const ComponentReturn *Root::message_as<ComponentReturn>() const {
   return message_as_ComponentReturn();
-}
-
-template<> inline const GadgetsDescriptionRequest *Root::message_as<GadgetsDescriptionRequest>() const {
-  return message_as_GadgetsDescriptionRequest();
-}
-
-template<> inline const GadgetsDescriptionResponse *Root::message_as<GadgetsDescriptionResponse>() const {
-  return message_as_GadgetsDescriptionResponse();
 }
 
 struct RootBuilder {
@@ -881,285 +845,6 @@ inline flatbuffers::Offset<ComponentReturn> CreateComponentReturnDirect(
       outgoing_elements__);
 }
 
-/// A high-level structure of variables for type safety.
-/// A structure describes the semantics over a flat array of variables.
-/// Define the interface between a gadget and the rest of the circuit.
-/// In gadget composition, the parent provides these structures to its child.
-/// A gadget should document what structures it can accept.
-struct StructuredConnection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_VARIABLE_COUNT = 4,
-    VT_STRUCTURES = 6,
-    VT_NAME = 8,
-    VT_INFO = 10
-  };
-  /// How many variables make up this connection.
-  uint64_t variable_count() const {
-    return GetField<uint64_t>(VT_VARIABLE_COUNT, 0);
-  }
-  /// Optional: recursive type.
-  /// The inner structures describe subsequent segments of the variables array.
-  const flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>> *structures() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>> *>(VT_STRUCTURES);
-  }
-  /// Optional: Name of the connection.
-  const flatbuffers::String *name() const {
-    return GetPointer<const flatbuffers::String *>(VT_NAME);
-  }
-  /// Optional: Any custom information.
-  const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_VARIABLE_COUNT) &&
-           VerifyOffset(verifier, VT_STRUCTURES) &&
-           verifier.VerifyVector(structures()) &&
-           verifier.VerifyVectorOfTables(structures()) &&
-           VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(name()) &&
-           VerifyOffset(verifier, VT_INFO) &&
-           verifier.VerifyVector(info()) &&
-           verifier.VerifyVectorOfTables(info()) &&
-           verifier.EndTable();
-  }
-};
-
-struct StructuredConnectionBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_variable_count(uint64_t variable_count) {
-    fbb_.AddElement<uint64_t>(StructuredConnection::VT_VARIABLE_COUNT, variable_count, 0);
-  }
-  void add_structures(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>>> structures) {
-    fbb_.AddOffset(StructuredConnection::VT_STRUCTURES, structures);
-  }
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
-    fbb_.AddOffset(StructuredConnection::VT_NAME, name);
-  }
-  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info) {
-    fbb_.AddOffset(StructuredConnection::VT_INFO, info);
-  }
-  explicit StructuredConnectionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  StructuredConnectionBuilder &operator=(const StructuredConnectionBuilder &);
-  flatbuffers::Offset<StructuredConnection> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<StructuredConnection>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<StructuredConnection> CreateStructuredConnection(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t variable_count = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<StructuredConnection>>> structures = 0,
-    flatbuffers::Offset<flatbuffers::String> name = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0) {
-  StructuredConnectionBuilder builder_(_fbb);
-  builder_.add_variable_count(variable_count);
-  builder_.add_info(info);
-  builder_.add_name(name);
-  builder_.add_structures(structures);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<StructuredConnection> CreateStructuredConnectionDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t variable_count = 0,
-    const std::vector<flatbuffers::Offset<StructuredConnection>> *structures = nullptr,
-    const char *name = nullptr,
-    const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr) {
-  auto structures__ = structures ? _fbb.CreateVector<flatbuffers::Offset<StructuredConnection>>(*structures) : 0;
-  auto name__ = name ? _fbb.CreateString(name) : 0;
-  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<CustomKeyValue>>(*info) : 0;
-  return Gadget::CreateStructuredConnection(
-      _fbb,
-      variable_count,
-      structures__,
-      name__,
-      info__);
-}
-
-/// A description of the types that a gadget expects.
-/// Used to provide type safety.
-struct GadgetDescription FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_GADGET_NAME = 4,
-    VT_INCOMING_CONNECTION = 6,
-    VT_OUTGOING_CONNECTION = 8,
-    VT_INFO = 10
-  };
-  /// Name of the gadget.
-  /// Use in other request to select a gadget.
-  const flatbuffers::String *gadget_name() const {
-    return GetPointer<const flatbuffers::String *>(VT_GADGET_NAME);
-  }
-  /// Describe the structure of the incoming array of variables.
-  const StructuredConnection *incoming_connection() const {
-    return GetPointer<const StructuredConnection *>(VT_INCOMING_CONNECTION);
-  }
-  /// Describe the structure of the outgoing array of variables.
-  const StructuredConnection *outgoing_connection() const {
-    return GetPointer<const StructuredConnection *>(VT_OUTGOING_CONNECTION);
-  }
-  /// Any custom information.
-  const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *info() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>> *>(VT_INFO);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_GADGET_NAME) &&
-           verifier.VerifyString(gadget_name()) &&
-           VerifyOffset(verifier, VT_INCOMING_CONNECTION) &&
-           verifier.VerifyTable(incoming_connection()) &&
-           VerifyOffset(verifier, VT_OUTGOING_CONNECTION) &&
-           verifier.VerifyTable(outgoing_connection()) &&
-           VerifyOffset(verifier, VT_INFO) &&
-           verifier.VerifyVector(info()) &&
-           verifier.VerifyVectorOfTables(info()) &&
-           verifier.EndTable();
-  }
-};
-
-struct GadgetDescriptionBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_gadget_name(flatbuffers::Offset<flatbuffers::String> gadget_name) {
-    fbb_.AddOffset(GadgetDescription::VT_GADGET_NAME, gadget_name);
-  }
-  void add_incoming_connection(flatbuffers::Offset<StructuredConnection> incoming_connection) {
-    fbb_.AddOffset(GadgetDescription::VT_INCOMING_CONNECTION, incoming_connection);
-  }
-  void add_outgoing_connection(flatbuffers::Offset<StructuredConnection> outgoing_connection) {
-    fbb_.AddOffset(GadgetDescription::VT_OUTGOING_CONNECTION, outgoing_connection);
-  }
-  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info) {
-    fbb_.AddOffset(GadgetDescription::VT_INFO, info);
-  }
-  explicit GadgetDescriptionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  GadgetDescriptionBuilder &operator=(const GadgetDescriptionBuilder &);
-  flatbuffers::Offset<GadgetDescription> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GadgetDescription>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<GadgetDescription> CreateGadgetDescription(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> gadget_name = 0,
-    flatbuffers::Offset<StructuredConnection> incoming_connection = 0,
-    flatbuffers::Offset<StructuredConnection> outgoing_connection = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<CustomKeyValue>>> info = 0) {
-  GadgetDescriptionBuilder builder_(_fbb);
-  builder_.add_info(info);
-  builder_.add_outgoing_connection(outgoing_connection);
-  builder_.add_incoming_connection(incoming_connection);
-  builder_.add_gadget_name(gadget_name);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<GadgetDescription> CreateGadgetDescriptionDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const char *gadget_name = nullptr,
-    flatbuffers::Offset<StructuredConnection> incoming_connection = 0,
-    flatbuffers::Offset<StructuredConnection> outgoing_connection = 0,
-    const std::vector<flatbuffers::Offset<CustomKeyValue>> *info = nullptr) {
-  auto gadget_name__ = gadget_name ? _fbb.CreateString(gadget_name) : 0;
-  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<CustomKeyValue>>(*info) : 0;
-  return Gadget::CreateGadgetDescription(
-      _fbb,
-      gadget_name__,
-      incoming_connection,
-      outgoing_connection,
-      info__);
-}
-
-struct GadgetsDescriptionRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           verifier.EndTable();
-  }
-};
-
-struct GadgetsDescriptionRequestBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  explicit GadgetsDescriptionRequestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  GadgetsDescriptionRequestBuilder &operator=(const GadgetsDescriptionRequestBuilder &);
-  flatbuffers::Offset<GadgetsDescriptionRequest> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GadgetsDescriptionRequest>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<GadgetsDescriptionRequest> CreateGadgetsDescriptionRequest(
-    flatbuffers::FlatBufferBuilder &_fbb) {
-  GadgetsDescriptionRequestBuilder builder_(_fbb);
-  return builder_.Finish();
-}
-
-struct GadgetsDescriptionResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_GADGETS = 4
-  };
-  const flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>> *gadgets() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>> *>(VT_GADGETS);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_GADGETS) &&
-           verifier.VerifyVector(gadgets()) &&
-           verifier.VerifyVectorOfTables(gadgets()) &&
-           verifier.EndTable();
-  }
-};
-
-struct GadgetsDescriptionResponseBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_gadgets(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>>> gadgets) {
-    fbb_.AddOffset(GadgetsDescriptionResponse::VT_GADGETS, gadgets);
-  }
-  explicit GadgetsDescriptionResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  GadgetsDescriptionResponseBuilder &operator=(const GadgetsDescriptionResponseBuilder &);
-  flatbuffers::Offset<GadgetsDescriptionResponse> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GadgetsDescriptionResponse>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<GadgetsDescriptionResponse> CreateGadgetsDescriptionResponse(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GadgetDescription>>> gadgets = 0) {
-  GadgetsDescriptionResponseBuilder builder_(_fbb);
-  builder_.add_gadgets(gadgets);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<GadgetsDescriptionResponse> CreateGadgetsDescriptionResponseDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<GadgetDescription>> *gadgets = nullptr) {
-  auto gadgets__ = gadgets ? _fbb.CreateVector<flatbuffers::Offset<GadgetDescription>>(*gadgets) : 0;
-  return Gadget::CreateGadgetsDescriptionResponse(
-      _fbb,
-      gadgets__);
-}
-
 inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type) {
   switch (type) {
     case Message_NONE: {
@@ -1179,14 +864,6 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
     }
     case Message_ComponentReturn: {
       auto ptr = reinterpret_cast<const ComponentReturn *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Message_GadgetsDescriptionRequest: {
-      auto ptr = reinterpret_cast<const GadgetsDescriptionRequest *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Message_GadgetsDescriptionResponse: {
-      auto ptr = reinterpret_cast<const GadgetsDescriptionResponse *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

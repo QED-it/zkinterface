@@ -6,9 +6,6 @@ union Message {
 
     ComponentCall,
     ComponentReturn,
-
-    GadgetsDescriptionRequest,
-    GadgetsDescriptionResponse,
 }
 
 table Root {
@@ -158,60 +155,4 @@ table ComponentReturn {
     /// The values that the gadget assigned to outgoing variables, if any.
     /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
     outgoing_elements      :[ubyte];
-}
-
-
-// == Type Safety Concept ==
-//
-// The interface uses flat array of variables,
-// because it is the lowest common denominator and
-// is simple to implement in all situations.
-//
-// Typing information is provided as an overlay that describes the variables.
-// A framework may omit or ignore typing information.
-//
-
-/// A high-level structure of variables for type safety.
-/// A structure describes the semantics over a flat array of variables.
-/// Define the interface between a gadget and the rest of the circuit.
-/// In gadget composition, the parent provides these structures to its child.
-/// A gadget should document what structures it can accept.
-table StructuredConnection {
-    /// How many variables make up this connection.
-    variable_count :uint64;
-
-    /// Optional: recursive type.
-    /// The inner structures describe subsequent segments of the variables array.
-    structures     :[StructuredConnection];
-
-    /// Optional: Name of the connection.
-    name           :string;
-
-    /// Optional: Any custom information.
-    info           :[CustomKeyValue];
-}
-
-/// A description of the types that a gadget expects.
-/// Used to provide type safety.
-table GadgetDescription {
-    /// Name of the gadget.
-    /// Use in other request to select a gadget.
-    gadget_name           :string;
-
-    /// Describe the structure of the incoming array of variables.
-    incoming_connection :StructuredConnection;
-
-    /// Describe the structure of the outgoing array of variables.
-    outgoing_connection :StructuredConnection;
-
-    /// Any custom information.
-    info           :[CustomKeyValue];
-}
-
-// == Messages for type safety ==
-
-table GadgetsDescriptionRequest {}
-
-table GadgetsDescriptionResponse {
-    gadgets :[GadgetDescription];
 }
