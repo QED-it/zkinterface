@@ -25,6 +25,20 @@ typedef libff::Fr<libff::alt_bn128_pp> FieldT;
 size_t fieldt_size = 32;
 
 
+class standard_libsnark_gadget {
+public:
+    virtual protoboard<FieldT>& borrow_protoboard();
+
+    virtual size_t num_inputs();
+
+    virtual size_t num_outputs();
+
+    virtual void generate_r1cs_constraints();
+
+    virtual vector<FieldT> generate_r1cs_witness(const vector<FieldT> &in_elements);
+};
+
+
 extern "C" {
 
 // ==== Conversion helpers ====
@@ -156,7 +170,8 @@ FlatBufferBuilder serialize_protoboard_constraints(
     auto lib_constraints = pb.get_constraint_system().constraints;
     vector<flatbuffers::Offset<BilinearConstraint>> fb_constraints;
 
-    for (auto lib_constraint = lib_constraints.begin(); lib_constraint != lib_constraints.end(); lib_constraint++) {
+    for (auto lib_constraint = lib_constraints.begin();
+         lib_constraint != lib_constraints.end(); lib_constraint++) {
         fb_constraints.push_back(CreateBilinearConstraint(
                 builder,
                 make_lc(lib_constraint->a.terms),
