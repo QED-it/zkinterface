@@ -90,7 +90,7 @@ table GadgetInstance {
     /// Optional: Any static parameter that may influence the instance construction.
     /// Parameters can be standard, conventional, or specific to a gadget.
     /// Example: the depth of a Merkle tree.
-    /// Counter-example: the Merkle authentication path is not configuration (rather witness).
+    /// Counter-example: the Merkle path is not configuration (rather witness).
     configuration           :[CustomKeyValue];
 }
 
