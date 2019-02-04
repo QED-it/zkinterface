@@ -311,15 +311,15 @@ impl<'a: 'b, 'b> VariableValuesBuilder<'a, 'b> {
 }
 
 /// An R1CS constraint between variables.
-pub enum ConstraintOffset {}
+pub enum BilinearConstraintOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct Constraint<'a> {
+pub struct BilinearConstraint<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for Constraint<'a> {
-    type Inner = Constraint<'a>;
+impl<'a> flatbuffers::Follow<'a> for BilinearConstraint<'a> {
+    type Inner = BilinearConstraint<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -328,18 +328,18 @@ impl<'a> flatbuffers::Follow<'a> for Constraint<'a> {
     }
 }
 
-impl<'a> Constraint<'a> {
+impl<'a> BilinearConstraint<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Constraint {
+        BilinearConstraint {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args ConstraintArgs<'args>) -> flatbuffers::WIPOffset<Constraint<'bldr>> {
-      let mut builder = ConstraintBuilder::new(_fbb);
+        args: &'args BilinearConstraintArgs<'args>) -> flatbuffers::WIPOffset<BilinearConstraint<'bldr>> {
+      let mut builder = BilinearConstraintBuilder::new(_fbb);
       if let Some(x) = args.linear_combination_c { builder.add_linear_combination_c(x); }
       if let Some(x) = args.linear_combination_b { builder.add_linear_combination_b(x); }
       if let Some(x) = args.linear_combination_a { builder.add_linear_combination_a(x); }
@@ -352,60 +352,60 @@ impl<'a> Constraint<'a> {
 
   #[inline]
   pub fn linear_combination_a(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Constraint::VT_LINEAR_COMBINATION_A, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, None)
   }
   #[inline]
   pub fn linear_combination_b(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Constraint::VT_LINEAR_COMBINATION_B, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, None)
   }
   #[inline]
   pub fn linear_combination_c(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Constraint::VT_LINEAR_COMBINATION_C, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, None)
   }
 }
 
-pub struct ConstraintArgs<'a> {
+pub struct BilinearConstraintArgs<'a> {
     pub linear_combination_a: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
     pub linear_combination_b: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
     pub linear_combination_c: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
 }
-impl<'a> Default for ConstraintArgs<'a> {
+impl<'a> Default for BilinearConstraintArgs<'a> {
     #[inline]
     fn default() -> Self {
-        ConstraintArgs {
+        BilinearConstraintArgs {
             linear_combination_a: None,
             linear_combination_b: None,
             linear_combination_c: None,
         }
     }
 }
-pub struct ConstraintBuilder<'a: 'b, 'b> {
+pub struct BilinearConstraintBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> ConstraintBuilder<'a, 'b> {
+impl<'a: 'b, 'b> BilinearConstraintBuilder<'a, 'b> {
   #[inline]
   pub fn add_linear_combination_a(&mut self, linear_combination_a: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Constraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
   }
   #[inline]
   pub fn add_linear_combination_b(&mut self, linear_combination_b: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Constraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
   }
   #[inline]
   pub fn add_linear_combination_c(&mut self, linear_combination_c: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Constraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ConstraintBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> BilinearConstraintBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    ConstraintBuilder {
+    BilinearConstraintBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Constraint<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<BilinearConstraint<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -692,13 +692,13 @@ impl<'a> R1CSConstraints<'a> {
     pub const VT_CONSTRAINTS: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Constraint<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Constraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
+  pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
   }
 }
 
 pub struct R1CSConstraintsArgs<'a> {
-    pub constraints: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<Constraint<'a >>>>>,
+    pub constraints: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<BilinearConstraint<'a >>>>>,
 }
 impl<'a> Default for R1CSConstraintsArgs<'a> {
     #[inline]
@@ -714,7 +714,7 @@ pub struct R1CSConstraintsBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> R1CSConstraintsBuilder<'a, 'b> {
   #[inline]
-  pub fn add_constraints(&mut self, constraints: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<Constraint<'b >>>>) {
+  pub fn add_constraints(&mut self, constraints: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<BilinearConstraint<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(R1CSConstraints::VT_CONSTRAINTS, constraints);
   }
   #[inline]
@@ -840,8 +840,9 @@ impl<'a> ComponentCall<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args ComponentCallArgs<'args>) -> flatbuffers::WIPOffset<ComponentCall<'bldr>> {
       let mut builder = ComponentCallBuilder::new(_fbb);
-      if let Some(x) = args.generate_assignment { builder.add_generate_assignment(x); }
+      if let Some(x) = args.witness { builder.add_witness(x); }
       if let Some(x) = args.instance { builder.add_instance(x); }
+      builder.add_generate_assignment(args.generate_assignment);
       builder.add_generate_r1cs(args.generate_r1cs);
       builder.finish()
     }
@@ -849,6 +850,7 @@ impl<'a> ComponentCall<'a> {
     pub const VT_INSTANCE: flatbuffers::VOffsetT = 4;
     pub const VT_GENERATE_R1CS: flatbuffers::VOffsetT = 6;
     pub const VT_GENERATE_ASSIGNMENT: flatbuffers::VOffsetT = 8;
+    pub const VT_WITNESS: flatbuffers::VOffsetT = 10;
 
   /// All details necessary to construct the instance.
   /// The same instance must be provided for R1CS and assignment generation.
@@ -864,15 +866,20 @@ impl<'a> ComponentCall<'a> {
   /// Whether an assignment should be generated.
   /// Provide witness values to the component.
   #[inline]
-  pub fn generate_assignment(&self) -> Option<Witness<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Witness<'a>>>(ComponentCall::VT_GENERATE_ASSIGNMENT, None)
+  pub fn generate_assignment(&self) -> bool {
+    self._tab.get::<bool>(ComponentCall::VT_GENERATE_ASSIGNMENT, Some(false)).unwrap()
+  }
+  #[inline]
+  pub fn witness(&self) -> Option<Witness<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Witness<'a>>>(ComponentCall::VT_WITNESS, None)
   }
 }
 
 pub struct ComponentCallArgs<'a> {
     pub instance: Option<flatbuffers::WIPOffset<GadgetInstance<'a >>>,
     pub generate_r1cs: bool,
-    pub generate_assignment: Option<flatbuffers::WIPOffset<Witness<'a >>>,
+    pub generate_assignment: bool,
+    pub witness: Option<flatbuffers::WIPOffset<Witness<'a >>>,
 }
 impl<'a> Default for ComponentCallArgs<'a> {
     #[inline]
@@ -880,7 +887,8 @@ impl<'a> Default for ComponentCallArgs<'a> {
         ComponentCallArgs {
             instance: None,
             generate_r1cs: false,
-            generate_assignment: None,
+            generate_assignment: false,
+            witness: None,
         }
     }
 }
@@ -898,8 +906,12 @@ impl<'a: 'b, 'b> ComponentCallBuilder<'a, 'b> {
     self.fbb_.push_slot::<bool>(ComponentCall::VT_GENERATE_R1CS, generate_r1cs, false);
   }
   #[inline]
-  pub fn add_generate_assignment(&mut self, generate_assignment: flatbuffers::WIPOffset<Witness<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Witness>>(ComponentCall::VT_GENERATE_ASSIGNMENT, generate_assignment);
+  pub fn add_generate_assignment(&mut self, generate_assignment: bool) {
+    self.fbb_.push_slot::<bool>(ComponentCall::VT_GENERATE_ASSIGNMENT, generate_assignment, false);
+  }
+  #[inline]
+  pub fn add_witness(&mut self, witness: flatbuffers::WIPOffset<Witness<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Witness>>(ComponentCall::VT_WITNESS, witness);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ComponentCallBuilder<'a, 'b> {
@@ -1138,7 +1150,7 @@ pub fn get_size_prefixed_root_as_root<'a>(buf: &'a [u8]) -> Root<'a> {
   flatbuffers::get_size_prefixed_root::<Root<'a>>(buf)
 }
 
-pub const ROOT_IDENTIFIER: &'static str = "zkco";
+pub const ROOT_IDENTIFIER: &'static str = "zkp2";
 
 #[inline]
 pub fn root_buffer_has_identifier(buf: &[u8]) -> bool {
@@ -1150,7 +1162,7 @@ pub fn root_size_prefixed_buffer_has_identifier(buf: &[u8]) -> bool {
   return flatbuffers::buffer_has_identifier(buf, ROOT_IDENTIFIER, true);
 }
 
-pub const ROOT_EXTENSION: &'static str = "zkco";
+pub const ROOT_EXTENSION: &'static str = "zkp2";
 
 #[inline]
 pub fn finish_root_buffer<'a, 'b>(

@@ -6,7 +6,7 @@ use gadget_call::{
     InstanceDescription,
 };
 use gadget_generated::gadget::{
-    self,
+    BilinearConstraint,
     ComponentCall,
     ComponentCallArgs,
     ComponentReturn,
@@ -26,7 +26,8 @@ pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
         ComponentCall::create(&mut builder, &ComponentCallArgs {
             instance: Some(i),
             generate_r1cs: true,
-            generate_assignment: None,
+            generate_assignment: false,
+            witness: None,
         })
     };
 
@@ -82,7 +83,7 @@ pub struct R1CSIterator<'a> {
     // Iterate over constraints in the current message.
     constraints_count: usize,
     next_constraint: usize,
-    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<gadget::Constraint<'a>>>>,
+    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>,
 }
 
 impl<'a> Iterator for R1CSIterator<'a> {
