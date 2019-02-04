@@ -21,18 +21,20 @@ using libff::alt_bn128_r_limbs;
 using libff::bit_vector;
 
 typedef libff::Fr<libff::alt_bn128_pp> FieldT;
+size_t fieldt_size = 32;
+
 
 extern "C" {
 
 // ==== Conversion helpers ====
 
 // Bytes to Bigint. Little-Endian.
-bigint<alt_bn128_r_limbs> from_le(const uint8_t *bytes, size_t length) {
+bigint<alt_bn128_r_limbs> from_le(const uint8_t *bytes, size_t size) {
     bigint<alt_bn128_r_limbs> num;
     size_t bytes_per_limb = sizeof(num.data[0]);
-    assert(bytes_per_limb * alt_bn128_r_limbs >= length);
+    assert(bytes_per_limb * alt_bn128_r_limbs >= size);
 
-    for (size_t byte = 0; byte < length; byte++) {
+    for (size_t byte = 0; byte < size; byte++) {
         size_t limb = byte / bytes_per_limb;
         size_t limb_byte = byte % bytes_per_limb;
         num.data[limb] |= mp_limb_t(bytes[byte]) << (limb_byte * 8);
@@ -41,34 +43,61 @@ bigint<alt_bn128_r_limbs> from_le(const uint8_t *bytes, size_t length) {
 }
 
 // Bigint to Bytes. Little-endian.
-void into_le(const bigint<alt_bn128_r_limbs> num, uint8_t *out, size_t length) {
+void into_le(const bigint<alt_bn128_r_limbs> &num, uint8_t *out, size_t size) {
     size_t bytes_per_limb = sizeof(num.data[0]);
-    assert(length >= bytes_per_limb * alt_bn128_r_limbs);
+    assert(size >= bytes_per_limb * alt_bn128_r_limbs);
 
-    for (size_t byte = 0; byte < length; byte++) {
+    for (size_t byte = 0; byte < size; byte++) {
         size_t limb = byte / bytes_per_limb;
         size_t limb_byte = byte % bytes_per_limb;
         out[byte] = uint8_t(num.data[limb] >> (limb_byte * 8));
     }
 }
 
-// Bytes to Bit Vector.
-bit_vector to_bit_vector(const uint8_t *elements, size_t num_elements, size_t element_size) {
-    bit_vector bits(num_elements);
-
-    for (size_t i = 0; i < num_elements; i++) {
-        auto num = from_le(
-                elements + element_size * i,
-                element_size);
-        bits[i] = (num == 1);
+// Elements to bytes.
+vector<uint8_t> elements_into_le(const vector<FieldT> &from_elements) {
+    vector<uint8_t> to_bytes(fieldt_size * from_elements.size());
+    for (size_t i = 0; i < from_elements.size(); ++i) {
+        into_le(
+                from_elements[i].as_bigint(),
+                to_bytes.data() + fieldt_size * i,
+                fieldt_size);
     }
-    return bits;
+    return to_bytes;
+}
+
+// Bytes to elements.
+vector<FieldT> le_into_elements(const uint8_t *from_bytes, size_t num_elements, size_t element_size) {
+    vector<FieldT> to_elements(num_elements);
+    for (size_t i = 0; i < num_elements; ++i) {
+        to_elements[i] = FieldT(from_le(
+                from_bytes + element_size * i,
+                element_size));
+    }
+    return to_elements;
+}
+
+// FlatBuffers bytes into elements.
+vector<FieldT> deserialize_elements(const flatbuffers::Vector<uint8_t> *from_bytes, size_t num_elements) {
+    size_t element_size = from_bytes->size() / num_elements;
+    return le_into_elements(from_bytes->data(), num_elements, element_size);
+}
+
+// Extract the incoming elements from a ComponentCall.
+vector<FieldT> deserialize_incoming_elements(const ComponentCall *call) {
+    auto num_elements = call->instance()->incoming_variable_ids()->size();
+    auto in_elements_bytes = call->witness()->incoming_elements();
+    return deserialize_elements(in_elements_bytes, num_elements);
+}
+
+// Serialize outgoing elements into a message builder.
+flatbuffers::Offset<flatbuffers::Vector<uint8_t>>
+serialize_elements(FlatBufferBuilder &builder, const vector<FieldT> &from_elements) {
+    return builder.CreateVector(elements_into_le(from_elements));
 }
 
 
 // ==== Helpers to report the content of a protoboard ====
-
-size_t fieldt_size = 32;
 
 
 /** Convert protoboard index to standard variable ID. */
@@ -124,10 +153,10 @@ FlatBufferBuilder serialize_protoboard_constraints(
 
     // Send all rows of all three matrices
     auto lib_constraints = pb.get_constraint_system().constraints;
-    vector<flatbuffers::Offset<Constraint>> fb_constraints;
+    vector<flatbuffers::Offset<BilinearConstraint>> fb_constraints;
 
     for (auto lib_constraint = lib_constraints.begin(); lib_constraint != lib_constraints.end(); lib_constraint++) {
-        fb_constraints.push_back(CreateConstraint(
+        fb_constraints.push_back(CreateBilinearConstraint(
                 builder,
                 make_lc(lib_constraint->a.terms),
                 make_lc(lib_constraint->b.terms),
@@ -177,92 +206,5 @@ FlatBufferBuilder serialize_protoboard_local_assignment(
     return builder;
 }
 
-
-// == Example ==
-
-bool example_gadget_call(
-        unsigned char *request_buf,
-        gadget_callback_t result_stream_callback,
-        void *result_stream_context,
-        gadget_callback_t response_callback,
-        void *response_context
-) {
-    auto root = GetSizePrefixedRoot(request_buf);
-    const GadgetInstance *instance;
-    const AssignmentRequest *assignment_request;
-
-    switch (root->message_type()) {
-        default:
-            return false;
-
-        case Message_R1CSRequest:
-            instance = root->message_as_R1CSRequest()->instance();
-
-        case Message_AssignmentRequest:
-            assignment_request = root->message_as_AssignmentRequest();
-            instance = assignment_request->instance();
-    }
-
-    libff::alt_bn128_pp::init_public_params();
-    protoboard<FieldT> pb;
-
-    digest_variable<FieldT> left(pb, 256, "left");
-    digest_variable<FieldT> right(pb, 256, "right");
-    digest_variable<FieldT> output(pb, 256, "output");
-    pb.set_input_sizes(left.bits.size() + right.bits.size() + output.bits.size());
-
-    sha256_two_to_one_hash_gadget<FieldT> sha(pb, left, right, output, "f");
-
-    // Witness reduction.
-    auto iv = instance->incoming_variable_ids();
-    auto ie = assignment_request->incoming_elements();
-    auto element_size = ie->size() / iv->size();
-    size_t half_inputs = iv->size() / 2;
-
-    const uint8_t *left_data = ie->data();
-    bit_vector left_bits = to_bit_vector(left_data, half_inputs, element_size);
-    left.generate_r1cs_witness(left_bits);
-
-    const uint8_t *right_data = left_data + element_size * half_inputs;
-    bit_vector right_bits = to_bit_vector(right_data, half_inputs, element_size);
-    right.generate_r1cs_witness(right_bits);
-
-    sha.generate_r1cs_witness();
-
-    // Report full assignment.
-    auto assignment_builder = serialize_protoboard_local_assignment(instance, pb);
-    if (result_stream_callback != NULL) {
-        result_stream_callback(result_stream_context, assignment_builder.GetBufferPointer());
-    }
-
-    // Return digest bits.
-    {
-        FlatBufferBuilder builder;
-
-        vector<FieldT> out_vals = output.bits.get_vals(pb);
-        vector<uint8_t> return_elements(fieldt_size * out_vals.size());
-
-        for (size_t i = 0; i < out_vals.size(); ++i) {
-            into_le(
-                    out_vals[i].as_bigint(),
-                    return_elements.data() + fieldt_size * i,
-                    fieldt_size);
-        }
-
-        auto response = CreateAssignmentResponse(
-                builder,
-                pb.num_variables() + 1,
-                builder.CreateVector(return_elements));
-
-        auto root = CreateRoot(builder, Message_AssignmentResponse, response.Union());
-        builder.FinishSizePrefixed(root);
-
-        if (response_callback != NULL) {
-            return response_callback(response_context, builder.GetBufferPointer());
-        }
-    }
-
-    return true;
-}
 
 } // extern "C"
