@@ -15,6 +15,7 @@ using namespace Gadget;
 using flatbuffers::FlatBufferBuilder;
 
 using std::vector;
+using std::string;
 using namespace libsnark;
 using libff::bigint;
 using libff::alt_bn128_r_limbs;
@@ -204,6 +205,24 @@ FlatBufferBuilder serialize_protoboard_local_assignment(
     auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
     builder.FinishSizePrefixed(root);
     return builder;
+}
+
+
+FlatBufferBuilder serialize_error(string error) {
+    FlatBufferBuilder builder;
+    auto ser_error = builder.CreateString(error);
+    auto response = CreateComponentReturn(builder, 0, 0, ser_error);
+    builder.FinishSizePrefixed(CreateRoot(builder, Message_ComponentReturn, response.Union()));
+    return builder;
+}
+
+bool return_error(gadget_callback_t response_callback, void *response_context, string error) {
+    if (response_callback != nullptr) {
+        FlatBufferBuilder builder = serialize_error(error);
+        response_callback(response_context, builder.GetBufferPointer());
+        // Releasing builder...
+    }
+    return false;
 }
 
 
