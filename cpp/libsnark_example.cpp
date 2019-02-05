@@ -8,11 +8,10 @@
 #include "gadget_generated.h"
 #include "libsnark_integration.hpp"
 
+using std::vector;
 using namespace libsnark;
 using namespace libff;
-using std::vector;
-
-typedef libff::Fr<alt_bn128_pp> FieldT;
+using namespace standard_gadget;
 
 
 class sha256_gadget : standard_libsnark_gadget {
