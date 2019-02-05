@@ -4,24 +4,26 @@
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_components.hpp"
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
+#include "gadget.h"
+#include "gadget_generated.h"
+#include "libsnark_integration.hpp"
+
 using namespace libsnark;
 using namespace libff;
 using std::vector;
 
 typedef libff::Fr<alt_bn128_pp> FieldT;
 
-#include "gadget.h"
-#include "gadget_generated.h"
-#include "libsnark_integration.hpp"
 
-
-class sha256_gadget {
+class sha256_gadget : standard_libsnark_gadget {
 private:
     digest_variable<FieldT> left, right, output;
     sha256_two_to_one_hash_gadget<FieldT> hasher;
 
 public:
     protoboard<FieldT> pb;
+
+    protoboard<FieldT> &borrow_protoboard() { return pb; }
 
     sha256_gadget(const GadgetInstance *instance) :
             left(pb, 256, "left"),
@@ -45,19 +47,21 @@ public:
         hasher.generate_r1cs_constraints();
     }
 
-    vector<FieldT> generate_r1cs_witness(const uint8_t *in_elements, size_t num_elements, size_t element_size) {
-        assert(num_elements == num_inputs());
-        size_t half_inputs = num_elements / 2;
+    vector<FieldT> generate_r1cs_witness(const vector<FieldT> &in_elements) {
+        assert(in_elements.size() == num_inputs());
+        size_t half_inputs = in_elements.size() / 2;
 
-        const uint8_t *left_data = in_elements;
-        const uint8_t *right_data = in_elements + element_size * half_inputs;
+        // Interpret inputs as bits.
+        bit_vector left_bits(half_inputs);
+        bit_vector right_bits(half_inputs);
 
-        bit_vector left_bits = to_bit_vector(left_data, half_inputs, element_size);
+        for (size_t i = 0; i < half_inputs; i++) {
+            left_bits[i] = (in_elements[i] == 1);
+            right_bits[i] = (in_elements[half_inputs + i] == 1);
+        }
+
         left.generate_r1cs_witness(left_bits);
-
-        bit_vector right_bits = to_bit_vector(right_data, half_inputs, element_size);
         right.generate_r1cs_witness(right_bits);
-
         hasher.generate_r1cs_witness();
 
         return output.bits.get_vals(pb);
@@ -73,70 +77,65 @@ bool sha256_gadget_call(
         gadget_callback_t response_callback,
         void *response_context
 ) {
+    auto root = GetSizePrefixedRoot(request_buf);
+
+    if (root->message_type() != Message_ComponentCall) {
+        return return_error(response_callback, response_context, "Unexpected message");
+    }
+
+    const ComponentCall *call = root->message_as_ComponentCall();
+    const GadgetInstance *instance = call->instance();
+
     libff::alt_bn128_pp::init_public_params();
 
-    auto root = GetSizePrefixedRoot(request_buf);
-    if (root->message_type() != Message_AssignmentRequest) return false;
-
-    const AssignmentRequest *assignment_request = root->message_as_AssignmentRequest();
-    const GadgetInstance *instance = assignment_request->instance();
-
-    sha256_gadget g(instance);
+    sha256_gadget gadget(instance);
 
     // Instance reduction.
-    if (assignment_request->generate_r1cs()) {
-
-        g.generate_r1cs_constraints();
+    if (call->generate_r1cs()) {
+        gadget.generate_r1cs_constraints();
 
         // Report constraints.
-        auto constraints_msg = serialize_protoboard_constraints(instance, g.pb);
         if (result_stream_callback != nullptr) {
+            auto constraints_msg = serialize_protoboard_constraints(instance, gadget.borrow_protoboard());
             result_stream_callback(result_stream_context, constraints_msg.GetBufferPointer());
+            // Releasing constraints_msg...
         }
     }
 
     // Witness reduction.
-    bool generate_assignment = assignment_request->incoming_elements() != nullptr;
-    vector<uint8_t> return_elements;
+    vector<FieldT> out_elements;
 
-    if (generate_assignment) {
-        auto in_variables = instance->incoming_variable_ids();
-        auto in_elements = assignment_request->incoming_elements();
-        auto element_size = in_elements->size() / in_variables->size();
+    if (call->generate_assignment()) {
+        vector<FieldT> in_elements = deserialize_incoming_elements(call);
 
-        vector<FieldT> out_elements = g.generate_r1cs_witness(in_elements->data(), in_variables->size(), element_size);
+        out_elements = gadget.generate_r1cs_witness(in_elements);
 
-        // Report assignment to local variables.
+        // Report assignment to generated local variables.
         if (result_stream_callback != nullptr) {
-            auto assignment_msg = serialize_protoboard_local_assignment(instance, g.pb);
+            auto assignment_msg = serialize_protoboard_local_assignment(instance, gadget.borrow_protoboard());
             result_stream_callback(result_stream_context, assignment_msg.GetBufferPointer());
-        }
-
-        // Find assignment to output variables.
-        return_elements.resize(fieldt_size * out_elements.size());
-        for (size_t i = 0; i < out_elements.size(); ++i) {
-            into_le(
-                    out_elements[i].as_bigint(),
-                    return_elements.data() + fieldt_size * i,
-                    fieldt_size);
+            // Releasing assignment_msg...
         }
     }
 
     // Response.
-    FlatBufferBuilder response_builder;
+    FlatBufferBuilder builder;
 
-    uint64_t num_local_vars = g.pb.num_variables() - g.num_inputs() - g.num_outputs();
+    uint64_t num_local_vars = gadget.borrow_protoboard().num_variables() - gadget.num_inputs() - gadget.num_outputs();
     uint64_t free_variable_id_after = instance->free_variable_id_before() + num_local_vars;
+    auto maybe_out_elements = call->generate_assignment() ? serialize_elements(builder, out_elements) : 0;
 
-    auto response = CreateAssignmentResponse(
-            response_builder,
+    auto response = CreateComponentReturn(
+            builder,
             free_variable_id_after,
-            generate_assignment ? response_builder.CreateVector(return_elements) : 0);
+            0, // No custom info.
+            0, // No error.
+            maybe_out_elements);
 
-    response_builder.FinishSizePrefixed(CreateRoot(response_builder, Message_AssignmentResponse, response.Union()));
+    builder.FinishSizePrefixed(CreateRoot(builder, Message_ComponentReturn, response.Union()));
 
     if (response_callback != nullptr) {
-        return response_callback(response_context, response_builder.GetBufferPointer());
+        return response_callback(response_context, builder.GetBufferPointer());
     }
 
     return true;
