@@ -29,8 +29,9 @@
         
         Note how the routine can be re-used by the witness reduction and deterministically assign the values to the respective variables in memory. Moreover, if needed, the constraint system can be outputed as a file containing a static rank-1 constraint system. One objection to using this routine design is that the component at the top level (i.e.: the Merkle Tree) cannot is waiting for the response of the sub-component (i.e.: the hasher component). This can have a cost in the efficiency of the circuit generation if we imagine a long enough chain of sub-calls that would cause a quadratic overhead. This is unlikely to happen in the current set of applications and circuits. 
 		
-			\begin{figure}[h!]
-				\includegraphics[width=\linewidth]{routine.png}
-				\caption{The flow of interaction between existing libraries and the interface}
-				\label{flow}
-			\end{figure}
+	
+		\begin{figure}[h!]
+			\includegraphics[width=\linewidth]{call_flow.png}
+			\caption{The flow of messages between libraries using the interface}
+			\label{flow}
+		\end{figure}
