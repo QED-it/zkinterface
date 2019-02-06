@@ -108,7 +108,8 @@
 	Refer to the inline documentation.
 
 \paragraph{Stream and File Format.}
-
+	\enote{Explain what's already induced by FlatBuffers: explain that the framework, plus our .fbs file, specify how the aforementioned high-level messages are actually represented at the byte level, including message framing, message naming, etc..}
 	All messages are framed, meaning that they can be concatenated and distinguished in streams of bytes or in files.
 	Messages must be prefixed by the size of the message not including the prefix,
 	as a 4-bytes little-endian unsigned integer.
+	\enote{Say something about streams - stdio/stdout, files, TCP connections, etc.?}
