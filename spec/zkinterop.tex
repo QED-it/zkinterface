@@ -41,11 +41,17 @@
 		
 
 		\section{Overview}
-		\paragraph{Introduction.} Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is extensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first ZKProof workshop. One of the requirements is to create a compiler of programs into constraint systems that are native to the proving system.
+		\paragraph{Introduction.} Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is extensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first ZKProof workshop. One of the requirements is to create a compiler of programs into constraint systems that are consumed by the proving system.
 		
-		There are several trade-offs one can consider when designing general-purpose (front-end) compilers, lending to distinct frameworks, APIs, generality, etc. Today, existing compilers are implemented to work best with their corresponding (back-end) proving system (somemetimes more than one). For a comprehensive list of front-ends and back-ends, you can go to \href{https://zkp.science}{zkp.science}. 
+		There are several trade-offs one can consider when designing general-purpose (front-end) compilers, leading to distinct frameworks, APIs, generality, etc. Today, existing compilers are implemented to work best with their corresponding (back-end) proving system (somemetimes more than one). For a comprehensive list of front-ends and back-ends, you can go to \href{https://zkp.science}{zkp.science}. 
 		
-		These libraries are usually built end-to-end: they take in some program that defines the statement and generate or verify a proof, in many cases without explicitly exposing the constraint system compilation. Moreover, if the compilers can output intermediary files and configurations, they are usually native to the specific back-end. In practice this means there is no portability between different proving systems and compilers. We aim to solve this, as seen in Figure \ref{interface} issue by creating a community standard proposal for the ZKProof effort around constraint system formatting, building upon the work done at the first ZKProof workshop.
+		These libraries are usually built end-to-end: they take in some program that defines the statement and generate or verify a proof, in many cases without explicitly exposing the constraint system compilation. Moreover, if the compilers can output intermediary files and configurations, they are usually native to the specific back-end. In practice this means that
+		\begin{itemize}
+			\item there is no portability between different proving systems and compilers, and
+			\item it is not possible to compile a program using code from different frameworks
+		\end{itemize}   
+		
+		We aim to solve this issue, as seen in Figure \ref{interface}, by creating a community standard proposal for the ZKProof effort around constraint system formatting, building upon the work done at the first ZKProof workshop.
 		
 		\begin{figure}[h!]
 			\includegraphics[width=\linewidth]{interface.png}
@@ -53,13 +59,14 @@
 			\label{interface}
 		\end{figure}
 
-		\paragraph{Contribution.} We design and implement a standard rank-1 constraint system (R1CS) interface between front-ends and back-ends. Our design encompasses programmable instance and witness reductions, while capturing the parameters of the different components of the statement to be proven, such as the scalar field of the Pedersen commitment or the depth of the Merkle tree, among others. Given that these statements can be large and difficult to build, developers usually build smaller components that are re-usable with different statements; these components are sometimes called ``gadgets". With our zkInterface one can piece together programmatically the different components to form a full fledge statement.
+		\paragraph{Contribution.} We design and implement a standard rank-1 constraint system (R1CS) interface between front-ends and back-ends. Our design encompasses programmable instance and witness reductions, while capturing the parameters of the different components of the statement to be proven. Given that these statements can be large and difficult to build, developers usually build smaller components that are re-usable with different statements; these components are sometimes called ``gadgets". With our zkInterface one can piece together programmatically the different components to form a complete statement.
 		
 		\paragraph{Goals.} Our goals for the standard are the following
 		\begin{itemize}
-			\item Running time of R1CS construction and witness reduction should be linear (multiplicative overhead) compared to a native implementation of the same gadgets
-			\item Cross-language interoperability via dynamic linking and shared memory and via separated executables and machines communicating in serialized byte streams.
-			\item Compactness of serialized representation
+			\item Interoperability across frameworks and programming languages
+			\item The ability to write components that can be consumed by different frameworks
+			\item Overhead of the R1CS construction and witness reduction should be linear compared to a native implementation of the same gadgets 
+			\item Design an extensible interface, for example to support non R1CS systems.
 		\end{itemize}
 	
 		\paragraph{Scope.} We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
