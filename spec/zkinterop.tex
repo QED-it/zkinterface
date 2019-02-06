@@ -16,7 +16,6 @@
 	\usepackage{lib/style} % include custom style for proto declarations.	
 	
 	%\usepackage{sagetex}
-	
 	\newcommand\dnote[1]{\textcolor{red}{#1}}
 	\newcommand\enote[1]{\textcolor{blue}{#1}}
 	\newcommand\anote[1]{\textcolor{green}{#1}}
@@ -40,24 +39,13 @@
 		
 		\maketitle
 		
-		%\begin{abstract}
-			
-		%\end{abstract}
-		
-		
-		\anote{Aurel - anote} //
-		\dnote{Daniel - dnote} //
-		\enote{Eran - enote} //
-
-		\todototoc
-		\listoftodos
 
 		\section{Introduction}
-		Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is 	here talk about the different levels in word docextensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first workshop. One of the requirements is to create a compiler of statements to be proven into a native low-level representation of the proving system.
+		Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is extensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first ZKProof workshop. One of the requirements is to create a compiler of programs into constraint systems that are native to the proving system.
 		
 		There are several trade-offs one can consider when designing general-purpose (front-end) compilers, lending to distinct frameworks, APIs, generality, etc. Today, existing compilers are implemented to work best with their corresponding (back-end) proving system (somemetimes more than one). For a comprehensive list of front-ends and back-ends, you can go to \href{https://zkp.science}{zkp.science}. 
 		
-		These libraries are usually built end-to-end: they take in some constraint system that defines the statement of the proving computation. In turn, there exist some tools to facilitate writing such constraint systems, which usually means compiling a program into R1CS, such as ZoKrates, gadget-lib or sapling-crypto.
+		These libraries are usually built end-to-end: they take in some constraint system that defines the statement of the proving computation and generates or verifies a proof. 
 		
 		Generally, the compilers can output intermediary files and configurations, yet are used for a specific back-end. In practice this means there is no portability between proving systems and compilers. We aim to solve this issue by creating a community standard proposal for the ZKProof effort around constraint system formatting. We build upon the work done at the first ZKProof workshop, see the file format suggested and the further topics laid out. 
 		
@@ -98,17 +86,19 @@
 			- boolean circuits
 			- repetitions in computation
 		- gadget composability
+		- there are multiple systems and new ones have improves / different ways of doing things and computing / dealing with constraint systems, so hard to generalized
+		- know the properties of the variables that are being used - what is the component asserting (does it include the bitness check / constraint). Does the gadget enforce some properties on the variables or as a user I need to check it myself? It is a source of potential error and needs to be well documented. Could have extension that defines better type systems (any number vs bool which already includes constraint)
 		- 
 		
 		\paragraph{Scope.} We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
 		
 		The standard that we propose can be seen in three different levels:
 		\begin{enumerate}
-			\item The first level defines 
+			\item The first level defines  
 			\begin{itemize}
 				\item standard messages and their serialization that the caller and callee exchange, 
 				\item an R1CS file format for the instance and 
-				\item a file format for the assignments.
+				\item a file format for the assignments.\dnote{this we want to standardize but need approval between different people / teams}
 			\end{itemize}
 			\item The second level defines a simple C API that allows for the exchange of messages.
 			\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
@@ -128,7 +118,8 @@
 		- ZoKrates' idea
 		- what else??
 		
-		
+		\dnote{Need to ask people from first workshop whether they think zkproofFormat1 is better or not?}
+		\dtodo{Remove indication of file format from code / spec but include statement that it can be done and needs some decision / discussion}
 		
 		\input{description.tex}
 
