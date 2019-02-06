@@ -1,29 +1,31 @@
+%=============================================================================
 \section{Specification}
+
+\enote{For now, maybe just remove this section, and leave only the narrative in the Architecture subsection, and the in-source comments?}
 		
-        \paragraph{Interface Definition.}
+\paragraph{Interface Definition.}
 
-		The interface is defined as a FlatBuffers schema that describes 
-		the serialization of messages that the caller and callee can exchange.
+	The interface is defined as a FlatBuffers schema that describes 
+	the serialization of messages that the caller and callee can exchange.
 
-		The FlatBuffers system includes a simple interface definition language,
-		support for all common programming languages,
-		a clear evolution path for future extensions of the standard,
-		and the possibility of very efficient implementations.
+	The FlatBuffers system includes a simple interface definition language,
+	support for all common programming languages,
+	a clear evolution path for future extensions of the standard,
+	and the possibility of very efficient implementations.
 
-		\anote{Add ref: https://google.github.io/flatbuffers/}
+	\anote{Add ref: https://google.github.io/flatbuffers/}
 
-		The interface definition is provided in annex.
-        
-        \paragraph{Request Call.}
+	The interface definition is provided in annex.
 
-        \paragraph{Callee Response.}
+\paragraph{Request Call.}
 
-		\paragraph{C API.}
+\paragraph{Callee Response.}
 
-        \paragraph{Memory Allocation.}
+	\paragraph{C API.}
 
-        \paragraph{File Format.}
+\paragraph{Memory Allocation.}
+
+\paragraph{File Format.}
 
 \subsection{Interface Definition}
 
-\lstinputlisting[language=flatbuffers2,style=protobuf]{../gadget.fbs}
