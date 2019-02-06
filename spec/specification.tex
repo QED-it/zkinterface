@@ -1,31 +1,114 @@
 %=============================================================================
 \section{Specification}
 
-\enote{For now, maybe just remove this section, and leave only the narrative in the Architecture subsection, and the in-source comments?}
-		
-\paragraph{Interface Definition.}
+\paragraph{Interface.}
 
 	The interface is defined as a FlatBuffers schema that describes 
-	the serialization of messages that the caller and callee can exchange.
+	the messages that the caller and callee can exchange.
 
+	The interface is defined as a set of messages that the caller and callee can exchange.
+	The definition is provided in annex. Refer to the inline documentation of each message and field.
+
+	Messages are described in a FlatBuffers schema.
+
+	\subparagraph{Note}
 	The FlatBuffers system includes a simple interface definition language,
-	support for all common programming languages,
+	a data layout specification,
 	a clear evolution path for future extensions of the standard,
+	support for all common programming languages,
 	and the possibility of very efficient implementations.
+	The specification of FlatBuffers can be found at
+	\href{https://google.github.io/flatbuffers/}{https://google.github.io/flatbuffers/}.
 
-	\anote{Add ref: https://google.github.io/flatbuffers/}
+\paragraph{Messages Flow.}
 
-	The interface definition is provided in annex.
+	The caller calls the component code with a single Call message.
+	The component exits with a single Return message.
+	This is a control flow analoguous to a function call in common programming languages.
 
-\paragraph{Request Call.}
+	The caller also provides a way for the component to send 
+	R1CSConstraints and AssignedVariables messages.
+	This is an output channel distinct from the return message.
 
-\paragraph{Callee Response.}
+	During instance reduction,
+	a component may add any number of constraints to the constraint system
+	by sending one or more R1CSConstraints messages.
 
-	\paragraph{C API.}
+	During witness reduction,
+	a component may assign values to variables
+	by returning one or more AssignedVariables messages.
 
-\paragraph{Memory Allocation.}
+	\subparagraph{Note}
+	The design of constraints and assignments channels
+	allows a component to call subcomponents itself.
+	Messages from all (sub-)components can simply be sent separately
+	without the need to aggregate them into a single message.
+	
+	Moreover, an implementation can decouple the proving system
+	from the logic of building constraints and assignments,
+	by arranging for the constraints and assignments messages
+	to be processed by the proving system, independently from the control logic.
 
-\paragraph{File Format.}
+\paragraph{Variables.}
 
-\subsection{Interface Definition}
+	All variables in a constraint system are assigned a numerical identifier
+	unique within this system.
+	Messages that contain constraints or assignments refer to variables by their
+	unique ID.
 
+	\subparagraph{Note}
+	This design allows implementations to aggregate and handle messages in a generic way,
+	without any	reference to the components or mechanisms that generated them.
+
+	\anote{Must be consecutive or are gaps allowed?}
+
+\paragraph{Local Variables Allocation.}
+
+	A component may allocate a number of local variables to use
+	in the internal implementation of the function that it computes.
+	They are analoguous to stack variables in common programming languages.
+
+	The following protocol is used to allocate variable IDs that are
+	unique within a whole constraint system.
+	\begin{itemize}
+		\item The caller must provide a numerical ID greater than all IDs that have already been allocated, called the Free-Before ID.
+		\item The component may use the Free-Before ID and consecutive IDs as its local variables IDs.
+		\item The component must return the next consecutive ID that it did not use, called the Free-After ID.
+		\item The caller must treat IDs lesser than the Free-After ID as allocated by the component,
+			and must not use them.
+	\end{itemize}
+
+	During instance reduction, the component can refer to
+	its local variables in the constraints that it generates.
+	The caller and other parts of the program must not refer to these variables.
+
+	During witness reduction, the component must assign values to its local variables.
+
+\paragraph{Incoming/Outgoing Variables.}
+
+	The concept of incoming, outgoing variables arises when a program is decomposed into components.
+	These variables serve as the functional interface between a component and its caller.
+	They are analoguous to arguments and return values of functions in common programming languages.
+	A variable is not inherently incoming, outgoing, nor local;
+	rather, this is a convention in the context of a component call.
+
+	The caller provides the IDs of variables to be used as incoming and outgoing variables by the component.
+
+	During instance reduction, both the caller and the component can refer to
+	these variables in the constraints that they generate.
+	Other parts of the program may also refer to these same variables in their own contexts.
+
+	During witness reduction, the caller must assign values to incoming variables,
+	and pass these values to the component.
+	The component must compute values for outgoing variables, and return these values to the caller.
+
+\paragraph{C Interface.}
+
+	A C interface to exchange messages is defined in annex.
+	Refer to the inline documentation.
+
+\paragraph{Stream and File Format.}
+
+	All messages are framed, meaning that they can be concatenated and distinguished in streams of bytes or in files.
+	Messages must be prefixed by the size of the message not including the prefix,
+	as a 4-bytes little-endian unsigned integer.
