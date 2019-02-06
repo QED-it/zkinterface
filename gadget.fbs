@@ -1,119 +1,11 @@
 namespace Gadget;
 
 union Message {
-    R1CSConstraints,
-    AssignedVariables,
-
     ComponentCall,
     ComponentReturn,
-}
 
-table Root {
-    message :Message;
-}
-
-root_type Root;
-file_identifier "zkp2";
-file_extension "zkp2";
-
-
-// == Types ==
-
-// Variable ID = uint64
-//
-// Unique within a constraint system.
-// Zero is a reserved special value.
-
-// BigInt
-//
-// Big integers are represented as canonical little-endian byte arrays.
-// Multiple big integers can be concatenated in a single array.
-//
-// Evolution plan:
-// If a different representation of elements is to be supported in the future,
-// it should use new fields, and omit the current canonical fields.
-// This will allow past implementations to detect whether they are compatible.
-//
-
-/// Concrete variable values.
-/// Used for linear combinations and assignments.
-table VariableValues {
-    /// The IDs of the variables being assigned to.
-    variable_ids   :[uint64];
-
-    /// Field Elements assigned to variables.
-    /// Contiguous BigInts in the same order as variable_ids.
-    ///
-    /// The field in use is defined in `instance.field_order`.
-    ///
-    /// The size of an element representation is determined by:
-    ///     element size = elements.length / variable_ids.length
-    ///
-    /// The element representation may be truncated and therefore shorter
-    /// than the canonical representation. Truncated bytes are treated as zeros.
-    elements       :[ubyte];
-}
-
-/// An R1CS constraint between variables.
-table BilinearConstraint {
-    // (A) * (B) = (C)
-    linear_combination_a :VariableValues;
-    linear_combination_b :VariableValues;
-    linear_combination_c :VariableValues;
-}
-
-/// Description of a particular instance of a gadget.
-table GadgetInstance {
-    /// Which gadget to instantiate.
-    /// Allows a library to provide multiple gadgets.
-    gadget_name             :string;
-
-    /// Incoming Variables to use as connections to the gadget.
-    /// Allocated by the caller.
-    /// Assigned by the caller in `Witness.incoming_elements`.
-    incoming_variable_ids   :[uint64];
-
-    /// Outgoing Variables to use as connections to the gadget.
-    /// There may be no Outgoing Variables if the gadget is a pure assertion.
-    /// Allocated by the caller.
-    /// Assigned by the called gadget in `ComponentReturn.outgoing_elements`.
-    outgoing_variable_ids   :[uint64];
-
-    /// First free Variable ID before the call.
-    /// The gadget can allocate new Variable IDs starting with this one.
-    free_variable_id_before :uint64;
-
-    /// The order of the field used by the current system.
-    /// A BigInt.
-    field_order             :[ubyte];
-
-    /// Optional: Any static parameter that may influence the instance construction.
-    /// Parameters can be standard, conventional, or specific to a gadget.
-    /// Example: the depth of a Merkle tree.
-    /// Counter-example: the Merkle path is not configuration (rather witness).
-    configuration           :[CustomKeyValue];
-}
-
-/// Generic key-value for custom attributes.
-table CustomKeyValue {
-    key   :string;
-    value :[ubyte];
-}
-
-
-// == Messages ==
-
-/// Report constraints to be added to the constraints system.
-/// To send to the stream of constraints.
-table R1CSConstraints {
-    constraints    :[BilinearConstraint];
-}
-
-/// Report local assignments computed by the gadget.
-/// To send to the stream of assigned variables.
-/// Does not include input and output variables.
-table AssignedVariables {
-    values :VariableValues;
+    R1CSConstraints,
+    AssignedVariables,
 }
 
 table ComponentCall {
@@ -130,16 +22,54 @@ table ComponentCall {
     witness             :Witness;
 }
 
-/// Details necessary to compute an assignment.
-table Witness {
-    /// The values that the caller assigned to Incoming Variables.
-    /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
-    incoming_elements :[ubyte];
+    /// Description of a particular instance of a gadget.
+    table GadgetInstance {
+        /// Which gadget to instantiate.
+        /// Allows a library to provide multiple gadgets.
+        gadget_name             :string;
 
-    /// Optional: Any info that may be useful to the gadget to compute its assignments.
-    /// Example: Merkle authentication path.
-    info              :[CustomKeyValue];
-}
+        /// Incoming Variables to use as connections to the gadget.
+        /// Allocated by the caller.
+        /// Assigned by the caller in `Witness.incoming_elements`.
+        incoming_variable_ids   :[uint64];
+
+        /// Outgoing Variables to use as connections to the gadget.
+        /// There may be no Outgoing Variables if the gadget is a pure assertion.
+        /// Allocated by the caller.
+        /// Assigned by the called gadget in `ComponentReturn.outgoing_elements`.
+        outgoing_variable_ids   :[uint64];
+
+        /// First free Variable ID before the call.
+        /// The gadget can allocate new Variable IDs starting with this one.
+        free_variable_id_before :uint64;
+
+        /// The order of the field used by the current system.
+        /// A BigInt.
+        field_order             :[ubyte];
+
+        /// Optional: Any static parameter that may influence the instance
+        /// construction. Parameters can be standard, conventional, or custom.
+        /// Example: the depth of a Merkle tree.
+        /// Counter-example: a Merkle path is not configuration (rather witness).
+        configuration           :[KeyValue];
+    }
+
+    /// Details necessary to compute an assignment.
+    table Witness {
+        /// The values that the caller assigned to Incoming Variables.
+        /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+        incoming_elements :[ubyte];
+
+        /// Optional: Any info that may be useful to the gadget to compute assignments.
+        /// Example: Merkle authentication path.
+        info              :[KeyValue];
+    }
+
+    /// Generic key-value for custom attributes.
+    table KeyValue {
+        key   :string;
+        value :[ubyte];
+    }
 
 /// Response after all R1CSConstraints or AssignedVariables have been sent.
 table ComponentReturn {
@@ -148,7 +78,7 @@ table ComponentReturn {
     free_variable_id_after :uint64;
 
     /// Optional: Any info that may be useful to the caller.
-    info                   :[CustomKeyValue];
+    info                   :[KeyValue];
 
     /// Optional: An error message. Null if no error.
     error                  :string;
@@ -157,3 +87,67 @@ table ComponentReturn {
     /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
     outgoing_elements      :[ubyte];
 }
+
+/// Report constraints to be added to the constraints system.
+/// To send to the stream of constraints.
+table R1CSConstraints {
+    constraints    :[BilinearConstraint];
+}
+
+    /// An R1CS constraint between variables.
+    table BilinearConstraint {
+        // (A) * (B) = (C)
+        linear_combination_a :VariableValues;
+        linear_combination_b :VariableValues;
+        linear_combination_c :VariableValues;
+    }
+
+/// Report local assignments computed by the gadget.
+/// To send to the stream of assigned variables.
+/// Does not include input and output variables.
+table AssignedVariables {
+    values :VariableValues;
+}
+
+    /// Concrete variable values.
+    /// Used for linear combinations and assignments.
+    table VariableValues {
+        /// The IDs of the variables being assigned to.
+        variable_ids   :[uint64];
+
+        /// Field Elements assigned to variables.
+        /// Contiguous BigInts in the same order as variable_ids.
+        ///
+        /// The field in use is defined in `instance.field_order`.
+        ///
+        /// The size of an element representation is determined by:
+        ///     element size = elements.length / variable_ids.length
+        ///
+        /// The element representation may be truncated and therefore shorter
+        /// than the canonical representation. Truncated bytes are treated as zeros.
+        elements       :[ubyte];
+    }
+
+    // type Variable ID = uint64
+    //
+    // IDs must be unique within a constraint system.
+    // Zero is a reserved special value.
+
+    // type BigInt
+    //
+    // Big integers are represented as canonical little-endian byte arrays.
+    // Multiple big integers can be concatenated in a single array.
+    //
+    // Evolution plan:
+    // If a different representation of elements is to be supported in the future,
+    // it should use new fields, and omit the current canonical fields.
+    // This will allow past implementations to detect whether they are compatible.
+
+
+table Root {
+    message :Message;
+}
+
+root_type Root;
+file_identifier "zkp2";
+file_extension "zkp2";
