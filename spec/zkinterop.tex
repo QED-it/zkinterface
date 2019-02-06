@@ -65,6 +65,8 @@ These libraries are usually built end-to-end: they take in some program that def
 \subsection{Goals}
 \enote{Rewrite:}
 
+\enote{Copy relevant text from the Implementation Track, especially Advanced Interoperability}
+
 We aim to solve this issue, as seen in Figure \ref{interface}, by creating a community standard proposal for the ZKProof effort around constraint system formatting, building upon the work done at the first ZKProof workshop.
 
 We design and implement a standard rank-1 constraint system (R1CS) interface between front-ends and back-ends. Our design encompasses programmable instance and witness reductions, while capturing the parameters of the different components of the statement to be proven. Given that these statements can be large and difficult to build, developers usually build smaller components that are re-usable with different statements; these components are sometimes called ``gadgets". With our zkInterface one can piece together programmatically the different components to form a complete statement.
@@ -77,13 +79,7 @@ We design and implement a standard rank-1 constraint system (R1CS) interface bet
 	\item Design an extensible interface, for example to support non R1CS systems.
 \end{itemize}
 
-\begin{figure}[h!]
-	\includegraphics[width=\linewidth]{interface.png}
-	\caption{zkInterface\enote{Replace by diagram on slack}}
-	\label{interface}
-\end{figure}
-
-\paragraph{Scope and limitations.} \enote{Explain what we won't do or defer to the future}
+\paragraph{Scope and limitations.} \enote{Rewrite:}
 
 We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
 
@@ -104,5 +100,8 @@ This proposal is not aiming to standardize a language or framework for generatin
 \input{description.tex}
 
 \input{specification.tex}
+
+\lstinputlisting[language=flatbuffers2,style=protobuf]{../gadget.fbs}
+
 	
 \end{document}
