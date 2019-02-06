@@ -50,9 +50,9 @@ bool r1cs_request(
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
 
-        auto constraint = CreateConstraint(builder, lc, lc, lc);
+        auto constraint = CreateBilinearConstraint(builder, lc, lc, lc);
 
-        vector<flatbuffers::Offset<Constraint>> constraints;
+        vector<flatbuffers::Offset<BilinearConstraint>> constraints;
         constraints.push_back(constraint);
         constraints.push_back(constraint);
 
@@ -182,7 +182,7 @@ bool gadget_request(
         if (!ok) return false;
     }
 
-    if (call->generate_assignment() != nullptr) {
+    if (call->generate_assignment()) {
         bool ok = assignments_request(
                 call,
                 result_stream_callback, result_stream_context,

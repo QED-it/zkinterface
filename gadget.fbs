@@ -13,8 +13,8 @@ table Root {
 }
 
 root_type Root;
-file_identifier "zkco";
-file_extension "zkco";
+file_identifier "zkp2";
+file_extension "zkp2";
 
 
 // == Types ==
@@ -55,7 +55,7 @@ table VariableValues {
 }
 
 /// An R1CS constraint between variables.
-table Constraint {
+table BilinearConstraint {
     // (A) * (B) = (C)
     linear_combination_a :VariableValues;
     linear_combination_b :VariableValues;
@@ -106,7 +106,7 @@ table CustomKeyValue {
 /// Report constraints to be added to the constraints system.
 /// To send to the stream of constraints.
 table R1CSConstraints {
-    constraints    :[Constraint];
+    constraints    :[BilinearConstraint];
 }
 
 /// Report local assignments computed by the gadget.
@@ -126,7 +126,8 @@ table ComponentCall {
 
     /// Whether an assignment should be generated.
     /// Provide witness values to the component.
-    generate_assignment :Witness;
+    generate_assignment :bool;
+    witness             :Witness;
 }
 
 /// Details necessary to compute an assignment.

@@ -131,7 +131,8 @@ pub fn make_assignment_request(
         ComponentCall::create(&mut builder, &ComponentCallArgs {
             instance: Some(i),
             generate_r1cs: false,
-            generate_assignment: Some(witness),
+            generate_assignment: true,
+            witness: Some(witness),
         })
     };
 

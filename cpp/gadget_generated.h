@@ -12,7 +12,7 @@ struct Root;
 
 struct VariableValues;
 
-struct Constraint;
+struct BilinearConstraint;
 
 struct GadgetInstance;
 
@@ -248,7 +248,7 @@ inline flatbuffers::Offset<VariableValues> CreateVariableValuesDirect(
 }
 
 /// An R1CS constraint between variables.
-struct Constraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct BilinearConstraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_LINEAR_COMBINATION_A = 4,
     VT_LINEAR_COMBINATION_B = 6,
@@ -275,36 +275,36 @@ struct Constraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct ConstraintBuilder {
+struct BilinearConstraintBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_linear_combination_a(flatbuffers::Offset<VariableValues> linear_combination_a) {
-    fbb_.AddOffset(Constraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
+    fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
   }
   void add_linear_combination_b(flatbuffers::Offset<VariableValues> linear_combination_b) {
-    fbb_.AddOffset(Constraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
+    fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
   }
   void add_linear_combination_c(flatbuffers::Offset<VariableValues> linear_combination_c) {
-    fbb_.AddOffset(Constraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
+    fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
   }
-  explicit ConstraintBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit BilinearConstraintBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ConstraintBuilder &operator=(const ConstraintBuilder &);
-  flatbuffers::Offset<Constraint> Finish() {
+  BilinearConstraintBuilder &operator=(const BilinearConstraintBuilder &);
+  flatbuffers::Offset<BilinearConstraint> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Constraint>(end);
+    auto o = flatbuffers::Offset<BilinearConstraint>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Constraint> CreateConstraint(
+inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<VariableValues> linear_combination_a = 0,
     flatbuffers::Offset<VariableValues> linear_combination_b = 0,
     flatbuffers::Offset<VariableValues> linear_combination_c = 0) {
-  ConstraintBuilder builder_(_fbb);
+  BilinearConstraintBuilder builder_(_fbb);
   builder_.add_linear_combination_c(linear_combination_c);
   builder_.add_linear_combination_b(linear_combination_b);
   builder_.add_linear_combination_a(linear_combination_a);
@@ -519,8 +519,8 @@ struct R1CSConstraints FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONSTRAINTS = 4
   };
-  const flatbuffers::Vector<flatbuffers::Offset<Constraint>> *constraints() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Constraint>> *>(VT_CONSTRAINTS);
+  const flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>> *constraints() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>> *>(VT_CONSTRAINTS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -534,7 +534,7 @@ struct R1CSConstraints FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct R1CSConstraintsBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Constraint>>> constraints) {
+  void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>>> constraints) {
     fbb_.AddOffset(R1CSConstraints::VT_CONSTRAINTS, constraints);
   }
   explicit R1CSConstraintsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -551,7 +551,7 @@ struct R1CSConstraintsBuilder {
 
 inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraints(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Constraint>>> constraints = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>>> constraints = 0) {
   R1CSConstraintsBuilder builder_(_fbb);
   builder_.add_constraints(constraints);
   return builder_.Finish();
@@ -559,8 +559,8 @@ inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraints(
 
 inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraintsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<Constraint>> *constraints = nullptr) {
-  auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<Constraint>>(*constraints) : 0;
+    const std::vector<flatbuffers::Offset<BilinearConstraint>> *constraints = nullptr) {
+  auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<BilinearConstraint>>(*constraints) : 0;
   return Gadget::CreateR1CSConstraints(
       _fbb,
       constraints__);
@@ -614,7 +614,8 @@ struct ComponentCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_INSTANCE = 4,
     VT_GENERATE_R1CS = 6,
-    VT_GENERATE_ASSIGNMENT = 8
+    VT_GENERATE_ASSIGNMENT = 8,
+    VT_WITNESS = 10
   };
   /// All details necessary to construct the instance.
   /// The same instance must be provided for R1CS and assignment generation.
@@ -627,16 +628,20 @@ struct ComponentCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   /// Whether an assignment should be generated.
   /// Provide witness values to the component.
-  const Witness *generate_assignment() const {
-    return GetPointer<const Witness *>(VT_GENERATE_ASSIGNMENT);
+  bool generate_assignment() const {
+    return GetField<uint8_t>(VT_GENERATE_ASSIGNMENT, 0) != 0;
+  }
+  const Witness *witness() const {
+    return GetPointer<const Witness *>(VT_WITNESS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_INSTANCE) &&
            verifier.VerifyTable(instance()) &&
            VerifyField<uint8_t>(verifier, VT_GENERATE_R1CS) &&
-           VerifyOffset(verifier, VT_GENERATE_ASSIGNMENT) &&
-           verifier.VerifyTable(generate_assignment()) &&
+           VerifyField<uint8_t>(verifier, VT_GENERATE_ASSIGNMENT) &&
+           VerifyOffset(verifier, VT_WITNESS) &&
+           verifier.VerifyTable(witness()) &&
            verifier.EndTable();
   }
 };
@@ -650,8 +655,11 @@ struct ComponentCallBuilder {
   void add_generate_r1cs(bool generate_r1cs) {
     fbb_.AddElement<uint8_t>(ComponentCall::VT_GENERATE_R1CS, static_cast<uint8_t>(generate_r1cs), 0);
   }
-  void add_generate_assignment(flatbuffers::Offset<Witness> generate_assignment) {
-    fbb_.AddOffset(ComponentCall::VT_GENERATE_ASSIGNMENT, generate_assignment);
+  void add_generate_assignment(bool generate_assignment) {
+    fbb_.AddElement<uint8_t>(ComponentCall::VT_GENERATE_ASSIGNMENT, static_cast<uint8_t>(generate_assignment), 0);
+  }
+  void add_witness(flatbuffers::Offset<Witness> witness) {
+    fbb_.AddOffset(ComponentCall::VT_WITNESS, witness);
   }
   explicit ComponentCallBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -669,10 +677,12 @@ inline flatbuffers::Offset<ComponentCall> CreateComponentCall(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<GadgetInstance> instance = 0,
     bool generate_r1cs = false,
-    flatbuffers::Offset<Witness> generate_assignment = 0) {
+    bool generate_assignment = false,
+    flatbuffers::Offset<Witness> witness = 0) {
   ComponentCallBuilder builder_(_fbb);
-  builder_.add_generate_assignment(generate_assignment);
+  builder_.add_witness(witness);
   builder_.add_instance(instance);
+  builder_.add_generate_assignment(generate_assignment);
   builder_.add_generate_r1cs(generate_r1cs);
   return builder_.Finish();
 }
@@ -891,7 +901,7 @@ inline const Gadget::Root *GetSizePrefixedRoot(const void *buf) {
 }
 
 inline const char *RootIdentifier() {
-  return "zkco";
+  return "zkp2";
 }
 
 inline bool RootBufferHasIdentifier(const void *buf) {
@@ -910,7 +920,7 @@ inline bool VerifySizePrefixedRootBuffer(
 }
 
 inline const char *RootExtension() {
-  return "zkco";
+  return "zkp2";
 }
 
 inline void FinishRootBuffer(
