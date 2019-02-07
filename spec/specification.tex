@@ -3,13 +3,9 @@
 
 \paragraph{Interface.}
 
-	The interface is defined as a FlatBuffers schema that describes 
-	the messages that the caller and callee can exchange.
-
 	The interface is defined as a set of messages that the caller and callee can exchange.
-	The definition is provided in annex. Refer to the inline documentation of each message and field.
-
-	Messages are described in a FlatBuffers schema.
+	The definition is provided in Listing \ref{gadget.fbs} as a FlatBuffers schema.
+	Refer to the inline documentation of each message and field.
 
 	\subparagraph{Note}
 	The FlatBuffers system includes a simple interface definition language,
@@ -22,6 +18,8 @@
 
 \paragraph{Messages Flow.}
 
+	The flow of messages is illustrated in Figure \ref{flow}.
+
 	The caller calls the component code with a single Call message.
 	The component exits with a single Return message.
 	This is a control flow analoguous to a function call in common programming languages.
@@ -33,10 +31,11 @@
 	During instance reduction,
 	a component may add any number of constraints to the constraint system
 	by sending one or more R1CSConstraints messages.
+	The caller and other components may do so as well.
 
 	During witness reduction,
 	a component may assign values to variables
-	by returning one or more AssignedVariables messages.
+	by sending one or more AssignedVariables messages.
 
 	\subparagraph{Note}
 	The design of constraints and assignments channels
@@ -79,10 +78,11 @@
 	\end{itemize}
 
 	During instance reduction, the component can refer to
-	its local variables in the constraints that it generates.
-	The caller and other parts of the program must not refer to these variables.
+	its local variables in the R1CSConstraints messages that it generates.
+	The caller and other parts of the program must not refer to these local variables.
 
-	During witness reduction, the component must assign values to its local variables.
+	During witness reduction, the component must assign values to its local variables
+	by sending AssignedVariables messages.
 
 \paragraph{Incoming/Outgoing Variables.}
 
@@ -93,18 +93,22 @@
 	rather, this is a convention in the context of a component call.
 
 	The caller provides the IDs of variables to be used as incoming and outgoing variables by the component.
+	There may be no outgoing variables if the component implements a pure assertion.
 
 	During instance reduction, both the caller and the component can refer to
-	these variables in the constraints that they generate.
+	these variables in the R1CSConstraints messages that they generate.
 	Other parts of the program may also refer to these same variables in their own contexts.
 
-	During witness reduction, the caller must assign values to incoming variables,
-	and pass these values to the component.
-	The component must compute values for outgoing variables, and return these values to the caller.
+	During witness reduction, the caller must pass incoming values to the component in the Call message.
+	The component must return outgoing values to the caller in the Return message.
+
+	The caller is responsible for the assignment of values to both incoming and outgoing variables.
+	How this is achieved depends on the caller and proving system,
+	and on whether some variables are treated as public inputs of the zero-knowledge program.
 
 \paragraph{C Interface.}
 
-	A C interface to exchange messages is defined in annex.
+	A C interface to exchange messages is defined in Listing \ref{gadget.h}.
 	Refer to the inline documentation.
 
 \paragraph{Stream and File Format.}
