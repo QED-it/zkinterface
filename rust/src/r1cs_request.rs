@@ -1,7 +1,7 @@
 use assignment_request::AssignedVariable;
 use flatbuffers::FlatBufferBuilder;
 use gadget_call::{
-    call_gadget,
+    call_component_wrapper,
     CallbackContext,
     InstanceDescription,
 };
@@ -39,7 +39,7 @@ pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
     builder.finish_size_prefixed(message, None);
     let buf = builder.finished_data();
 
-    let ctx = call_gadget(&buf).unwrap();
+    let ctx = call_component_wrapper(&buf).unwrap();
 
     R1CSContext { instance, ctx }
 }
@@ -53,7 +53,7 @@ pub struct R1CSContext {
 impl R1CSContext {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
-            messages_iter: self.ctx.result_stream.iter(),
+            messages_iter: self.ctx.constraints_messages.iter(),
             constraints_count: 0,
             next_constraint: 0,
             constraints: None,
@@ -61,7 +61,7 @@ impl R1CSContext {
     }
 
     pub fn response(&self) -> Option<ComponentReturn> {
-        let buf = self.ctx.response.as_ref()?;
+        let buf = self.ctx.return_message.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
         message.message_as_component_return()
     }
