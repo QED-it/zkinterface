@@ -2,7 +2,7 @@
 
 	%\input{style}
 	
-        \usepackage[notes=true]{lib/dtrt}
+	\usepackage[notes=true]{lib/dtrt}
 	\usepackage{algorithm}
 	\usepackage{algpseudocode}
 	\usepackage{amsmath}
@@ -88,8 +88,8 @@ The standard that we propose can be seen in three different levels:
 	\item The first level defines  
 	\begin{itemize}
 		\item standard messages and their serialization that the caller and callee exchange, 
-		\item an R1CS file format for the instance
-		\item a file format for the assignments.
+		\item a data format for R1CS constraints,
+		\item a data format for R1CS variables assignments.
 	\end{itemize}
 	\item The second level defines a simple C API that allows for the exchange of messages.
 	\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
@@ -97,9 +97,15 @@ The standard that we propose can be seen in three different levels:
 
 This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written. However, it is important to point that any such framework could use the proposed interface.
 
-\input{description.tex}
+\begin{figure}[h!]
+	\includegraphics[width=\linewidth]{interface.png}
+	\caption{zkInterface\enote{Replace by diagram on slack}}
+	\label{interface}
+\end{figure}
 
-\input{specification.tex}
+\input{design.tex}
+
+%Rewriting \input{description.tex}
 
 \subsection{Interface Definition}
 

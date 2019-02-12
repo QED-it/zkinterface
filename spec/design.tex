@@ -1,5 +1,26 @@
 %=============================================================================
-\section{Specification}
+\section{Design}
+
+%-----------------------------------------------------------------------------
+\subsection{Approach}
+
+\enote{Explain data flow; calling approach based on passing buffers; in-process or cross-process. Explain using FlatBuffers and why. Explain in general terms that we deal directly with variables in a global space, with lightweight coordination to allocate variables; and why (avoid duplication/rewriting etc.}
+
+zkInterface is a procedural, purely functional interface for zero-knowledge systems that enables cross-language interoperability via dynamic linking and shared memory. The current version, even if limiting, creates an interface based on R1CS formatting and offers the ability to abstractly craft a constraint system building from different components, possibly written in different frameworks, by determining how data should be written and read. 
+
+\enote{I'm not sure what this means:}
+It can also be seen as a design tool for improved generation of constraints and usability, analogous to a portable binary format, since one can parametrize the functions calls and easily compose different functions, or components, that are not directly compatible.
+
+\begin{figure}[h!]
+	\includegraphics[width=\linewidth]{call_flow.png}
+	\caption{The flow of messages between libraries using the interface}
+	\label{flow}
+\end{figure}
+
+
+\subsection{Architecture}
+
+\enote{Describe the high-level design, introducing all the main concepts in a readable narrative and referring to them concretely by the  identifier name in the sourcecode.}
 
 \paragraph{Interface.}
 
