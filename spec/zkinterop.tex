@@ -2,7 +2,7 @@
 
 	%\input{style}
 	
-        \usepackage[notes=true]{lib/dtrt}
+	\usepackage[notes=true]{lib/dtrt}
 	\usepackage{algorithm}
 	\usepackage{algpseudocode}
 	\usepackage{amsmath}
@@ -93,10 +93,12 @@ We design and implement a standard rank-1 constraint system (R1CS) interface bet
 
 \paragraph{Desiderata}
 \begin{itemize}
-	\item Interoperability across frameworks and programming languages
-	\item The ability to write components that can be consumed by different frameworks
-	\item Overhead of the R1CS construction and witness reduction should be linear compared to a native implementation of the same gadgets 
-	\item Design an extensible interface, for example to support non R1CS systems.
+	\item Interoperability across frontend frameworks and programming languages.
+	\item Ability to write components that can be consumed by different frontends and backends.
+	\item Minimize copying and duplication of data.
+	\item The overhead of the R1CS construction and witness reduction should be low (and in particular, linear) compared to a native implementation of the same gadgets in existing frameworks.
+	\item Expose details of the backend's interface that are necessary for performance (e.g., constraint system representation and algebraic fields).
+	\item Aproach can be extended to support constraint systems beyond R1CS.
 \end{itemize}
 
 \paragraph{Scope and limitations.} \enote{Rewrite:}
@@ -136,10 +138,31 @@ The current proposal is limited in several ways, mainly due to time constraints 
 	\item \dnote{Variable types, say for checking booleanity}
 \end{itemize} 
 
+We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
 
-\input{description.tex}
+The standard that we propose can be seen in three different levels:
+\begin{enumerate}
+	\item The first level defines  
+	\begin{itemize}
+		\item standard messages and their serialization that the caller and callee exchange, 
+		\item a data format for R1CS constraints,
+		\item a data format for R1CS variables assignments.
+	\end{itemize}
+	\item The second level defines a simple C API that allows for the exchange of messages.
+	\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
+\end{enumerate}
 
-\input{specification.tex}
+This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written. However, it is important to point that any such framework could use the proposed interface.
+
+\begin{figure}[h!]
+	\includegraphics[width=\linewidth]{interface.png}
+	\caption{zkInterface\enote{Replace by diagram on slack}}
+	\label{interface}
+\end{figure}
+
+\input{design.tex}
+
+%Rewriting \input{description.tex}
 
 \subsection{Interface Definition}
 

@@ -232,10 +232,10 @@ namespace standard_gadget {
         return builder;
     }
 
-    bool return_error(gadget_callback_t response_callback, void *response_context, string error) {
-        if (response_callback != nullptr) {
+    bool return_error(gadget_callback_t return_callback, void *return_context, string error) {
+        if (return_callback != nullptr) {
             FlatBufferBuilder builder = serialize_error(error);
-            response_callback(response_context, builder.GetBufferPointer());
+            return_callback(return_context, builder.GetBufferPointer());
             // Releasing builder...
         }
         return false;
