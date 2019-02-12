@@ -47,12 +47,45 @@
 
 %=============================================================================
 \section{Overview}
+\dnote{need to add bibtex citation format to documents website!!!}
+In this work, as per the scope of the ZKProof effort \dnote{cite security / implementation track proceedings}, we propose a standard for interoperability for non-interactive proof systems (NIZKs) for general statements (NP) that use an R1CS/QAP-style constraint system representation. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits or algebraic constraints) are in use, and are within scope of the ongoing effort.
 
 %-----------------------------------------------------------------------------
 \subsection{Background}
+
+Zero-Knowledge Proofs are cryptographic primitives that allow some entity (the prover) to prove to another party (the verifier) the validity of some statement or relation. Based on \dnote{implementations proceeding}, we differentiate between the backend, which is the portion of the software that contains the implementation of the underlying cryptographic protocol, and the frontend, which provides means to express statements in a convenient language, allowing to prove such statements in zero knowledge by compiling them into a low-level representation of the statement.
+
+The backend of a proving system can  proves statements where the instance and witness are expressed as variable assignments, and relations are expressed via low-level languages (such as arithmetic circuits, Boolean circuits, R1CS/QAP constraint systems or arithmetic constraint satisfaction problems). There are numerous such backends, including implementations of many of the schemes discussed in the Security Track. Most have originated as academic research prototypes, and are available as open-source projects. 
+
+A frontend consists of:
+The specification of a high-level language for expressing statements.
+A compiler that converts relations expressed in the high-level language into the low-level relations suitable for some backend(s). For example, this may produce an R1CS constraint system.
+Instance reduction: conversion of the instance in a high-level statement to a low-level instance (e.g., assignment to R1CS instance variables).
+Witness reduction: conversion of the witness to a high-level statement to a low-level witness (e.g., assignment to witness variables).
+Typically, a library of "gadgets" consisting of useful and hand-optimized building blocks for statements.
+ 
+Since the offerings and features of backends and frontends evolve rapidly, we refer the reader to the curated taxonomy at https://zkp.science for the latest information. 
+
+
+
+
+Generally, 
+
+
+## sovrin / zmix
+- how to describe the proofs / data
+- two reasons for R1CS - range proofs and set membership (merkle tree)
+- need to explain exactly that each library has two components (or can have)
+- not standardizing the proof format or the keys format; you can have flexibility about the proving system and specification
+- you can do instance + witness reduction at once for non-pre-processing schemes
+- interested dalek-bulletproofs and bellman backend
+
 \enote{Rewrite:}
+\dnote{No friendly language, it is a spec (trivial task, )}
+\dnote{bit of background on what is zkp and why we are standardizing this }
 Implementing zero-knowledge proof constructions is not a trivial task and comes with diverse matters, as is extensively explained in the \href{https://zkproof.org/proceedings-snapshots/zkproof-implementation-20180801.pdf}{Implementation Track proceeding} of the first ZKProof workshop. One of the requirements is to create a compiler of programs into constraint systems that are consumed by the proving system.
 
+\dnote{liberally using from proceedings document}
 There are several trade-offs one can consider when designing general-purpose (front-end) compilers, leading to distinct frameworks, APIs, generality, etc. Today, existing compilers are implemented to work best with their corresponding (back-end) proving system (somemetimes more than one). For a comprehensive list of front-ends and back-ends, you can go to \href{https://zkp.science}{zkp.science}. 
 
 These libraries are usually built end-to-end: they take in some program that defines the statement and generate or verify a proof, in many cases without explicitly exposing the constraint system compilation. Moreover, if the compilers can output intermediary files and configurations, they are usually native to the specific back-end. In practice this means that
@@ -64,6 +97,7 @@ These libraries are usually built end-to-end: they take in some program that def
 %-----------------------------------------------------------------------------
 \subsection{Goals}
 \enote{Rewrite:}
+\dnote{use from proceeding ``extensive interop''}
 
 \enote{Copy relevant text from the Implementation Track, especially Advanced Interoperability}
 
@@ -80,6 +114,8 @@ We design and implement a standard rank-1 constraint system (R1CS) interface bet
 \end{itemize}
 
 \paragraph{Scope and limitations.} \enote{Rewrite:}
+\dnote{need to discuss why R1CS: because it is a native language to many of the state-of-the-art constructions or are easily reducible to the native language. For those who are not native, they are complex and not generic to many constructions.}
+\dnote{Need to pass the muthu test!!}
 
 We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
 
@@ -88,11 +124,17 @@ The standard that we propose can be seen in three different levels:
 	\item The first level defines  
 	\begin{itemize}
 		\item standard messages and their serialization that the caller and callee exchange, 
-		\item an R1CS file format for the instance
+		\item an R1CS file format for the instance \dnote{tentatively remove for now}
 		\item a file format for the assignments.
 	\end{itemize}
-	\item The second level defines a simple C API that allows for the exchange of messages.
-	\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
+\end{enumerate}
+
+
+	\dnote{add as extensions in new section}
+\begin{enumerate}
+	\item The second level defines a simple C API that allows for the exchange of messages. \dnote{From Eran: not done and not needed}
+	\item The third level defines the self-contained packaging of a component for its portable execution on different platforms. \dnote{Not in critical path}
+	\item going beyond R1CS (copy text from proceedings)
 \end{enumerate}
 
 This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written. However, it is important to point that any such framework could use the proposed interface.
