@@ -4,12 +4,16 @@
 %-----------------------------------------------------------------------------
 \subsection{Approach}
 
-\enote{Explain data flow; calling approach based on passing buffers; in-process or cross-process. Explain using FlatBuffers and why. Explain in general terms that we deal directly with variables in a global space, with lightweight coordination to allocate variables; and why (avoid duplication/rewriting etc.}
+	zkInterface is a procedural, purely functional interface for zero-knowledge systems that enables cross-language interoperability. The current version, even if limiting, creates an interface based on R1CS formatting and offers the ability to abstractly craft a constraint system building from different components, possibly written in different frameworks, by defining how data should be written and read. 
+	It is independent of any particular proving systems.
 
-zkInterface is a procedural, purely functional interface for zero-knowledge systems that enables cross-language interoperability via dynamic linking and shared memory. The current version, even if limiting, creates an interface based on R1CS formatting and offers the ability to abstractly craft a constraint system building from different components, possibly written in different frameworks, by determining how data should be written and read. 
+	The same interface can be used in two use-cases:
+	\begin{itemize}
+		\item To connect the construction and execution of a zero-knowledge program
+			to a proving system.
 
-\enote{I'm not sure what this means:}
-It can also be seen as a design tool for improved generation of constraints and usability, analogous to a portable binary format, since one can parametrize the functions calls and easily compose different functions, or components, that are not directly compatible.
+		\item To decompose a zero-knowledge program into multiple components that can be engineered separately.
+	\end{itemize}
 
 \begin{figure}[h!]
 	\includegraphics[width=\linewidth]{call_flow.png}
@@ -18,36 +22,62 @@ It can also be seen as a design tool for improved generation of constraints and 
 \end{figure}
 
 
-\subsection{Architecture}
-
-\enote{Describe the high-level design, introducing all the main concepts in a readable narrative and referring to them concretely by the  identifier name in the sourcecode.}
-
 \paragraph{Interface.}
 
-	The interface is defined as a set of messages that the caller and callee can exchange.
-	The definition is provided in Listing \ref{gadget.fbs} as a FlatBuffers schema.
-	Refer to the inline documentation of each message and field.
+	The interaction between caller and components is based on exchanging messages.
+	Messages are purely read-only data, which grants a great flexibility to
+	implementations of components and applications.
+
+	Different parts of an application may be written in different programming languages, and interoperate through messages.
+	These parts may be linked and executed in a single process, calling functions,
+	and exchanging messages through buffers of shared memory.
+	They may also run as separate processes, writing and reading messages in files or through pipes.
+
+	The set of messages is defined in Listing \ref{gadget.fbs}, 
+	using the FlatBuffers interface definition language.
+	All messages and fields are defined in this schema.
 
 	\subparagraph{Note}
-	The FlatBuffers system includes a simple interface definition language,
-	a data layout specification,
-	a clear evolution path for future extensions of the standard,
-	support for all common programming languages,
-	and the possibility of very efficient implementations.
+	The FlatBuffers system includes an interface definition language
+	which implies a precise data layout.
+
+	Code to write and read messages can be generated for all common programming languages. Code examples for C++ and for Rust are provided.
+	
+	Multiple paths for evolution and extensions of the standard are possible,
+	thanks to the flexibility and backward-compatibility of the encoding.
+
+	The encoding is designed to require little to no data transformation, making it possible to implement the standard with minimal overhead in very large applications.
+
 	The specification of FlatBuffers can be found at
 	\href{https://google.github.io/flatbuffers/}{https://google.github.io/flatbuffers/}.
+
+\paragraph{Instance and Witness Reductions.}
+
+	Instance reduction is the process of constructing a constraint system.
+	Witness reduction is the process of assigning values to all variables
+	in the system before generating a proof about concrete input values.
+
+	When using a proving system with pre-processing, instance reduction
+	is performed once ahead of time and used in a trusted setup.
+	In proving systems without pre-processing, instance reduction is used in proof verification.
+	Both cases are supported.
+
+\subsection{Architecture}
 
 \paragraph{Messages Flow.}
 
 	The flow of messages is illustrated in Figure \ref{flow}.
 
-	The caller calls the component code with a single Call message.
-	The component exits with a single Return message.
+	The caller calls the component code with a single ComponentCall message.
+	The component exits with a single ComponentReturn message.
 	This is a control flow analoguous to a function call in common programming languages.
 
 	The caller also provides a way for the component to send 
 	R1CSConstraints and AssignedVariables messages.
-	This is an output channel distinct from the return message.
+	This is an output channel distinct from the return messages.
+
+	The caller can request an instance reduction, or a witness reduction, or both at once.
+	This is controlled by the fields generate\_r1cs and generate\_assignment of ComponentCall messages.
 
 	During instance reduction,
 	a component may add any number of constraints to the constraint system
@@ -120,19 +150,19 @@ It can also be seen as a design tool for improved generation of constraints and 
 	these variables in the R1CSConstraints messages that they generate.
 	Other parts of the program may also refer to these same variables in their own contexts.
 
-	During witness reduction, the caller must pass incoming values to the component in the Call message.
-	The component must return outgoing values to the caller in the Return message.
+	During witness reduction, the caller must pass incoming values to the component in the ComponentCall message.
+	The component must return outgoing values to the caller in the ComponentReturn message.
 
 	The caller is responsible for the assignment of values to both incoming and outgoing variables.
 	How this is achieved depends on the caller and proving system,
 	and on whether some variables are treated as public inputs of the zero-knowledge program.
 
-\paragraph{C Interface.}
+\paragraph{In-memory execution - C Interface.}
 
 	A C interface to exchange messages is defined in Listing \ref{gadget.h}.
 	Refer to the inline documentation.
 
-\paragraph{Stream and File Format.}
+\paragraph{Multi-process execution - Stream and File Format.}
 	\enote{Explain what's already induced by FlatBuffers: explain that the framework, plus our .fbs file, specify how the aforementioned high-level messages are actually represented at the byte level, including message framing, message naming, etc..}
 	All messages are framed, meaning that they can be concatenated and distinguished in streams of bytes or in files.
 	Messages must be prefixed by the size of the message not including the prefix,
