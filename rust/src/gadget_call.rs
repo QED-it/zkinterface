@@ -10,12 +10,14 @@ use std::slice;
 
 #[allow(improper_ctypes)]
 extern "C" {
-    fn gadget_request(
-        request: *const u8,
-        result_stream_callback: extern fn(context_ptr: *mut CallbackContext, result: *const u8) -> bool,
-        result_stream_context: *mut CallbackContext,
-        response_callback: extern fn(context_ptr: *mut CallbackContext, response: *const u8) -> bool,
-        response_context: *mut CallbackContext,
+    fn call_component(
+        call_msg: *const u8,
+        constraints_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
+        constraints_context: *mut CallbackContext,
+        assigned_variables_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
+        assigned_variables_context: *mut CallbackContext,
+        return_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
+        return_context: *mut CallbackContext,
     ) -> bool;
 }
 
@@ -38,57 +40,73 @@ fn from_c<'a, CTX>(
     (context, buf)
 }
 
-/// Collect the stream of results into the context.
+/// Collect the stream of constraints into the context.
 extern "C"
-fn result_stream_callback_c(
+fn constraints_callback_c(
     context_ptr: *mut CallbackContext,
-    result_ptr: *const u8,
+    message_ptr: *const u8,
 ) -> bool {
-    let (context, buf) = from_c(context_ptr, result_ptr);
+    let (context, buf) = from_c(context_ptr, message_ptr);
 
-    context.result_stream.push(Vec::from(buf));
+    context.constraints_messages.push(Vec::from(buf));
+    true
+}
+
+/// Collect the stream of assigned variables into the context.
+extern "C"
+fn assigned_variables_callback_c(
+    context_ptr: *mut CallbackContext,
+    message_ptr: *const u8,
+) -> bool {
+    let (context, buf) = from_c(context_ptr, message_ptr);
+
+    context.assigned_variables_messages.push(Vec::from(buf));
     true
 }
 
 /// Collect the final response into the context.
 extern "C"
-fn response_callback_c(
+fn return_callback_c(
     context_ptr: *mut CallbackContext,
-    response_ptr: *const u8,
+    return_ptr: *const u8,
 ) -> bool {
-    let (context, buf) = from_c(context_ptr, response_ptr);
+    let (context, buf) = from_c(context_ptr, return_ptr);
 
-    context.response = Some(Vec::from(buf));
+    context.return_message = Some(Vec::from(buf));
     true
 }
 
-pub fn call_gadget(message_buf: &[u8]) -> Result<CallbackContext, String> {
+pub fn call_component_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String> {
     let message_ptr = message_buf.as_ptr();
 
     let mut context = CallbackContext {
-        result_stream: vec![],
-        response: None,
+        constraints_messages: vec![],
+        assigned_variables_messages: vec![],
+        return_message: None,
     };
 
     let ok = unsafe {
-        gadget_request(
+        call_component(
             message_ptr,
-            result_stream_callback_c,
+            constraints_callback_c,
             &mut context as *mut CallbackContext,
-            response_callback_c,
+            assigned_variables_callback_c,
+            &mut context as *mut CallbackContext,
+            return_callback_c,
             &mut context as *mut CallbackContext,
         )
     };
 
     match ok {
-        false => Err("gadget_request failed".to_string()),
+        false => Err("call_component failed".to_string()),
         true => Ok(context),
     }
 }
 
 pub struct CallbackContext {
-    pub result_stream: Vec<Vec<u8>>,
-    pub response: Option<Vec<u8>>,
+    pub constraints_messages: Vec<Vec<u8>>,
+    pub assigned_variables_messages: Vec<Vec<u8>>,
+    pub return_message: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Debug)]
@@ -133,9 +151,9 @@ fn test_gadget_request() {
 
     let r1cs_ctx = make_r1cs_request(instance.clone());
 
-    println!("Rust received {} results and {} parent response.",
-             r1cs_ctx.ctx.result_stream.len(),
-             if r1cs_ctx.ctx.response.is_some() { "a" } else { "no" });
+    println!("Rust received {} constraints messages and {} parent response.",
+             r1cs_ctx.ctx.constraints_messages.len(),
+             if r1cs_ctx.ctx.return_message.is_some() { "a" } else { "no" });
 
     println!("Got constraints:");
     for c in r1cs_ctx.iter_constraints() {
@@ -154,12 +172,12 @@ fn test_gadget_request() {
     ];
     let assign_ctx = make_assignment_request(instance, in_elements);
 
-    println!("Rust received {} results and {} parent response.",
-             assign_ctx.ctx.result_stream.len(),
-             if assign_ctx.ctx.response.is_some() { "a" } else { "no" });
+    println!("Rust received {} assigned variables messages and {} parent response.",
+             assign_ctx.ctx.assigned_variables_messages.len(),
+             if assign_ctx.ctx.return_message.is_some() { "a" } else { "no" });
 
-    assert!(assign_ctx.ctx.result_stream.len() == 1);
-    assert!(assign_ctx.ctx.response.is_some());
+    assert!(assign_ctx.ctx.assigned_variables_messages.len() == 1);
+    assert!(assign_ctx.ctx.return_message.is_some());
 
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();

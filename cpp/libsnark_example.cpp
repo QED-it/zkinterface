@@ -16,7 +16,7 @@ using namespace standard_gadget;
 
 class sha256_gadget : standard_libsnark_gadget {
 private:
-    digest_variable<FieldT> left, right, output;
+    digest_variable <FieldT> left, right, output;
     sha256_two_to_one_hash_gadget<FieldT> hasher;
 
 public:
@@ -70,16 +70,21 @@ public:
 
 extern "C"
 bool sha256_gadget_call(
-        unsigned char *request_buf,
-        gadget_callback_t result_stream_callback,
-        void *result_stream_context,
-        gadget_callback_t response_callback,
-        void *response_context
+        unsigned char *call_msg,
+
+        gadget_callback_t constraints_callback,
+        void *constraints_context,
+
+        gadget_callback_t assigned_variables_callback,
+        void *assigned_variables_context,
+
+        gadget_callback_t return_callback,
+        void *return_context
 ) {
-    auto root = GetSizePrefixedRoot(request_buf);
+    auto root = GetSizePrefixedRoot(call_msg);
 
     if (root->message_type() != Message_ComponentCall) {
-        return return_error(response_callback, response_context, "Unexpected message");
+        return return_error(return_callback, return_context, "Unexpected message");
     }
 
     const ComponentCall *call = root->message_as_ComponentCall();
@@ -93,12 +98,13 @@ bool sha256_gadget_call(
     if (call->generate_r1cs()) {
         gadget.generate_r1cs_constraints();
 
+        auto constraints_msg = serialize_protoboard_constraints(instance, gadget.borrow_protoboard());
+
         // Report constraints.
-        if (result_stream_callback != nullptr) {
-            auto constraints_msg = serialize_protoboard_constraints(instance, gadget.borrow_protoboard());
-            result_stream_callback(result_stream_context, constraints_msg.GetBufferPointer());
-            // Releasing constraints_msg...
+        if (constraints_callback != nullptr) {
+            constraints_callback(constraints_context, constraints_msg.GetBufferPointer());
         }
+        // Releasing constraints_msg...
     }
 
     // Witness reduction.
@@ -109,12 +115,13 @@ bool sha256_gadget_call(
 
         out_elements = gadget.generate_r1cs_witness(in_elements);
 
-        // Report assignment to generated local variables.
-        if (result_stream_callback != nullptr) {
-            auto assignment_msg = serialize_protoboard_local_assignment(instance, gadget.borrow_protoboard());
-            result_stream_callback(result_stream_context, assignment_msg.GetBufferPointer());
-            // Releasing assignment_msg...
+        auto assignment_msg = serialize_protoboard_local_assignment(instance, gadget.borrow_protoboard());
+
+        // Report values assigned to local variables.
+        if (assigned_variables_callback != nullptr) {
+            assigned_variables_callback(assigned_variables_context, assignment_msg.GetBufferPointer());
         }
+        // Releasing assignment_msg...
     }
 
     // Response.
@@ -133,8 +140,8 @@ bool sha256_gadget_call(
 
     builder.FinishSizePrefixed(CreateRoot(builder, Message_ComponentReturn, response.Union()));
 
-    if (response_callback != nullptr) {
-        return response_callback(response_context, builder.GetBufferPointer());
+    if (return_callback != nullptr) {
+        return return_callback(return_context, builder.GetBufferPointer());
     }
 
     return true;

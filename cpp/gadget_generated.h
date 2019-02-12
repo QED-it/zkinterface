@@ -28,6 +28,7 @@ struct VariableValues;
 
 struct Root;
 
+/// The messages that the caller and component can exchange.
 enum Message {
   Message_NONE = 0,
   Message_ComponentCall = 1,
@@ -90,6 +91,7 @@ template<> struct MessageTraits<AssignedVariables> {
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
 bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
+/// Caller calls a component.
 struct ComponentCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_INSTANCE = 4,
@@ -439,7 +441,8 @@ inline flatbuffers::Offset<KeyValue> CreateKeyValueDirect(
       value__);
 }
 
-/// Response after all R1CSConstraints or AssignedVariables have been sent.
+/// Component returns to the caller. This is the final message
+/// after all R1CSConstraints or AssignedVariables have been sent.
 struct ComponentReturn FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_FREE_VARIABLE_ID_AFTER = 4,

@@ -1,5 +1,6 @@
 namespace Gadget;
 
+/// The messages that the caller and component can exchange.
 union Message {
     ComponentCall,
     ComponentReturn,
@@ -8,6 +9,7 @@ union Message {
     AssignedVariables,
 }
 
+/// Caller calls a component.
 table ComponentCall {
     /// All details necessary to construct the instance.
     /// The same instance must be provided for R1CS and assignment generation.
@@ -71,7 +73,8 @@ table ComponentCall {
         value :[ubyte];
     }
 
-/// Response after all R1CSConstraints or AssignedVariables have been sent.
+/// Component returns to the caller. This is the final message
+/// after all R1CSConstraints or AssignedVariables have been sent.
 table ComponentReturn {
     /// First variable ID free after the gadget call.
     /// A variable ID greater than all IDs allocated by the gadget.

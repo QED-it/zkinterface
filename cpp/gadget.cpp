@@ -156,16 +156,19 @@ bool assignments_request(
 }
 
 
-bool gadget_request(
-        unsigned char *request_ptr,
+bool call_component(
+        unsigned char *call_msg,
 
-        gadget_callback_t result_stream_callback,
-        void *result_stream_context,
+        gadget_callback_t constraints_callback,
+        void *constraints_context,
 
-        gadget_callback_t response_callback,
-        void *response_context
+        gadget_callback_t assigned_variables_callback,
+        void *assigned_variables_context,
+
+        gadget_callback_t return_callback,
+        void *return_context
 ) {
-    auto root = GetSizePrefixedRoot(request_ptr);
+    auto root = GetSizePrefixedRoot(call_msg);
 
     if (root->message_type() != Message_ComponentCall) {
         return false; // Error, unknown request.
@@ -176,8 +179,8 @@ bool gadget_request(
     if (call->generate_r1cs()) {
         bool ok = r1cs_request(
                 call,
-                result_stream_callback, result_stream_context,
-                response_callback, response_context
+                constraints_callback, constraints_context,
+                return_callback, return_context
         );
         if (!ok) return false;
     }
@@ -185,8 +188,8 @@ bool gadget_request(
     if (call->generate_assignment()) {
         bool ok = assignments_request(
                 call,
-                result_stream_callback, result_stream_context,
-                response_callback, response_context
+                assigned_variables_callback, assigned_variables_context,
+                return_callback, return_context
         );
         if (!ok) return false;
     }

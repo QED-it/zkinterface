@@ -11,6 +11,7 @@ pub mod gadget {
   extern crate flatbuffers;
   use self::flatbuffers::EndianScalar;
 
+/// The messages that the caller and component can exchange.
 #[allow(non_camel_case_types)]
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -81,6 +82,7 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
+/// Caller calls a component.
 pub enum ComponentCallOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -534,7 +536,8 @@ impl<'a: 'b, 'b> KeyValueBuilder<'a, 'b> {
   }
 }
 
-/// Response after all R1CSConstraints or AssignedVariables have been sent.
+/// Component returns to the caller. This is the final message
+/// after all R1CSConstraints or AssignedVariables have been sent.
 pub enum ComponentReturnOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
