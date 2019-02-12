@@ -73,10 +73,11 @@ We design and implement a standard rank-1 constraint system (R1CS) interface bet
 
 \paragraph{Desiderata}
 \begin{itemize}
-	\item Interoperability across frameworks and programming languages
-	\item The ability to write components that can be consumed by different frameworks
-	\item Overhead of the R1CS construction and witness reduction should be linear compared to a native implementation of the same gadgets 
-	\item Design an extensible interface, for example to support non R1CS systems.
+	\item Interoperability across frontend frameworks and programming languages.
+	\item Ability to write components that can be consumed by different frontends and backends.
+	\item The overhead of the R1CS construction and witness reduction should be linear compared to a native implementation of the same gadgets .
+        \item Expose details of the backend's interface that are necessary for performance (e.g., constraint system representation and algebraic fields).
+	\item Appraoch can be extended to support constraint systems beyond R1CS.
 \end{itemize}
 
 \paragraph{Scope and limitations.} \enote{Rewrite:}
