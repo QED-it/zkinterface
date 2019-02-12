@@ -10,15 +10,23 @@
 	The same interface can be used in two use-cases:
 	\begin{itemize}
 		\item To connect the construction and execution of a zero-knowledge program
-			to a proving system.
+			to a proving system. See Figure \ref{program_proving}.
 
-		\item To decompose a zero-knowledge program into multiple components that can be engineered separately.
+		\item To decompose a zero-knowledge program into multiple components that can be engineered separately. See Figure \ref{program_components}.
 	\end{itemize}
+	
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.5\linewidth]{graphics/program_proving.png}
+	\caption{The interaction between a zero-knowledge program and a proving system.}
+	\label{program_proving}
+\end{figure}
 
-\begin{figure}[h!]
-	\includegraphics[width=\linewidth]{call_flow.png}
-	\caption{The flow of messages between libraries using the interface}
-	\label{flow}
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.7\linewidth]{graphics/program_components.png}
+	\caption{A zero-knowledge program built from multiple components.}
+	\label{program_components}
 \end{figure}
 
 
@@ -39,12 +47,12 @@
 
 	\subparagraph{Note}
 	The FlatBuffers system includes an interface definition language
-	which implies a precise data layout.
+	which implies a precise data layout at the byte level.
 
 	Code to write and read messages can be generated for all common programming languages. Code examples for C++ and for Rust are provided.
-	
+
 	Multiple paths for evolution and extensions of the standard are possible,
-	thanks to the flexibility and backward-compatibility of the encoding.
+	thanks to the flexibility and backward-compatibility features of the encoding.
 
 	The encoding is designed to require little to no data transformation, making it possible to implement the standard with minimal overhead in very large applications.
 
@@ -62,7 +70,15 @@
 	In proving systems without pre-processing, instance reduction is used in proof verification.
 	Both cases are supported.
 
+%-----------------------------------------------------------------------------
 \subsection{Architecture}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\linewidth]{graphics/call_flow.png}
+	\caption{The flow of messages between libraries using the interface.}
+	\label{flow}
+\end{figure}
 
 \paragraph{Messages Flow.}
 
