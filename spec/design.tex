@@ -30,7 +30,7 @@
 \end{figure}
 
 
-\paragraph{Interface.}
+\parhead{Interface}
 
 	The interaction between caller and components is based on exchanging messages.
 	Messages are purely read-only data, which grants a great flexibility to
@@ -59,7 +59,7 @@
 	The specification of FlatBuffers can be found at
 	\href{https://google.github.io/flatbuffers/}{https://google.github.io/flatbuffers/}.
 
-\paragraph{Instance and Witness Reductions.}
+\parhead{Instance and Witness Reductions}
 
 	Instance reduction is the process of constructing a constraint system.
 	Witness reduction is the process of assigning values to all variables
@@ -68,7 +68,7 @@
 	When using a proving system with pre-processing, instance reduction
 	is performed once ahead of time and used in a trusted setup.
 	In proving systems without pre-processing, instance reduction is used in proof verification.
-	Both cases are supported.
+	The standard supports both execution flows with similar messages.
 
 %-----------------------------------------------------------------------------
 \subsection{Architecture}
@@ -80,11 +80,11 @@
 	\label{flow}
 \end{figure}
 
-\paragraph{Messages Flow.}
+\parhead{Messages Flow}
 
 	The flow of messages is illustrated in Figure \ref{flow}.
 
-	The caller calls the component code with a single ComponentCall message.
+	The caller calls the component code with a single \textsf{ComponentCall} message.
 	The component exits with a single ComponentReturn message.
 	This is a control flow analoguous to a function call in common programming languages.
 
@@ -115,7 +115,7 @@
 	by arranging for the constraints and assignments messages
 	to be processed by the proving system, independently from the control logic.
 
-\paragraph{Variables.}
+\parhead{Variables}
 
 	All variables in a constraint system are assigned a numerical identifier
 	unique within this system.
@@ -128,7 +128,7 @@
 
 	\anote{Must be consecutive or are gaps allowed?}
 
-\paragraph{Local Variables Allocation.}
+\parhead{Local Variables Allocation}
 
 	A component may allocate a number of local variables to use
 	in the internal implementation of the function that it computes.
@@ -151,7 +151,7 @@
 	During witness reduction, the component must assign values to its local variables
 	by sending AssignedVariables messages.
 
-\paragraph{Incoming/Outgoing Variables.}
+\parhead{Incoming/Outgoing Variables}
 
 	The concept of incoming, outgoing variables arises when a program is decomposed into components.
 	These variables serve as the functional interface between a component and its caller.
@@ -173,12 +173,20 @@
 	How this is achieved depends on the caller and proving system,
 	and on whether some variables are treated as public inputs of the zero-knowledge program.
 
-\paragraph{In-memory execution - C Interface.}
+\parhead{In-memory execution - C API}
 
-	A C interface to exchange messages is defined in Listing \ref{gadget.h}.
-	Refer to the inline documentation.
+	The application may execute the code of a component in its own process.
 
-\paragraph{Multi-process execution - Stream and File Format.}
+	The component exposes its functionnality as a function calleable using the C calling convention of the platform. The component code may be linked statically or be loaded from a shared library.
+
+	The application must prepare a ComponentCall message in memory, and implement one callback functions to receive the messages of the component,
+	and call the component function with pointers to the message and the callbacks.
+
+	The component function reads the call message and performs its specific computation. It prepares the resulting messages (R1CSConstraints, AssignedVariables, or ComponentReturn) in memory, and calls the callbacks with pointers to these messages.
+
+	The function definition that implements this flow is defined in Listing \ref{gadget.h} as a C header. Refer to the inline documentation for more details.
+
+\parhead{Multi-process execution - Stream and File Format}
 	\enote{Explain what's already induced by FlatBuffers: explain that the framework, plus our .fbs file, specify how the aforementioned high-level messages are actually represented at the byte level, including message framing, message naming, etc..}
 	All messages are framed, meaning that they can be concatenated and distinguished in streams of bytes or in files.
 	Messages must be prefixed by the size of the message not including the prefix,
