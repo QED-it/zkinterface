@@ -116,12 +116,8 @@
 	to be processed by the proving system, independently from the control logic.
 
 \parhead{Variables}
-
-	All variables in a constraint system are assigned a numerical identifier
-	unique within this system.
-	Messages that contain constraints or assignments refer to variables by their
-	unique ID.
-
+	The constraint system reasons about variables, which are assigned a numerical identifier that are unique within a constraint system. The variable numbers are incrementally allocated in a global namespace. Messages that contain constraints or assignments refer to variables by this numeric ID. It is up to gadgets that create the constrain system to keep track of the semantics (and if desired, helpful symbolic names) of the variables that they deal with, and to allocate new variables for their internal use. The messages defined by the framework include a simple protocol for conveying the state of of the variable allocator (i.e., the first free variable number), and the identity of variables that tie a gadget to other gadgets.
+	
 	\subparagraph{Note}
 	This design allows implementations to aggregate and handle messages in a generic way,
 	without any	reference to the components or mechanisms that generated them.
@@ -129,8 +125,6 @@
 	\anote{Must be consecutive or are gaps allowed?}
 
 \parhead{Local Variables Allocation}
-	The constraint system reasons about variables, which are allocated numerically in a contiguous global namespace. It is up to gadgets that create the constrain system to keep track of the semantics (and if desired, helpful symbolic names) of the variables that they deal with, and to allocate new variables for their internal use. The messages defined by the framework include a simple protocol for conveying the state of of the variable allocator (i.e., the first free variable number), and the identity of variables that tie a gadget to other gadgets.
-
 	A component may allocate a number of local variables to use
 	in the internal implementation of the function that it computes.
 	They are analoguous to stack variables in common programming languages.
