@@ -51,7 +51,7 @@
   #include <functional>
 #endif
 
-#include "flatbuffers/stl_emulation.h"
+#include "stl_emulation.h"
 
 // Note the __clang__ check is needed, because clang presents itself
 // as an older GNUC compiler (4.2).
