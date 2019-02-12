@@ -156,7 +156,7 @@ bool assignments_request(
 }
 
 
-bool call_component(
+bool call_gadget(
         unsigned char *call_msg,
 
         gadget_callback_t constraints_callback,

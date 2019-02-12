@@ -16,7 +16,7 @@ using namespace standard_gadget;
 
 class sha256_gadget : standard_libsnark_gadget {
 private:
-    digest_variable <FieldT> left, right, output;
+    digest_variable<FieldT> left, right, output;
     sha256_two_to_one_hash_gadget<FieldT> hasher;
 
 public:

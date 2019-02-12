@@ -1,3 +1,6 @@
+// This is a FlatBuffers schema.
+// See https://google.github.io/flatbuffers/
+
 namespace Gadget;
 
 /// The messages that the caller and component can exchange.

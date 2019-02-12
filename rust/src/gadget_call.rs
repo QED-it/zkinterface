@@ -10,7 +10,7 @@ use std::slice;
 
 #[allow(improper_ctypes)]
 extern "C" {
-    fn call_component(
+    fn call_gadget(
         call_msg: *const u8,
         constraints_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
         constraints_context: *mut CallbackContext,
@@ -86,7 +86,7 @@ pub fn call_component_wrapper(message_buf: &[u8]) -> Result<CallbackContext, Str
     };
 
     let ok = unsafe {
-        call_component(
+        call_gadget(
             message_ptr,
             constraints_callback_c,
             &mut context as *mut CallbackContext,
@@ -98,7 +98,7 @@ pub fn call_component_wrapper(message_buf: &[u8]) -> Result<CallbackContext, Str
     };
 
     match ok {
-        false => Err("call_component failed".to_string()),
+        false => Err("call_gadget failed".to_string()),
         true => Ok(context),
     }
 }
