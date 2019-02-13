@@ -47,7 +47,7 @@
 \tableofcontents
 %=============================================================================
 \section{Overview}
-This standard, part of the ZKProof Standardization effort \dnote{cite: security / implementation track proceedings}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that is best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
+This standard, part of the ZKProof Standardization effort \dnote{cite: security / implementation track proceedings}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
 This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation \enote{Add reference to R1CS. I think the best one, in term of notations and references, we have is the QED-it challenge... We prepared a PDF stand-alone version of that for ZKProof, maybe post it online or attach it as an appendix?}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
 
@@ -87,7 +87,7 @@ With this proposal we aim to solve this by creating a R1CS-based interface betwe
 
 %-----------------------------------------------------------------------------
 \subsection{Terminology}
-\dnote{add back the terminology section (need witness / instance at least), (internal vs external variables)}
+The terminology follows the Implementation Track proceeding \dnote{add reference}, and any new terms and concepts will be defined accordingly.
 
 \subsection{Goals} 
 \label{goals}
@@ -198,9 +198,5 @@ Rank-1 Constraint Systems are native to many of the state-of-the-art constructio
 		label=gadget.h]{../cpp/gadget.h}
 
 
-
-\bibliography{references}
-\bibliographystyle{alphaurl}
-
-
+ 
 \end{document}
