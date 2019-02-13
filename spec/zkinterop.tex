@@ -1,4 +1,4 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[a4paper,12pt]{article}
 
 	%\input{style}
 	
@@ -45,7 +45,7 @@
 		 
 		\enote{Add abstract}
 		\dnote{Add bibliography and proper citations of the proceedings}
-
+\tableofcontents
 %=============================================================================
 \section{Overview}
 In this work, as per the scope of the ZKProof effort \dnote{cite: security / implementation track proceedings}, we propose a standard for interoperability for non-interactive proof systems (NIZKs) for general statements (NP) that use an R1CS/QAP-style constraint system representation. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits or algebraic constraints) are in use, and are within scope of future versions of the proposed standard.
@@ -78,24 +78,24 @@ Currently, existing frontend are implemented to work best with their correspondi
 	\item It is not possible to generate a constraint system using different frontends
 \end{itemize}   
 
-With this proposal we aim to solve this by creating a R1CS-based interface between frontends and backends. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement.
+With this proposal we aim to solve this by creating a R1CS-based interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement.
+
+\begin{figure}[h!]
+	\includegraphics[width=\linewidth]{interop.png}
+	\caption{Interoperability between frontends and backends with zkInterface}
+	\label{interface}
+\end{figure}
 
 %-----------------------------------------------------------------------------
-\subsection{Goals}
-\enote{Rewrite:}
-\dnote{use from proceeding ``extensive interop''}
+\subsection{Terminology}
+\dnote{add back the terminology section (need witness / instance at least), (internal vs external variables)}
 
-\enote{Copy relevant text from the Implementation Track, especially Advanced Interoperability}
+\subsection{Goals} \label{goals}
 
-%We aim to solve this issue, as seen in Figure \ref{interface}, by creating a community standard proposal for the ZKProof effort around constraint system formatting, building upon the work done at the first ZKProof workshop.
+There are several forms of interoperability and we set some of these as goals for this standard. One such form is between different implementations of the same backend construction, providing an interoperable format for the proving and verification keys, as well as the proof. Another form is between backends and frontends, which is the focus of this standard. The following are stronger forms of the latter kind of interoperability which have been identified as desirable by practitioners.
 
-We design and implement a standard rank-1 constraint system (R1CS) interface between frontends and backends. Our design encompasses procedural instance and witness reductions, while capturing the parameters of the different components of the statement to be proven. 
-
-
-The following are stronger forms of interoperability which have been identified as desirable by practitioners, and are to be addressed by the ongoing standardization effort.
-
-\parhead{Statement and witness formats}
-In the R1CS File Format section and associated resources, we define a file format for R1CS constraint systems. There remains to finalize this specification, including instances and witnesses. This will enable users to have their choice of frameworks (frontends and backends) and streaming for storage and communication, and facilitate creation of benchmark test cases that could be executed by any backend accepting these formats.
+\parhead{Statement instance and witness formats} 
+Specifying a standard format for the statement instance and witness enables users to have their choice of frameworks (frontends and backends) and streaming for storage and communication, and facilitate creation of benchmark test cases that could be executed by any backend accepting these formats.
  
 Crucially, analogous formats are desired for constraint system languages other than R1CS.
 
@@ -105,21 +105,19 @@ Beyond the above, there’s a need for different implementations to coordinate t
 
 Precise specification of statement semantics, in terms of higher-level abstraction, is needed for interoperability of constraint systems that are invoked by several different implementations of the instance reduction (from high-level statement to the actual input required by the ZKP prover and verifier). One may go further and try to reuse the actual implementation of the instance reduction, taking a high-level and possibly domain-specific representation of values (e.g., big  integers) and converting it into low-level variables. This raises questions of language and platform incompatibility, as well as proper modularization and packaging.
 
-Note that correct statement semantics is crucial for security. Two implementations that use the same high-level protocol, same constraint system and compatible backends may still fail to correctly interoperate if their instance reductions are incompatible -- both in completeness (proofs don’t verify) or soundness (causing false but convincing proofs, implying a security vulnerability). Moreover, semantics are a requisite for verification and helpful for debugging.
+Note that correct statement semantics is crucial for security. Two implementations that use the same high-level protocol, same constraint system and compatible backends may still fail to correctly interoperate if their instance reductions are incompatible -- both in completeness (proofs don’t verify) or soundness (causing false but convincing proofs, implying a security vulnerability). Moreover, semantics are a requisite for verification and helpful for debugging. Beyond interoperability, some low-level building blocks (e.g., finite field and elliptic curve arithmetic) are needed by many or all implementations, and suitable libraries can be reused.
 
 Some backends can exploit uniformity or regularity in the constraint system (e.g., repeating patterns or algebraic structure), and could thus take advantage of formats and semantics that convey the requisite information.
 
-At the typical complexity level of today’s constraint systems, it is often acceptable to handle all of the above manually, by fresh re-implementation based on informal specifications and inspection of prior implementation. We expect this to become less tenable and more error prone as application complexity grows.
+Given the typical complexity level of today’s constraint systems, it is often acceptable to handle all of the above manually, by fresh re-implementation based on informal specifications and inspection of prior implementation. Our goal, however, is for the interface to handle the semantics of the components, reducing the predisposition to error as application complexity grows. The following paragraphs expand on how the semantics should be considered for interoperability of gadgets.
 
 \parhead{Witness reduction}
-Similar considerations arise for the witness reduction, converting a high-level witness representation (for a given statement) into the assignment to witness variables. For example, a high-level protocol may use Merkle trees of particular depth with a particular hash function, and a high-level instance may include a Merkle authentication path. The witness reduction would need to convert these into witness variables, that contain all of the Merkle authentication path data (encoded by some particular convention into field elements and assigned in some particular order) and moreover the numerous additional witness variables that occur in the constraints that evaluate the hash function, ensure consistency and Booleanity, etc.
-
-The witness reduction is highly dependent on the particular implementation of the constraint system. Possible approaches to interoperability are, as above: formal specifications, code reuse and manual ad hoc compatibility.
+Similar considerations arise for the witness reduction, mapping a high-level witness representation for a given statement into the assignment to witness variables (as defined by the instance). For example, a high-level protocol may use Merkle trees of particular depth with a particular hash function, and a high-level instance may include a Merkle authentication path. The witness reduction would need to convert these into witness variables, that contain all of the Merkle authentication path data encoded by some particular convention into field elements and assigned in some particular order. Moreover, it would also need to convert the numerous additional witness variables that occur in the constraints that evaluate the hash function, ensure consistency and Booleanity, amonh others.
 
 \parhead{Gadgets interoperability}
-At a finer grain than monolithic constraint systems and their assignments, there is need for sharing subcircuits and gadgets. For example, libsnark offers a rich library of highly optimized R1CS gadgets, which developers of several front-end compilers would like to reuse in the context of their own constraint-system construction framework.
+Beyond using fixed, monolithic constraint systems and their assignments, there is a need for sharing subcircuits and gadgets. For example, libsnark offers a rich library of R1CS gadgets, which developers of several front-end compilers would like to reuse in the context of their own constraint-system construction framework. 
 
-While porting chunks of constraints across frameworks is relatively straightforward, there are challenges in coordinating the semantics of the externally-visible variables of the gadget, analogous to but more difficult than those mentioned above for full constraint systems: there is a need to coordinate or reuse the semantics of a gadget’s externally-visible variables, as well as to coordinate or reuse the witness reduction function of imported gadgets in order to converts a witness into an assignment to the internal variables.
+While porting chunks of constraints across frameworks is relatively straightforward, there are challenges in coordinating the semantics of the externally-visible variables of the gadget, analogous to but more difficult than those mentioned above for full constraint systems. Mainly, there is a need to coordinate or reuse the semantics of a gadget’s externally-visible variables (those accessible by other gadgets), as well as the witness reduction function of imported gadgets in order to assign a witness into the internal variables of the gadget.
 
 As for instance semantics, well-defined gadget semantics is crucial for soundness, completeness and verification, and is helpful for debugging.
 
@@ -128,10 +126,10 @@ An attractive approach to the aforementioned needs for instance and witness redu
 
 This requires communication not of mere data, but invocation of procedural code. Suggested approaches to this include linking against executable code (e.g., .so files or .dll), using some elegant and portable high-level language with its associated portable, or using a low-level portable executable format such as WebAssembly. All of these require suitable calling conventions (e.g., how are field elements represented?), usage guidelines and examples.
 
-Beyond interoperability, some low-level building blocks (e.g., finite field and elliptic curve arithmetic) are needed by many or all implementations, and suitable libraries can be reused. To a large extent this is already happening, using the standard practices for code reuse using native libraries. Such reused libraries may offer a convenient common ground for consistent calling conventions as well.
-
 
 \subsection{Desiderata}
+The following is a list of explicit requirements that we have taken into account for the design of the zkInterface. We have expanded on specific topics based on the goals described in section \ref{goals}, as well as based on other known caveats that derive from efficiency and usability needs.
+
 \begin{enumerate}
 	\item Interoperability across frontend frameworks and programming languages.
 	\item Ability to write components that can be consumed by different frontends and backends.
@@ -141,62 +139,47 @@ Beyond interoperability, some low-level building blocks (e.g., finite field and 
 	\item Aproach can be extended to support constraint systems beyond R1CS.
 \end{enumerate}
 
-\subsection{Scope, limitations and future work} \enote{Rewrite:}
-\dnote{need to discuss why R1CS: because it is a native language to many of the state-of-the-art constructions or are easily reducible to the native language. For those who are not native, they are complex and not generic to many constructions.}
-\dnote{Need to pass the muthu test!!}
+\subsection{Scope, limitations and possible extensions}
 
+We present a set of specifications to be standardized to enable the use of an interface between zero-knowledge proof systems. We have identified the minimal items needed to create a standard interface that meets the goals and desired requirements. The following points form the scope of our proposed standard.
+
+\begin{itemize}
+	\item Standard defined messages that the caller and callee exchange.
+	\item The serialization of the messages.
+	\item A protocol to build a constraint system from gadget composition.
+	\item Technical recommendations on the method to exchange messages.
+\end{itemize}
+
+Some limitations of the standard, with respect to interoperability, are the following.
+
+\parhead{Limitations.}
+Here we briefly discuss some of the limitations of the standard with respect to interoperability.
+\begin{description}
+	\item [Backend interoperability] We do not aim to standardize the proof algorithms, the format of the proofs generated by a backend, or the format of the proving and verification keys -- all of which would be required to achieve interoperability between backends. (See ``Proof interoperability'' and ``Common reference strings'' in \dnote{[ref the impl track]}.
+	\item [Programming language and frontend frameworks] We are intentionally agnostic about, and do not aim to standardize, the programming language and programming framework used by frontends.
+\end{description}
+
+\parhead{Extensions.}
+The interface aims to be extensible with backwards compatibility, and we aim for future versions of the standard to be fully generic and to be as easy to use as possible. Possible extensions are the following:
+
+\begin{itemize}
+	\item Generalized constraint system representation that would allow to compile any statement while recognizing any specific structure or underlying semantics not capture today by R1CS. The paragraph below expands more on this extension.
+	\item Self-contained packaging of a component would allow for portable execution of the components (or gadgets) on different platforms.
+	\item Enforcing properties of variables using a type system (e.g.: boolean type that enforces booleanity check).
+\end{itemize}
+
+\parhead{Other constraint system representations.} \dnote{copy-paste from proceeding about semantics and about non-R1CS systems.}
+\dnote{need to discuss why R1CS: because it is a native language to many of the state-of-the-art constructions or are easily reducible to the native language. For those who are not native, they are complex and not generic to many constructions. MUTHU TEST}
 
 Rank-1 Constraint Systems are native to many of the state-of-the-art constructions or are reducible to the native low-level representation of the backend. Today these systems are in production and have a large user base
 
 
-The 
-	Standard defined messages that the caller and callee exchange, including their serialization
 
-
-\parhead{Backend interoperability}
-Here, we do not aim to standardize the proof algorithms, the format proofs generated by a backend, or the format of the proving and verification keys -- all of which would be required to achieve interoperability between backends. (See ``Proof interoperability'' and ``Common reference strings'' in \XXX[ref the impl track].
-
-\parhead{Programming language and frontend frameworks}
-We are intentionally agnostic about, and do not aim to standardize, the programming language and programming framework used by frontends.
-
-\medskip
-The interface aims to be extensible with backwards compatibility, and we aim for future versions of the standard to be fully generic and to be as easy to use as possible. Possible extensions are the following:
-
-\parhead{Usability.} \dnote{what can we add about this?}
-\begin{itemize}
-	\item A simple C API that allows for the exchange of messages would imply that one would not have to implement the standard message format in the specific programming language used by the frontend or backend.
-	\item Self-contained packaging of a component would allow for portable execution of the components (or gadgets) on different platforms.
-	\item going beyond R1CS (copy text from proceedings)
-\end{itemize}
-
-\parhead{Generality.} \dnote{copy-paste from proceeding about semantics and about non-R1CS systems.}
 \begin{itemize}
 	\item A message format that capture the specific semantics of the components.
 	\item A statement representation that captures the specific structure of the statement, something that is not achieved with R1CS.
-	\item \dnote{Variable types, say for checking booleanity}
 \end{itemize} 
 
-We aim for the standard interface to be as generic as possible, including non-R1CS-based proving systems. However, the current proposal is more limited, mainly due to time constraints.
-
-The standard that we propose can be seen in three different levels:
-\begin{enumerate}
-	\item The first level defines  
-	\begin{itemize}
-		\item standard messages and their serialization that the caller and callee exchange, 
-		\item a data format for R1CS constraints,
-		\item a data format for R1CS variables assignments.
-	\end{itemize}
-	\item The second level defines a simple C API that allows for the exchange of messages.
-	\item The third level defines the self-contained packaging of a component for its portable execution on different platforms.
-\end{enumerate}
-
-This proposal is not aiming to standardize a language or framework for generating constraint systems, nor the way that components of the proving statement should be written. However, it is important to point that any such framework could use the proposed interface.
-
-\begin{figure}[h!]
-	\includegraphics[width=\linewidth]{interface.png}
-	\caption{zkInterface\enote{Replace by diagram on slack}}
-	\label{interface}
-\end{figure}
 
 \input{design.tex}
 
