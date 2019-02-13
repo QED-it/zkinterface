@@ -4,7 +4,7 @@
 %-----------------------------------------------------------------------------
 \subsection{Approach}
 
-	zkInterface is a procedural, purely functional interface for zero-knowledge systems that enables cross-language interoperability. The current version, even if limiting, creates an interface based on R1CS formatting and offers the ability to abstractly craft a constraint system building from different components, possibly written in different frameworks, by defining how data should be written and read. 
+	zkInterface is a procedural, purely functional interface for zero-knowledge systems that enables cross-language interoperability. The current version, even if limiting, creates an interface based on R1CS formatting and offers the ability to abstractly craft a constraint system building from different gadgets, possibly written in different frameworks, by defining how data should be written and read.
 	It is independent of any particular proving systems.
 
 	The same interface can be used in two use-cases:
@@ -12,7 +12,7 @@
 		\item To connect the construction and execution of a zero-knowledge program
 			to a proving system. See Figure \ref{program_proving}.
 
-		\item To decompose a zero-knowledge program into multiple components that can be engineered separately. See Figure \ref{program_components}.
+		\item To decompose a zero-knowledge program into multiple gadgets that can be engineered separately. See Figure \ref{program_components}.
 	\end{itemize}
 	
 \begin{figure}[!h]
@@ -25,39 +25,50 @@
 \begin{figure}[!h]
 	\centering
 	\includegraphics[width=0.7\linewidth]{graphics/program_components.png}
-	\caption{A zero-knowledge program built from multiple components.}
+	\caption{A zero-knowledge program built from multiple gadgets.}
 	\label{program_components}
 \end{figure}
 
 
 \parhead{Interface}
 
-	The interaction between caller and components is based on exchanging messages.
+	The interaction between caller and gadgets is based on exchanging messages.
 	Messages are purely read-only data, which grants a great flexibility to
-	implementations of components and applications.
+	implementations of gadgets and applications.
+
+\parhead{Interoperability}
 
 	Different parts of an application may be written in different programming languages, and interoperate through messages.
 	These parts may be linked and executed in a single process, calling functions,
 	and exchanging messages through buffers of shared memory.
-	They may also run as separate processes, writing and reading messages in files or through pipes.
+	They may also run as separate processes, writing and reading messages in files, or through pipes or sockets.
+	Some implementation strategies are discussed in section~\ref{sec:execution}.
+
+\parhead{Messages Definition}
+\label{message_definition}
 
 	The set of messages is defined in Listing \ref{gadget.fbs}, 
 	using the FlatBuffers interface definition language.
 	All messages and fields are defined in this schema.
 
-	\subparagraph{Note}
 	The FlatBuffers system includes an interface definition language
 	which implies a precise data layout at the byte level.
-
-	Code to write and read messages can be generated for all common programming languages. Code examples for C++ and for Rust are provided.
+	Code to write and read messages can be generated for all common programming languages.
+	Examples are provided for C++ and for Rust.
 
 	Multiple paths for evolution and extensions of the standard are possible,
 	thanks to the flexibility and backward-compatibility features of the encoding.
+	The encoding is designed to require little to no data transformation, making it possible
+	to implement the standard with minimal overhead in very large applications.
 
-	The encoding is designed to require little to no data transformation, making it possible to implement the standard with minimal overhead in very large applications.
+	Messages must be prefixed by the size of the message not including the prefix,
+	as a 4-bytes little-endian unsigned integer.
+	This makes it possible to concatenate and distinguish messages
+	in streams of bytes or in files.
 
 	The specification of FlatBuffers can be found at
 	\href{https://google.github.io/flatbuffers/}{https://google.github.io/flatbuffers/}.
+
 
 \parhead{Instance and Witness Reductions}
 
@@ -68,7 +79,8 @@
 	When using a proving system with pre-processing, instance reduction
 	is performed once ahead of time and used in a trusted setup.
 	In proving systems without pre-processing, instance reduction is used in proof verification.
-	The standard supports both execution flows with similar messages.
+	The standard supports both execution flows.
+
 
 %-----------------------------------------------------------------------------
 \subsection{Architecture}
@@ -84,30 +96,30 @@
 
 	The flow of messages is illustrated in Figure \ref{flow}.
 
-	The caller calls the component code with a single \textsf{ComponentCall} message.
-	The component exits with a single ComponentReturn message.
+	The caller calls the gadget code with a single \textsf{GadgetCall} message.
+	The gadget exits with a single GadgetReturn message.
 	This is a control flow analoguous to a function call in common programming languages.
 
-	The caller also provides a way for the component to send 
+	The caller also provides a way for the gadget to send
 	R1CSConstraints and AssignedVariables messages.
 	This is an output channel distinct from the return messages.
 
 	The caller can request an instance reduction, or a witness reduction, or both at once.
-	This is controlled by the fields generate\_r1cs and generate\_assignment of ComponentCall messages.
+	This is controlled by the fields generate\_r1cs and generate\_assignment of GadgetCall messages.
 
 	During instance reduction,
-	a component may add any number of constraints to the constraint system
+	a gadget may add any number of constraints to the constraint system
 	by sending one or more R1CSConstraints messages.
-	The caller and other components may do so as well.
+	The caller and other gadgets may do so as well.
 
 	During witness reduction,
-	a component may assign values to variables
+	a gadget may assign values to variables
 	by sending one or more AssignedVariables messages.
 
 	\subparagraph{Note}
 	The design of constraints and assignments channels
-	allows a component to call subcomponents itself.
-	Messages from all (sub-)components can simply be sent separately
+	allows a gadget to call subgadgets itself.
+	Messages from all (sub-)gadgets can simply be sent separately
 	without the need to aggregate them into a single message.
 	
 	Moreover, an implementation can decouple the proving system
@@ -117,15 +129,13 @@
 
 \parhead{Variables}
 	The constraint system reasons about variables, which are assigned a numerical identifier that are unique within a constraint system. The variable numbers are incrementally allocated in a global namespace. Messages that contain constraints or assignments refer to variables by this numeric ID. It is up to gadgets that create the constrain system to keep track of the semantics (and if desired, helpful symbolic names) of the variables that they deal with, and to allocate new variables for their internal use. The messages defined by the framework include a simple protocol for conveying the state of of the variable allocator (i.e., the first free variable number), and the identity of variables that tie a gadget to other gadgets.
-	
+
 	\subparagraph{Note}
 	This design allows implementations to aggregate and handle messages in a generic way,
-	without any	reference to the components or mechanisms that generated them.
-
-	\anote{Must be consecutive or are gaps allowed?}
+	without any	reference to the gadgets or mechanisms that generated them.
 
 \parhead{Local Variables Allocation}
-	A component may allocate a number of local variables to use
+	A gadget may allocate a number of local variables to use
 	in the internal implementation of the function that it computes.
 	They are analoguous to stack variables in common programming languages.
 
@@ -133,57 +143,37 @@
 	unique within a whole constraint system.
 	\begin{itemize}
 		\item The caller must provide a numerical ID greater than all IDs that have already been allocated, called the Free-Before ID.
-		\item The component may use the Free-Before ID and consecutive IDs as its local variables IDs.
-		\item The component must return the next consecutive ID that it did not use, called the Free-After ID.
-		\item The caller must treat IDs lesser than the Free-After ID as allocated by the component,
+		\item The gadget may use the Free-Before ID and consecutive IDs as its local variables IDs.
+		\item The gadget must return the next consecutive ID that it did not use, called the Free-After ID.
+		\item The caller must treat IDs lesser than the Free-After ID as allocated by the gadget,
 			and must not use them.
 	\end{itemize}
 
-	During instance reduction, the component can refer to
+	During instance reduction, the gadget can refer to
 	its local variables in the R1CSConstraints messages that it generates.
 	The caller and other parts of the program must not refer to these local variables.
 
-	During witness reduction, the component must assign values to its local variables
+	During witness reduction, the gadget must assign values to its local variables
 	by sending AssignedVariables messages.
 
 \parhead{Incoming/Outgoing Variables}
 
-	The concept of incoming, outgoing variables arises when a program is decomposed into components.
-	These variables serve as the functional interface between a component and its caller.
+	The concept of incoming, outgoing variables arises when a program is decomposed into gadgets.
+	These variables serve as the functional interface between a gadget and its caller.
 	They are analoguous to arguments and return values of functions in common programming languages.
 	A variable is not inherently incoming, outgoing, nor local;
-	rather, this is a convention in the context of a component call.
+	rather, this is a convention in the context of a gadget call.
 
-	The caller provides the IDs of variables to be used as incoming and outgoing variables by the component.
-	There may be no outgoing variables if the component implements a pure assertion.
+	The caller provides the IDs of variables to be used as incoming and outgoing variables by the gadget.
+	There may be no outgoing variables if the gadget implements a pure assertion.
 
-	During instance reduction, both the caller and the component can refer to
+	During instance reduction, both the caller and the gadget can refer to
 	these variables in the R1CSConstraints messages that they generate.
 	Other parts of the program may also refer to these same variables in their own contexts.
 
-	During witness reduction, the caller must pass incoming values to the component in the ComponentCall message.
-	The component must return outgoing values to the caller in the ComponentReturn message.
+	During witness reduction, the caller must pass incoming values to the gadget in the GadgetCall message.
+	The gadget must return outgoing values to the caller in the GadgetReturn message.
 
 	The caller is responsible for the assignment of values to both incoming and outgoing variables.
 	How this is achieved depends on the caller and proving system,
-	and on whether some variables are treated as public inputs of the zero-knowledge program.
-
-\parhead{In-memory execution - C API}
-
-	The application may execute the code of a component in its own process.
-
-	The component exposes its functionnality as a function calleable using the C calling convention of the platform. The component code may be linked statically or be loaded from a shared library.
-
-	The application must prepare a ComponentCall message in memory, and implement one callback functions to receive the messages of the component,
-	and call the component function with pointers to the message and the callbacks.
-
-	The component function reads the call message and performs its specific computation. It prepares the resulting messages (R1CSConstraints, AssignedVariables, or ComponentReturn) in memory, and calls the callbacks with pointers to these messages.
-
-	The function definition that implements this flow is defined in Listing \ref{gadget.h} as a C header. Refer to the inline documentation for more details.
-
-\parhead{Multi-process execution - Stream and File Format}
-	\enote{Explain what's already induced by FlatBuffers: explain that the framework, plus our .fbs file, specify how the aforementioned high-level messages are actually represented at the byte level, including message framing, message naming, etc..}
-	All messages are framed, meaning that they can be concatenated and distinguished in streams of bytes or in files.
-	Messages must be prefixed by the size of the message not including the prefix,
-	as a 4-bytes little-endian unsigned integer.
-	\enote{Say something about streams - stdio/stdout, files, TCP connections, etc.?}
+	and on whether some variables are treated as public inputs of the instance.

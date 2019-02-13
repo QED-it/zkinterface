@@ -200,18 +200,20 @@ This proposal is not aiming to standardize a language or framework for generatin
 
 \input{design.tex}
 
-%Rewriting \input{description.tex}
 
 \subsection{Interface Definition}
 
-	\lstinputlisting[
-		caption=gadget.fbs - Interface definition,
-		language=flatbuffers2,style=protobuf,
-		label=gadget.fbs]{../gadget.fbs}
+\lstinputlisting[
+	caption=gadget.fbs - Interface definition,
+	language=flatbuffers2,style=protobuf,
+	label=gadget.fbs]{../gadget.fbs}
 
-	\lstinputlisting[
-		caption=gadget.h - C Interface,
-		language=C++,style=protobuf,
-		label=gadget.h]{../cpp/gadget.h}
+
+\input{execution.tex}
+
+\lstinputlisting[
+	caption=gadget.h - C Interface,
+	language=C++,style=protobuf,
+	label=gadget.h]{../cpp/gadget.h}
 
 \end{document}
