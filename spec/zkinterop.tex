@@ -36,7 +36,7 @@
 	%\makeatother
 	
 	%opening
-	\title{zkInterface, a tool for zero-knowledge interoperability}
+	\title{zkInterface, a standard tool for zero-knowledge interoperability}
 	\author{Daniel Benarroch, Aurel Nicolas, Eran Tromer}
 	
 	\begin{document}
@@ -44,7 +44,6 @@
 		\maketitle
 		 
 		\enote{Add abstract}
-		\dnote{Add bibliography and proper citations of the proceedings}
 \tableofcontents
 %=============================================================================
 \section{Overview}
@@ -90,7 +89,8 @@ With this proposal we aim to solve this by creating a R1CS-based interface betwe
 \subsection{Terminology}
 \dnote{add back the terminology section (need witness / instance at least), (internal vs external variables)}
 
-\subsection{Goals} \label{goals}
+\subsection{Goals} 
+\label{goals}
 
 There are several forms of interoperability and we set some of these as goals for this standard. One such form is between different implementations of the same backend construction, providing an interoperable format for the proving and verification keys, as well as the proof. Another form is between backends and frontends, which is the focus of this standard. The following are stronger forms of the latter kind of interoperability which have been identified as desirable by practitioners.
 
@@ -196,5 +196,11 @@ Rank-1 Constraint Systems are native to many of the state-of-the-art constructio
 		caption=gadget.h - C Interface,
 		language=C++,style=protobuf,
 		label=gadget.h]{../cpp/gadget.h}
+
+
+
+\bibliography{references}
+\bibliographystyle{alphaurl}
+
 
 \end{document}
