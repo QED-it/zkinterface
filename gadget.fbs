@@ -150,10 +150,17 @@ table AssignedVariables {
     // This will allow past implementations to detect whether they are compatible.
 
 
+// All message types are encapsulated in the FlatBuffers root table.
 table Root {
     message :Message;
 }
-
 root_type Root;
-file_identifier "zkp2";
+
+// When storing messages in a file, this file extension and identifier should be used.
 file_extension "zkp2";
+file_identifier "zkp2"; // a.k.a. magic bytes.
+
+// Message framing:
+//
+// All messages must be prefixed by the size of the message,
+// not including the prefix, as a 4-bytes little-endian unsigned integer.
