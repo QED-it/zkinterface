@@ -47,14 +47,14 @@
 		
 		\maketitle
 		 
-		\enote{Add abstract}
+% \enote{Add abstract}
 \tableofcontents
 %=============================================================================
 \section{Overview}
-This standard, part of the ZKProof Standardization effort \dnote{cite: security / implementation track proceedings}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
+This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
-This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation \enote{Add reference to R1CS. I think the best one, in term of notations and references, we have is the QED-it challenge... We prepared a PDF stand-alone version of that for ZKProof, maybe post it online or attach it as an appendix?}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
-
+This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
+%\enote{Add reference to R1CS. I think the best one, in term of notations and references, we have is the QED-it challenge... We prepared a PDF stand-alone version of that for ZKProof, maybe post it online or attach it as an appendix?}
 %-----------------------------------------------------------------------------
 \subsection{Background}
 
@@ -198,7 +198,26 @@ Some backends can take advantage of uniformity in the constraint system (e.g., w
 	language=C++,style=protobuf,
 	label=gadget.h]{../cpp/gadget.h}
 
-		
 
+\begin{thebibliography}{9}
+	\bibitem{ZKProofSecurity}
+	1st ZKProof Standards Workshop,
+	\emph{Security Track Proceeding}.
+	Online at \href{https://zkproof.org}{ZKProof.org}.
+	Published in Cambridge, Massachusetts, on May, 2018.
+
+	\bibitem{ZKProofImplementation}
+	1st ZKProof Standards Workshop,
+	\emph{Implementation Track Proceeding}.
+	Online at \href{https://zkproof.org}{ZKProof.org}.
+	Published in Cambridge, Massachusetts, on May, 2018.
+
+	\bibitem{ZKProofApplications}
+	1st ZKProof Standards Workshop,
+	\emph{Applications Track Proceeding}.
+	Online at \href{https://zkproof.org}{ZKProof.org}.
+	Published in Cambridge, Massachusetts, on May, 2018.
+\end{thebibliography}
+ 
  
 \end{document}
