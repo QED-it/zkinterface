@@ -76,7 +76,7 @@ fn return_callback_c(
     true
 }
 
-pub fn call_component_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String> {
+pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String> {
     let message_ptr = message_buf.as_ptr();
 
     let mut context = CallbackContext {

@@ -1,13 +1,13 @@
 use flatbuffers::FlatBufferBuilder;
 use gadget_call::{
-    call_component_wrapper,
+    call_gadget_wrapper,
     CallbackContext,
     InstanceDescription,
 };
 use gadget_generated::gadget::{
-    ComponentCall,
-    ComponentCallArgs,
-    ComponentReturn,
+    GadgetCall,
+    GadgetCallArgs,
+    GadgetReturn,
     get_size_prefixed_root_as_root,
     Message,
     Root,
@@ -32,10 +32,10 @@ impl AssignmentContext {
         }
     }
 
-    pub fn response(&self) -> Option<ComponentReturn> {
+    pub fn response(&self) -> Option<GadgetReturn> {
         let buf = self.ctx.return_message.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_component_return()
+        message.message_as_gadget_return()
     }
 
     pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
@@ -128,7 +128,7 @@ pub fn make_assignment_request(
             incoming_elements: Some(incoming_bytes),
             info: None,
         });
-        ComponentCall::create(&mut builder, &ComponentCallArgs {
+        GadgetCall::create(&mut builder, &GadgetCallArgs {
             instance: Some(i),
             generate_r1cs: false,
             generate_assignment: true,
@@ -137,14 +137,14 @@ pub fn make_assignment_request(
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::ComponentCall,
+        message_type: Message::GadgetCall,
         message: Some(request.as_union_value()),
     });
 
     builder.finish_size_prefixed(message, None);
     let buf = builder.finished_data();
 
-    let ctx = call_component_wrapper(&buf).unwrap();
+    let ctx = call_gadget_wrapper(&buf).unwrap();
 
     AssignmentContext { instance, ctx }
 }

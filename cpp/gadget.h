@@ -7,21 +7,21 @@ extern "C" {
 
 /*  Callback functions.
 
-    The caller implements these functions and passes function pointers to the component.
+    The caller implements these functions and passes function pointers to the gadget.
     The caller may also pass pointers to arbitrary opaque `context` objects of its choice.
-    The component calls the callbacks with its response messages, and repeating the context pointer.
+    The gadget calls the callbacks with its response messages, and repeating the context pointer.
  */
 typedef bool (*gadget_callback_t)(
         void *context,
         unsigned char *response
 );
 
-/*  A function that implements a component.
+/*  A function that implements a gadget.
 
-    It receives a `ComponentCall` message, callbacks, and callback contexts.
+    It receives a `GadgetCall` message, callbacks, and callback contexts.
     It calls `constraints_callback` one or more times with `constraints_context` and a `R1CSConstraints` message.
     It calls `assigned_variables_callback` one or more times with `assigned_variables_context` and a `AssignedVariables` message.
-    Finally, it calls `return_callback` with `return_context` and a `ComponentReturn` message.
+    Finally, it calls `return_callback` with `return_context` and a `GadgetReturn` message.
     The callbacks and the contexts pointers may be identical and may be NULL.
 
     The following memory management convention is used both for `call_gadget` and for the callbacks.

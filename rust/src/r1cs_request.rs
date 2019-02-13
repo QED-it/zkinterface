@@ -1,15 +1,15 @@
 use assignment_request::AssignedVariable;
 use flatbuffers::FlatBufferBuilder;
 use gadget_call::{
-    call_component_wrapper,
+    call_gadget_wrapper,
     CallbackContext,
     InstanceDescription,
 };
 use gadget_generated::gadget::{
     BilinearConstraint,
-    ComponentCall,
-    ComponentCallArgs,
-    ComponentReturn,
+    GadgetCall,
+    GadgetCallArgs,
+    GadgetReturn,
     get_size_prefixed_root_as_root,
     Message,
     Root,
@@ -23,7 +23,7 @@ pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
 
     let request = {
         let i = instance.build(&mut builder);
-        ComponentCall::create(&mut builder, &ComponentCallArgs {
+        GadgetCall::create(&mut builder, &GadgetCallArgs {
             instance: Some(i),
             generate_r1cs: true,
             generate_assignment: false,
@@ -32,14 +32,14 @@ pub fn make_r1cs_request(instance: InstanceDescription) -> R1CSContext {
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::ComponentCall,
+        message_type: Message::GadgetCall,
         message: Some(request.as_union_value()),
     });
 
     builder.finish_size_prefixed(message, None);
     let buf = builder.finished_data();
 
-    let ctx = call_component_wrapper(&buf).unwrap();
+    let ctx = call_gadget_wrapper(&buf).unwrap();
 
     R1CSContext { instance, ctx }
 }
@@ -60,10 +60,10 @@ impl R1CSContext {
         }
     }
 
-    pub fn response(&self) -> Option<ComponentReturn> {
+    pub fn response(&self) -> Option<GadgetReturn> {
         let buf = self.ctx.return_message.as_ref()?;
         let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_component_return()
+        message.message_as_gadget_return()
     }
 }
 

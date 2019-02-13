@@ -99,8 +99,8 @@ namespace standard_gadget {
         return le_into_elements(from_bytes->data(), num_elements, element_size);
     }
 
-    // Extract the incoming elements from a ComponentCall.
-    vector<FieldT> deserialize_incoming_elements(const ComponentCall *call) {
+    // Extract the incoming elements from a GadgetCall.
+    vector<FieldT> deserialize_incoming_elements(const GadgetCall *call) {
         auto num_elements = call->instance()->incoming_variable_ids()->size();
         auto in_elements_bytes = call->witness()->incoming_elements();
         return deserialize_elements(in_elements_bytes, num_elements);
@@ -227,8 +227,8 @@ namespace standard_gadget {
     FlatBufferBuilder serialize_error(string error) {
         FlatBufferBuilder builder;
         auto ser_error = builder.CreateString(error);
-        auto response = CreateComponentReturn(builder, 0, 0, ser_error);
-        builder.FinishSizePrefixed(CreateRoot(builder, Message_ComponentReturn, response.Union()));
+        auto response = CreateGadgetReturn(builder, 0, 0, ser_error);
+        builder.FinishSizePrefixed(CreateRoot(builder, Message_GadgetReturn, response.Union()));
         return builder;
     }
 
