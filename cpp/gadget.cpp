@@ -11,7 +11,7 @@ typedef uint64_t VariableId;
 
 
 bool r1cs_request(
-        const ComponentCall *request,
+        const GadgetCall *request,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -70,11 +70,11 @@ bool r1cs_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateComponentReturn(
+        auto response = CreateGadgetReturn(
                 builder,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_ComponentReturn, response.Union());
+        auto root = CreateRoot(builder, Message_GadgetReturn, response.Union());
         builder.FinishSizePrefixed(root);
 
         if (response_callback != nullptr) {
@@ -87,7 +87,7 @@ bool r1cs_request(
 
 
 bool assignments_request(
-        const ComponentCall *call,
+        const GadgetCall *call,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -140,11 +140,11 @@ bool assignments_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateComponentReturn(
+        auto response = CreateGadgetReturn(
                 builder,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_ComponentReturn, response.Union());
+        auto root = CreateRoot(builder, Message_GadgetReturn, response.Union());
         builder.FinishSizePrefixed(root);
 
         if (response_callback != nullptr) {
@@ -170,11 +170,11 @@ bool call_gadget(
 ) {
     auto root = GetSizePrefixedRoot(call_msg);
 
-    if (root->message_type() != Message_ComponentCall) {
+    if (root->message_type() != Message_GadgetCall) {
         return false; // Error, unknown request.
     }
 
-    auto call = root->message_as_ComponentCall();
+    auto call = root->message_as_GadgetCall();
 
     if (call->generate_r1cs()) {
         bool ok = r1cs_request(

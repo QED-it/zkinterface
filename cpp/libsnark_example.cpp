@@ -83,11 +83,11 @@ bool sha256_gadget_call(
 ) {
     auto root = GetSizePrefixedRoot(call_msg);
 
-    if (root->message_type() != Message_ComponentCall) {
+    if (root->message_type() != Message_GadgetCall) {
         return return_error(return_callback, return_context, "Unexpected message");
     }
 
-    const ComponentCall *call = root->message_as_ComponentCall();
+    const GadgetCall *call = root->message_as_GadgetCall();
     const GadgetInstance *instance = call->instance();
 
     libff::alt_bn128_pp::init_public_params();
@@ -131,14 +131,14 @@ bool sha256_gadget_call(
     uint64_t free_variable_id_after = instance->free_variable_id_before() + num_local_vars;
     auto maybe_out_elements = call->generate_assignment() ? serialize_elements(builder, out_elements) : 0;
 
-    auto response = CreateComponentReturn(
+    auto response = CreateGadgetReturn(
             builder,
             free_variable_id_after,
             0, // No custom info.
             0, // No error.
             maybe_out_elements);
 
-    builder.FinishSizePrefixed(CreateRoot(builder, Message_ComponentReturn, response.Union()));
+    builder.FinishSizePrefixed(CreateRoot(builder, Message_GadgetReturn, response.Union()));
 
     if (return_callback != nullptr) {
         return return_callback(return_context, builder.GetBufferPointer());

@@ -3,17 +3,17 @@
 
 namespace Gadget;
 
-/// The messages that the caller and component can exchange.
+/// The messages that the caller and gadget can exchange.
 union Message {
-    ComponentCall,
-    ComponentReturn,
+    GadgetCall,
+    GadgetReturn,
 
     R1CSConstraints,
     AssignedVariables,
 }
 
-/// Caller calls a component.
-table ComponentCall {
+/// Caller calls a gadget.
+table GadgetCall {
     /// All details necessary to construct the instance.
     /// The same instance must be provided for R1CS and assignment generation.
     instance            :GadgetInstance;
@@ -22,7 +22,7 @@ table ComponentCall {
     generate_r1cs       :bool;
 
     /// Whether an assignment should be generated.
-    /// Provide witness values to the component.
+    /// Provide witness values to the gadget.
     generate_assignment :bool;
     witness             :Witness;
 }
@@ -41,7 +41,7 @@ table ComponentCall {
         /// Outgoing Variables to use as connections to the gadget.
         /// There may be no Outgoing Variables if the gadget is a pure assertion.
         /// Allocated by the caller.
-        /// Assigned by the called gadget in `ComponentReturn.outgoing_elements`.
+        /// Assigned by the called gadget in `GadgetReturn.outgoing_elements`.
         outgoing_variable_ids   :[uint64];
 
         /// First free Variable ID before the call.
@@ -76,9 +76,9 @@ table ComponentCall {
         value :[ubyte];
     }
 
-/// Component returns to the caller. This is the final message
+/// The gadget returns to the caller. This is the final message
 /// after all R1CSConstraints or AssignedVariables have been sent.
-table ComponentReturn {
+table GadgetReturn {
     /// First variable ID free after the gadget call.
     /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id_after :uint64;
