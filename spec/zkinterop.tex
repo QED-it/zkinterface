@@ -167,29 +167,18 @@ The following are not addressed by this standard:
 The following are not covered by the present revision of the standard, but should be covered by future extensions. Thus, the standard should be flexible enough and easy to extend in a backward-compatible compatible fashion, to achieve the following:
 
 \subparhead{Other constraint system representations.}
-Going beyond R1CS, support other constraint system representations that are native to some ZK backends. These include Boolean circuits, arithmetic circuits, and algebraic constraint systems.
+Going beyond R1CS,%
+%
+\footnote{R1CS (i.e., a set of bilinear constraints where linear combinations are ``for free'' \enote{maybe move this intuition to where we introduce R1CS, near the missing reference to its definition?} is the native language of the numerous ZK schemes based on Quadratic Arithmetic Programs, which are used by most deployment nowadays. Moreover, arithmetic circuits and Boolean circuits can be easily and efficiently reduced to R1CS. Hence the focus on R1CS in this initial revision.} %
+%
+support other constraint system representations that are native to some ZK backends. These include Boolean circuits, arithmetic circuits, and algebraic constraint systems.
 
 \subparhead{Uniform constraint systems}
-Some backends can take advantage of uniformity in the constraint system (e.g., when some elements are repeated many times). Support the expression such uniformity.
+Some backends can take advantage of uniformity in the constraint system (e.g., when some elements are repeated many times). Support the expression of such uniformity in the constraint system representation, so backends can take utilize it.
 
 \subparhead{Packaging} Describe self-contained packaging of a component would allow for portable execution of the components (or gadgets) on different platforms.
 
-\subparhead{Typing} Enforcing properties of variables using a type system (e.g.: boolean type that enforces booleanity check).
-
-
-\ignore[Non-R1CS]{
-\parhead{Other constraint system representations.} \dnote{copy-paste from proceeding about semantics and about non-R1CS systems.}
-\dnote{need to discuss why R1CS: because it is a native language to many of the state-of-the-art constructions or are easily reducible to the native language. For those who are not native, they are complex and not generic to many constructions. MUTHU TEST}
-
-Rank-1 Constraint Systems are native to many of the state-of-the-art constructions or are reducible to the native low-level representation of the backend. Today these systems are in production and have a large user base
-
-
-
-\begin{itemize}
-	\item A message format that capture the specific semantics of the components.
-	\item A statement representation that captures the specific structure of the statement, something that is not achieved with R1CS.
-\end{itemize} 
-}
+\subparhead{Typing} Enforcing properties of variables using a type system (e.g., a ``boolean variable'' type that ensures a variable is 0 or 1 even when working over a large field).
 
 \input{design.tex}
 
