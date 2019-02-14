@@ -2,6 +2,8 @@
 
 zkInterface is a standard tool for zero-knowledge interoperability.
 
+[The spec can be found here](zkInterface.pdf).
+
 |                           |                             |
 | ------------------------- | --------------------------- |
 | `zkInterface.pdf`         | The interface specification |
