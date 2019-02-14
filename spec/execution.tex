@@ -1,6 +1,6 @@
 %=============================================================================
-\section{Execution}
-\label{sec:execution}
+\section{Implementation}
+\label{sec:implementation}
 
 The above section describes a protocol and the format of messages.
 Applications can execute, and exchange messages with
@@ -8,6 +8,7 @@ gadgets and proving systems implementations in a variety of ways.
 We recommend two approaches in this section.
 
 \parhead{In-memory execution}
+\label{inmemory}
 
 The application may execute the code of a component in its own process.
 
@@ -40,3 +41,19 @@ It should write a single GadgetReturn message to the standard error stream
 A program that implements a proving system should read messages of type R1CSConstraints, AssignedVariables, or GadgetReturn from stdin,
 which should contain all the information needed to perform a pre-processing
 or to generate proofs.
+
+
+\parhead{Demonstration}
+
+An example implementation is provided.
+
+A number of C++ helper functions are used to interoperate
+with libsnark protoboard objects.
+A SHA256 gadget from libsnark/gadgetlib1
+is encapsulated with the message-based interface of section~\ref{sec:design}.
+
+A test program written in Rust demonstrates
+in-memory execution using the method in section~\ref{inmemory},
+and includes helper functions to process messages.
+
+This code can be found at \href{https://github.com/QED-it/gadget\_standard}{https://github.com/QED-it/gadget\_standard}.
