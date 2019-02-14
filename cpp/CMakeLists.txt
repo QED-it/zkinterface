@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(zkcomponent gadget.cpp)
+include_directories(.)
 
 install(TARGETS zkcomponent DESTINATION .)
 install(FILES gadget.h gadget_generated.h libsnark_integration.hpp DESTINATION .)
