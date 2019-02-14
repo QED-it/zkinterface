@@ -90,7 +90,7 @@ Currently, existing frontend are implemented to work best with their correspondi
 With this proposal we aim to solve this by creating a R1CS-based interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement.
 
 \begin{figure}[h!]
-	\includegraphics[width=\linewidth]{interop.png}
+	\includegraphics[width=\linewidth]{graphics/interop.png}
 	\caption{Interoperability between frontends and backends with zkInterface}
 	\label{interface}
 \end{figure}
@@ -187,8 +187,11 @@ Some backends can take advantage of uniformity in the constraint system (e.g., w
 
 \subsection{Interface Definition}
 
+A copy of the messages definition is hosted at \\
+\href{https://github.com/QED-it/gadget\_standard/blob/master/gadget.fbs}{https://github.com/QED-it/gadget\_standard/blob/master/gadget.fbs}
+
 \lstinputlisting[
-	caption=gadget.fbs - Interface definition,
+	caption=Messages Definition,
 	language=flatbuffers2,style=protobuf,
 	label=gadget.fbs]{../gadget.fbs}
 
