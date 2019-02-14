@@ -41,7 +41,7 @@
 	
 	%opening
 	\title{zkInterface, a standard tool for zero-knowledge interoperability}
-	\author{Daniel Benarroch, Aurel Nicolas, Eran Tromer}
+	\author{Daniel Benarroch, Kobi Gurkan, Aurel Nicolas, Eran Tromer}
 	
 	\begin{document}
 		
@@ -53,16 +53,16 @@
 \section{Overview}
 This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
-This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
+This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{R1CS (i.e., a set of bilinear constraints where linear combinations are ``for free'' is the native language of the numerous ZK schemes based on Quadratic Arithmetic Programs, which are used by most deployment nowadays. Moreover, arithmetic circuits and Boolean circuits can be easily and efficiently reduced to R1CS. Hence the focus on R1CS in this initial revision.}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
 %\enote{Add reference to R1CS. I think the best one, in term of notations and references, we have is the QED-it challenge... We prepared a PDF stand-alone version of that for ZKProof, maybe post it online or attach it as an appendix?}
 %-----------------------------------------------------------------------------
 \subsection{Background}
 
 Zero-Knowledge Proofs are cryptographic primitives that allow some entity (the prover) to prove to another party (the verifier) the validity of some statement or relation. Today there are many efficient constructions of NIZKs, each with different trade-offs, as well as several implementations of the proving systems. By standardizing zero-knowledge proofs, we aim to foster the proper use of the technology.
 
-Every proving system can be divided \dnote{cite: implementation track proceeding} into the backend, which is the portion of the software that contains the implementation of the underlying cryptographic protocol, and the frontend, which provides means to express statements in a convenient language, allowing to prove such statements in zero knowledge by compiling them into a low-level representation of the statement.
+Every proving system can be divided \cite{ZKProofImplementation} into the backend, which is the portion of the software that contains the implementation of the underlying cryptographic protocol, and the frontend, which provides means to express statements in a convenient language, allowing to prove such statements in zero knowledge by compiling them into a low-level representation of the statement.
 
-The backend of a proving system consists of the key generation, proving and verification algorithms. It proves statements where the instance and witness are expressed as variable assignments, and relations are expressed via low-level languages (such as arithmetic circuits, Boolean circuits, R1CS/QAP constraint systems or arithmetic constraint satisfaction problems). There are numerous such backends, including implementations of many of the schemes discussed in the Security Track proceeding \dnote{cite: security track proceeding}.
+The backend of a proving system consists of the key generation, proving and verification algorithms. It proves statements where the instance and witness are expressed as variable assignments, and relations are expressed via low-level languages (such as arithmetic circuits, Boolean circuits, R1CS/QAP constraint systems or arithmetic constraint satisfaction problems). There are numerous such backends, including implementations of many of the schemes discussed in the Security Track proceeding \cite{ZKProofSecurity}.
 
 The frontend consists of the following:
 \begin{itemize}
@@ -91,7 +91,7 @@ With this proposal we aim to solve this by creating a R1CS-based interface betwe
 
 %-----------------------------------------------------------------------------
 \subsection{Terminology}
-The terminology follows the Implementation Track proceeding \dnote{add reference}, and any new terms and concepts will be defined accordingly.
+The terminology follows the Implementation Track proceeding \cite{ZKProofImplementation}, and any new terms and concepts will be defined accordingly.
 
 \subsection{Goals} 
 \label{goals}
@@ -159,7 +159,7 @@ Some limitations of the standard, with respect to interoperability, are the foll
 \parhead{Limitations.}
 The following are not addressed by this standard:
 
-\subparhead{Backend interoperability} We do not aim to standardize the proof algorithms, the format of the proofs generated by a backend, or the format of the proving and verification keys -- all of which would be required to achieve interoperability between backends. (See ``Proof interoperability'' and ``Common reference strings'' in \dnote{[ref the impl track]}.
+\subparhead{Backend interoperability} We do not aim to standardize the proof algorithms, the format of the proofs generated by a backend, or the format of the proving and verification keys -- all of which would be required to achieve interoperability between backends. (See ``Proof interoperability'' and ``Common reference strings'' in \cite{ZKProofImplementation}.
 
 \subparhead{Programming language and frontend frameworks} We are intentionally agnostic about, and do not aim to standardize, the programming language and programming framework used by frontends.
 
@@ -169,7 +169,7 @@ The following are not covered by the present revision of the standard, but shoul
 \subparhead{Other constraint system representations.}
 Going beyond R1CS,%
 %
-\footnote{R1CS (i.e., a set of bilinear constraints where linear combinations are ``for free'' \enote{maybe move this intuition to where we introduce R1CS, near the missing reference to its definition?} is the native language of the numerous ZK schemes based on Quadratic Arithmetic Programs, which are used by most deployment nowadays. Moreover, arithmetic circuits and Boolean circuits can be easily and efficiently reduced to R1CS. Hence the focus on R1CS in this initial revision.} %
+%
 %
 support other constraint system representations that are native to some ZK backends. These include Boolean circuits, arithmetic circuits, and algebraic constraint systems.
 
