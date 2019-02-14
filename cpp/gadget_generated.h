@@ -203,7 +203,7 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   /// Optional: Any static parameter that may influence the instance
   /// construction. Parameters can be standard, conventional, or custom.
-  /// Example: function_name, if a gadget supports multiple functions or variants.
+  /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
   /// Counter-example: a Merkle path is not configuration (rather witness).
   const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *configuration() const {
@@ -298,12 +298,12 @@ struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_INFO = 6
   };
   /// The values that the caller assigned to Incoming Variables.
-  /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+  /// Contiguous BigInts in the same order as `incoming_variable_ids`.
   const flatbuffers::Vector<uint8_t> *incoming_elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_INCOMING_ELEMENTS);
   }
-  /// Optional: Any info that may be useful to the gadget to compute assignments.
-  /// Example: Merkle authentication path.
+  /// Optional: Any custom data useful to the gadget to compute assignments.
+  /// Example: a Merkle authentication path.
   const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *info() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *>(VT_INFO);
   }

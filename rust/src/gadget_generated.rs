@@ -273,7 +273,7 @@ impl<'a> GadgetInstance<'a> {
   }
   /// Optional: Any static parameter that may influence the instance
   /// construction. Parameters can be standard, conventional, or custom.
-  /// Example: function_name, if a gadget supports multiple functions or variants.
+  /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
   /// Counter-example: a Merkle path is not configuration (rather witness).
   #[inline]
@@ -380,13 +380,13 @@ impl<'a> Witness<'a> {
     pub const VT_INFO: flatbuffers::VOffsetT = 6;
 
   /// The values that the caller assigned to Incoming Variables.
-  /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+  /// Contiguous BigInts in the same order as `incoming_variable_ids`.
   #[inline]
   pub fn incoming_elements(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Witness::VT_INCOMING_ELEMENTS, None).map(|v| v.safe_slice())
   }
-  /// Optional: Any info that may be useful to the gadget to compute assignments.
-  /// Example: Merkle authentication path.
+  /// Optional: Any custom data useful to the gadget to compute assignments.
+  /// Example: a Merkle authentication path.
   #[inline]
   pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Witness::VT_INFO, None)
