@@ -21,11 +21,11 @@ typedef bool (*gadget_callback_t)(
 /*  A function that implements a gadget.
 
     It receives a `GadgetCall` message, callbacks, and callback contexts.
-    It calls `constraints_callback` one or more times with
+    It calls `constraints_callback` zero or more times with
     `constraints_context` and a `R1CSConstraints` message.
-    It calls `assigned_variables_callback` one or more times with
+    It calls `assigned_variables_callback` zero or more times with
     `assigned_variables_context` and a `AssignedVariables` message.
-    Finally, it calls `return_callback` with `return_context` and a
+    Finally, it calls `return_callback` once with `return_context` and a
     `GadgetReturn` message.
     The callbacks and the contexts pointers may be identical and may be NULL.
 
