@@ -235,23 +235,15 @@ impl<'a> GadgetInstance<'a> {
       if let Some(x) = args.field_order { builder.add_field_order(x); }
       if let Some(x) = args.outgoing_variable_ids { builder.add_outgoing_variable_ids(x); }
       if let Some(x) = args.incoming_variable_ids { builder.add_incoming_variable_ids(x); }
-      if let Some(x) = args.gadget_name { builder.add_gadget_name(x); }
       builder.finish()
     }
 
-    pub const VT_GADGET_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_INCOMING_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
-    pub const VT_OUTGOING_VARIABLE_IDS: flatbuffers::VOffsetT = 8;
-    pub const VT_FREE_VARIABLE_ID_BEFORE: flatbuffers::VOffsetT = 10;
-    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 12;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
+    pub const VT_INCOMING_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
+    pub const VT_OUTGOING_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
+    pub const VT_FREE_VARIABLE_ID_BEFORE: flatbuffers::VOffsetT = 8;
+    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
 
-  /// Which gadget to instantiate.
-  /// Allows a library to provide multiple gadgets.
-  #[inline]
-  pub fn gadget_name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetInstance::VT_GADGET_NAME, None)
-  }
   /// Incoming Variables to use as connections to the gadget.
   /// Allocated by the caller.
   /// Assigned by the caller in `Witness.incoming_elements`.
@@ -281,6 +273,7 @@ impl<'a> GadgetInstance<'a> {
   }
   /// Optional: Any static parameter that may influence the instance
   /// construction. Parameters can be standard, conventional, or custom.
+  /// Example: function_name, if a gadget supports multiple functions or variants.
   /// Example: the depth of a Merkle tree.
   /// Counter-example: a Merkle path is not configuration (rather witness).
   #[inline]
@@ -290,7 +283,6 @@ impl<'a> GadgetInstance<'a> {
 }
 
 pub struct GadgetInstanceArgs<'a> {
-    pub gadget_name: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub incoming_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub outgoing_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub free_variable_id_before: u64,
@@ -301,7 +293,6 @@ impl<'a> Default for GadgetInstanceArgs<'a> {
     #[inline]
     fn default() -> Self {
         GadgetInstanceArgs {
-            gadget_name: None,
             incoming_variable_ids: None,
             outgoing_variable_ids: None,
             free_variable_id_before: 0,
@@ -315,10 +306,6 @@ pub struct GadgetInstanceBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> GadgetInstanceBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_gadget_name(&mut self, gadget_name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_GADGET_NAME, gadget_name);
-  }
   #[inline]
   pub fn add_incoming_variable_ids(&mut self, incoming_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_INCOMING_VARIABLE_IDS, incoming_variable_ids);

@@ -29,10 +29,6 @@ table GadgetCall {
 
     /// Description of a particular instance of a gadget.
     table GadgetInstance {
-        /// Which gadget to instantiate.
-        /// Allows a library to provide multiple gadgets.
-        gadget_name             :string;
-
         /// Incoming Variables to use as connections to the gadget.
         /// Allocated by the caller.
         /// Assigned by the caller in `Witness.incoming_elements`.
@@ -54,6 +50,7 @@ table GadgetCall {
 
         /// Optional: Any static parameter that may influence the instance
         /// construction. Parameters can be standard, conventional, or custom.
+        /// Example: function_name, if a gadget supports multiple functions or variants.
         /// Example: the depth of a Merkle tree.
         /// Counter-example: a Merkle path is not configuration (rather witness).
         configuration           :[KeyValue];
