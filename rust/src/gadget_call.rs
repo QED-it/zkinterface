@@ -111,7 +111,6 @@ pub struct CallbackContext {
 
 #[derive(Clone, Debug)]
 pub struct InstanceDescription {
-    pub gadget_name: String,
     pub incoming_variable_ids: Vec<u64>,
     pub outgoing_variable_ids: Option<Vec<u64>>,
     pub free_variable_id_before: u64,
@@ -123,7 +122,6 @@ impl InstanceDescription {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
         let i = GadgetInstanceArgs {
-            gadget_name: Some(builder.create_string(&self.gadget_name)),
             incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
             outgoing_variable_ids: self.outgoing_variable_ids.as_ref().map(|s| builder.create_vector(s)),
             free_variable_id_before: self.free_variable_id_before,
@@ -142,7 +140,6 @@ fn test_gadget_request() {
     println!();
 
     let instance = InstanceDescription {
-        gadget_name: "sha256".to_string(),
         incoming_variable_ids: vec![100, 101], // Some input variables.
         outgoing_variable_ids: Some(vec![102]), // Some output variable.
         free_variable_id_before: 103,

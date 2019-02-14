@@ -29,10 +29,6 @@ table GadgetCall {
 
     /// Description of a particular instance of a gadget.
     table GadgetInstance {
-        /// Which gadget to instantiate.
-        /// Allows a library to provide multiple gadgets.
-        gadget_name             :string;
-
         /// Incoming Variables to use as connections to the gadget.
         /// Allocated by the caller.
         /// Assigned by the caller in `Witness.incoming_elements`.
@@ -54,6 +50,7 @@ table GadgetCall {
 
         /// Optional: Any static parameter that may influence the instance
         /// construction. Parameters can be standard, conventional, or custom.
+        /// Example: function_name, if a gadget supports multiple function variants.
         /// Example: the depth of a Merkle tree.
         /// Counter-example: a Merkle path is not configuration (rather witness).
         configuration           :[KeyValue];
@@ -62,11 +59,11 @@ table GadgetCall {
     /// Details necessary to compute an assignment.
     table Witness {
         /// The values that the caller assigned to Incoming Variables.
-        /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+        /// Contiguous BigInts in the same order as `incoming_variable_ids`.
         incoming_elements :[ubyte];
 
-        /// Optional: Any info that may be useful to the gadget to compute assignments.
-        /// Example: Merkle authentication path.
+        /// Optional: Any custom data useful to the gadget to compute assignments.
+        /// Example: a Merkle authentication path.
         info              :[KeyValue];
     }
 
@@ -156,7 +153,7 @@ table Root {
 }
 root_type Root;
 
-// When storing messages in a file, this file extension and identifier should be used.
+// When storing messages to files, this extension and identifier should be used.
 file_extension "zkp2";
 file_identifier "zkp2"; // a.k.a. magic bytes.
 

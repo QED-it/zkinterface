@@ -172,18 +172,12 @@ inline flatbuffers::Offset<GadgetCall> CreateGadgetCall(
 /// Description of a particular instance of a gadget.
 struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_GADGET_NAME = 4,
-    VT_INCOMING_VARIABLE_IDS = 6,
-    VT_OUTGOING_VARIABLE_IDS = 8,
-    VT_FREE_VARIABLE_ID_BEFORE = 10,
-    VT_FIELD_ORDER = 12,
-    VT_CONFIGURATION = 14
+    VT_INCOMING_VARIABLE_IDS = 4,
+    VT_OUTGOING_VARIABLE_IDS = 6,
+    VT_FREE_VARIABLE_ID_BEFORE = 8,
+    VT_FIELD_ORDER = 10,
+    VT_CONFIGURATION = 12
   };
-  /// Which gadget to instantiate.
-  /// Allows a library to provide multiple gadgets.
-  const flatbuffers::String *gadget_name() const {
-    return GetPointer<const flatbuffers::String *>(VT_GADGET_NAME);
-  }
   /// Incoming Variables to use as connections to the gadget.
   /// Allocated by the caller.
   /// Assigned by the caller in `Witness.incoming_elements`.
@@ -209,6 +203,7 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   /// Optional: Any static parameter that may influence the instance
   /// construction. Parameters can be standard, conventional, or custom.
+  /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
   /// Counter-example: a Merkle path is not configuration (rather witness).
   const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *configuration() const {
@@ -216,8 +211,6 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_GADGET_NAME) &&
-           verifier.VerifyString(gadget_name()) &&
            VerifyOffset(verifier, VT_INCOMING_VARIABLE_IDS) &&
            verifier.VerifyVector(incoming_variable_ids()) &&
            VerifyOffset(verifier, VT_OUTGOING_VARIABLE_IDS) &&
@@ -235,9 +228,6 @@ struct GadgetInstance FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct GadgetInstanceBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_gadget_name(flatbuffers::Offset<flatbuffers::String> gadget_name) {
-    fbb_.AddOffset(GadgetInstance::VT_GADGET_NAME, gadget_name);
-  }
   void add_incoming_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> incoming_variable_ids) {
     fbb_.AddOffset(GadgetInstance::VT_INCOMING_VARIABLE_IDS, incoming_variable_ids);
   }
@@ -267,7 +257,6 @@ struct GadgetInstanceBuilder {
 
 inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstance(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> gadget_name = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> incoming_variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> outgoing_variable_ids = 0,
     uint64_t free_variable_id_before = 0,
@@ -279,26 +268,22 @@ inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstance(
   builder_.add_field_order(field_order);
   builder_.add_outgoing_variable_ids(outgoing_variable_ids);
   builder_.add_incoming_variable_ids(incoming_variable_ids);
-  builder_.add_gadget_name(gadget_name);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<GadgetInstance> CreateGadgetInstanceDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *gadget_name = nullptr,
     const std::vector<uint64_t> *incoming_variable_ids = nullptr,
     const std::vector<uint64_t> *outgoing_variable_ids = nullptr,
     uint64_t free_variable_id_before = 0,
     const std::vector<uint8_t> *field_order = nullptr,
     const std::vector<flatbuffers::Offset<KeyValue>> *configuration = nullptr) {
-  auto gadget_name__ = gadget_name ? _fbb.CreateString(gadget_name) : 0;
   auto incoming_variable_ids__ = incoming_variable_ids ? _fbb.CreateVector<uint64_t>(*incoming_variable_ids) : 0;
   auto outgoing_variable_ids__ = outgoing_variable_ids ? _fbb.CreateVector<uint64_t>(*outgoing_variable_ids) : 0;
   auto field_order__ = field_order ? _fbb.CreateVector<uint8_t>(*field_order) : 0;
   auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*configuration) : 0;
   return Gadget::CreateGadgetInstance(
       _fbb,
-      gadget_name__,
       incoming_variable_ids__,
       outgoing_variable_ids__,
       free_variable_id_before,
@@ -313,12 +298,12 @@ struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_INFO = 6
   };
   /// The values that the caller assigned to Incoming Variables.
-  /// Contiguous BigInts in the same order as `instance.incoming_variable_ids`.
+  /// Contiguous BigInts in the same order as `incoming_variable_ids`.
   const flatbuffers::Vector<uint8_t> *incoming_elements() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_INCOMING_ELEMENTS);
   }
-  /// Optional: Any info that may be useful to the gadget to compute assignments.
-  /// Example: Merkle authentication path.
+  /// Optional: Any custom data useful to the gadget to compute assignments.
+  /// Example: a Merkle authentication path.
   const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *info() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *>(VT_INFO);
   }

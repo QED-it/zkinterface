@@ -25,7 +25,6 @@ bool r1cs_request(
         auto instance = request->instance();
         free_variable_id_before = instance->free_variable_id_before();
         cout << "C++ got R1CS request"
-             << ", name=" << instance->gadget_name()->str()
              << ", free_variable_id_before="
              << free_variable_id_before << endl;
     }
@@ -101,7 +100,6 @@ bool assignments_request(
         auto instance = call->instance();
         free_variable_id_before = instance->free_variable_id_before();
         cout << "C++ got assignment request"
-             << ", name=" << instance->gadget_name()->str()
              << ", free_variable_id_before="
              << free_variable_id_before << endl;
     }
