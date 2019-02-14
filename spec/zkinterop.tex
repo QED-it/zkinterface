@@ -34,6 +34,11 @@
 	\def\boxit#1{%
 		\smash{\color{red}\fboxrule=1pt\relax\fboxsep=-2pt\llap{\rlap{\fbox{\strut\makebox[#1]{}}}~}}\ignorespaces
 	}
+
+	% Style for identifiers.
+	\newcommand{\textid}[1]{\texttt{#1}}
+	% Note paragraphs.
+	\newcommand{\noteparagraph}[1]{\textbf{#1}.}
 	
 	%\makeatletter
 	%\def\BState{\State\hskip-\ALG@thistlm}

@@ -14,10 +14,12 @@ The application may execute the code of a component in its own process.
 
 The component exposes its functionnality as a function calleable using the C calling convention of the platform. The component code may be linked statically or be loaded from a shared library.
 
-The application must prepare a ComponentCall message in memory, and implement one callback functions to receive the messages of the component,
+The application must prepare a \textid{ComponentCall} message in memory, and implement one callback functions to receive the messages of the component,
 and call the component function with pointers to the message and the callbacks.
 
-The component function reads the call message and performs its specific computation. It prepares the resulting messages (of type R1CSConstraints, AssignedVariables, or GadgetReturn) in memory, and calls the callbacks with pointers to these messages.
+The component function reads the call message and performs its specific computation. It prepares the resulting messages of type
+\textid{R1CSConstraints}, \textid{AssignedVariables}, or \textid{GadgetReturn}
+in memory, and calls the callbacks with pointers to these messages.
 
 A function definition that implements this flow is defined in Listing \ref{gadget.h} as a C header. Refer to the inline documentation for more details.
 
@@ -27,20 +29,22 @@ A function definition that implements this flow is defined in Listing \ref{gadge
 Different parts of the application can be implemented as different
 programs, executed separately.
 
-As specified in section~\ref{message_definition}, messages are framed and typed,
+As specified in section~\ref{messagedefinition}, messages are framed and typed,
 and can be concatenated in a stream of bytes. It is therefore possible to connect multiple programs through UNIX-style pipes, or to arrange a program to write messages to a file for another program to read later.
 To process multiple messages from the same stream or file, a program
 reads the 4 bytes containing the size of the next message, allowing it to seek
 to the message after that.
 
 A program that constructs a constraint system or implements a gadget should read a GadgetCall message from the standard input stream (stdin).
-It should write one or more messages of type R1CSConstraints or AssignedVariables to the standard output stream (stdout).
-It should write a single GadgetReturn message to the standard error stream
+It should write one or more messages of type
+\textid{R1CSConstraints} or \textid{AssignedVariables}
+to the standard output stream (stdout).
+It should write a single \textid{GadgetReturn} message to the standard error stream
 (stderr, used as a control channel).
 
-A program that implements a proving system should read messages of type R1CSConstraints, AssignedVariables, or GadgetReturn from stdin,
-which should contain all the information needed to perform a pre-processing
-or to generate proofs.
+A program that implements a proving system should read messages of type
+\textid{R1CSConstraints}, \textid{AssignedVariables}, or \textid{GadgetReturn}
+from stdin, which should contain all the information needed to perform a pre-processing or to generate proofs.
 
 
 \parhead{Demonstration}

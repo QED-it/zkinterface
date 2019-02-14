@@ -11,23 +11,23 @@
 	The same interface can be used in two use-cases:
 	\begin{itemize}
 		\item To connect the construction and execution of a zero-knowledge program
-			to a proving system. See Figure \ref{program_proving}.
+			to a proving system. See Figure \ref{fig:programproving}.
 
-		\item To decompose a zero-knowledge program into multiple gadgets that can be engineered separately. See Figure \ref{program_components}.
+		\item To decompose a zero-knowledge program into multiple gadgets that can be engineered separately. See Figure \ref{fig:programcomponents}.
 	\end{itemize}
 	
 \begin{figure}[!h]
 	\centering
 	\includegraphics[width=0.5\linewidth]{graphics/program_proving.png}
 	\caption{The interaction between a zero-knowledge program and a proving system.}
-	\label{program_proving}
+	\label{fig:programproving}
 \end{figure}
 
 \begin{figure}[!h]
 	\centering
 	\includegraphics[width=0.7\linewidth]{graphics/program_components.png}
 	\caption{A zero-knowledge program built from multiple gadgets.}
-	\label{program_components}
+	\label{fig:programcomponents}
 \end{figure}
 
 
@@ -89,39 +89,41 @@
 	\centering
 	\includegraphics[width=\linewidth]{graphics/call_flow.png}
 	\caption{The flow of messages between libraries using the interface.}
-	\label{flow}
+	\label{fig:flow}
 \end{figure}
 
 \parhead{Messages Flow}
+	The flow of messages is illustrated in Figure \ref{fig:flow}.
 
-	The flow of messages is illustrated in Figure \ref{flow}.
-
-	The caller calls the gadget code with a single \textsf{GadgetCall} message.
-	The gadget exits with a single GadgetReturn message.
+	The caller calls the gadget code with a single \textid{GadgetCall} message.
+	The gadget exits with a single \textid{GadgetReturn} message.
 	This is a control flow analoguous to a function call in common programming languages.
 
-	The caller also provides a way for the gadget to send
-	R1CSConstraints and AssignedVariables messages.
-	This is an output channel distinct from the return messages.
-
 	The caller can request an instance reduction, or a witness reduction, or both at once.
-	This is controlled by the fields generate\_r1cs and generate\_assignment of GadgetCall messages.
+	This is controlled by the fields \textid{generate\_r1cs} and \textid{generate\_assignment} of \textid{GadgetCall} messages.
 
 	During instance reduction,
 	a gadget may add any number of constraints to the constraint system
-	by sending one or more R1CSConstraints messages.
+	by sending one or more \textid{R1CSConstraints} messages.
 	The caller and other gadgets may do so as well.
 
 	During witness reduction,
 	a gadget may assign values to variables
-	by sending one or more AssignedVariables messages.
+	by sending one or more \textid{AssignedVariables} messages.
 
-	\subparagraph{Note}
-	The design of constraints and assignments channels
-	allows a gadget to call subgadgets itself.
-	Messages from all (sub-)gadgets can simply be sent separately
-	without the need to aggregate them into a single message.
-	
+\parhead{Messages Channels}
+	The caller provides the gadget with the means to send messages,
+	or output channels.	This can be implemented in various ways depending
+	on the application.
+	The caller may arrange a distinct channel for each message type,
+	and the gadget must send messages to the appropriate channels.
+
+	\noteparagraph{Note}
+	This design allows a gadget to call other gadgets itself.
+	All \textid{R1CSConstraints} or \textid{AssignedVariables} messages
+	from all (sub-)gadgets may be sent to a shared channel
+	without the need to aggregate them into a single message,
+	and independently of the call/return flow.
 	Moreover, an implementation can decouple the proving system
 	from the logic of building constraints and assignments,
 	by arranging for the constraints and assignments messages
@@ -130,7 +132,7 @@
 \parhead{Variables}
 	The constraint system reasons about variables, which are assigned a numerical identifier that are unique within a constraint system. The variable numbers are incrementally allocated in a global namespace. Messages that contain constraints or assignments refer to variables by this numeric ID. It is up to gadgets that create the constrain system to keep track of the semantics (and if desired, helpful symbolic names) of the variables that they deal with, and to allocate new variables for their internal use. The messages defined by the framework include a simple protocol for conveying the state of of the variable allocator (i.e., the first free variable number), and the identity of variables that tie a gadget to other gadgets.
 
-	\subparagraph{Note}
+	\noteparagraph{Note}
 	This design allows implementations to aggregate and handle messages in a generic way,
 	without any	reference to the gadgets or mechanisms that generated them.
 
@@ -150,11 +152,11 @@
 	\end{itemize}
 
 	During instance reduction, the gadget can refer to
-	its local variables in the R1CSConstraints messages that it generates.
+	its local variables in the \textid{R1CSConstraints} messages that it generates.
 	The caller and other parts of the program must not refer to these local variables.
 
 	During witness reduction, the gadget must assign values to its local variables
-	by sending AssignedVariables messages.
+	by sending \textid{AssignedVariables} messages.
 
 \parhead{Incoming/Outgoing Variables}
 
@@ -168,11 +170,11 @@
 	There may be no outgoing variables if the gadget implements a pure assertion.
 
 	During instance reduction, both the caller and the gadget can refer to
-	these variables in the R1CSConstraints messages that they generate.
+	these variables in the \textid{R1CSConstraints} messages that they generate.
 	Other parts of the program may also refer to these same variables in their own contexts.
 
-	During witness reduction, the caller must pass incoming values to the gadget in the GadgetCall message.
-	The gadget must return outgoing values to the caller in the GadgetReturn message.
+	During witness reduction, the caller must pass incoming values to the gadget in the \textid{GadgetCall} message.
+	The gadget must return outgoing values to the caller in the \textid{GadgetReturn} message.
 
 	The caller is responsible for the assignment of values to both incoming and outgoing variables.
 	How this is achieved depends on the caller and proving system,
