@@ -3,8 +3,8 @@
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2018
 
-#include "gadget.h"
-#include "gadget_generated.h"
+#include "zkinterface.h"
+#include "zkinterface_generated.h"
 
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"

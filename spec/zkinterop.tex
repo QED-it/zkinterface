@@ -190,20 +190,20 @@ Some backends can take advantage of uniformity in the constraint system (e.g., w
 \subsection{Interface Definition}
 
 A copy of the messages definition is hosted at \\
-\href{https://github.com/QED-it/gadget_standard/blob/master/gadget.fbs}{https://github.com/QED-it/gadget\_standard/blob/master/gadget.fbs}
+\href{https://github.com/QED-it/gadget_standard/blob/master/zkinterface.fbs}{https://github.com/QED-it/gadget\_standard/blob/master/zkinterface.fbs}
 
 \lstinputlisting[
 	caption=Messages Definition,
 	language=flatbuffers2,style=protobuf,
-	label=gadget.fbs]{../gadget.fbs}
+	label=zkinterface.fbs]{../zkinterface.fbs}
 
 
 \input{execution.tex}
 
 \lstinputlisting[
-	caption=gadget.h - C Interface,
+	caption=zkinterface.h - C Interface,
 	language=C++,style=protobuf,
-	label=gadget.h]{../cpp/gadget.h}
+	label=zkinterface.h]{../cpp/zkinterface.h}
 
 
 \begin{thebibliography}{99}

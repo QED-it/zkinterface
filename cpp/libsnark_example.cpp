@@ -4,8 +4,8 @@
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_components.hpp"
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
-#include "gadget.h"
-#include "gadget_generated.h"
+#include "zkinterface.h"
+#include "zkinterface_generated.h"
 #include "libsnark_integration.hpp"
 
 using std::vector;

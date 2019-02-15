@@ -5,7 +5,7 @@ use gadget_call::{
     CallbackContext,
     InstanceDescription,
 };
-use gadget_generated::zkinterface::{
+use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     GadgetCall,
     GadgetCallArgs,

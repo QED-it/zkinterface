@@ -4,7 +4,8 @@ use gadget_call::{
     CallbackContext,
     InstanceDescription,
 };
-use gadget_generated::zkinterface::{
+use std::slice::Iter;
+use zkinterface_generated::zkinterface::{
     GadgetCall,
     GadgetCallArgs,
     GadgetReturn,
@@ -15,7 +16,6 @@ use gadget_generated::zkinterface::{
     Witness,
     WitnessArgs,
 };
-use std::slice::Iter;
 
 pub struct AssignmentContext {
     pub instance: InstanceDescription,

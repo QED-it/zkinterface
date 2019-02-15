@@ -7,12 +7,12 @@ zkInterface is a standard tool for zero-knowledge interoperability.
 |                           |                             |
 | ------------------------- | --------------------------- |
 | `zkInterface.pdf`         | The interface specification |
-| `gadget.fbs`              | The gadget interface definition using FlatBuffers |
-| `rust/src/gadget_call.rs`      | Example gadget call in Rust |
-| `rust/src/gadget_generated.rs` | Generated Rust code         |
-| `cpp/gadget.cpp`          | Example gadget in C++       |
-| `cpp/gadget_generated.h`  | Generated C++ code          |
-| `build.rs`                | Generate Rust and C++ code from gadget.capnp, and compile the C++ |
+| `zkinterface.fbs`         | The gadget interface definition using FlatBuffers |
+| `rust/src/zkinterface_generated.rs` | Generated Rust code         |
+| `rust/src/gadget_call.rs`           | Example gadget call in Rust |
+| `cpp/zkinterface_generated.h`       | Generated C++ code          |
+| `cpp/gadget_example.cpp`            | Example gadget in C++       |
+| `build.rs`                | Generate Rust and C++ code from zkinterface.fbs, and compile the C++ example |
 | `cpp/libsnark_integration.hpp` | Libsnark support            |
 | `cpp/libsnark_example.cpp`     | Libsnark gadget example     |
 
@@ -40,4 +40,4 @@ make
 ```
 
 Then run:
-`flatc --LANGUAGE gadget.fbs`
+`flatc --LANGUAGE zkinterface.fbs`

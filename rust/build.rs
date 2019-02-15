@@ -11,7 +11,7 @@ fn main() {
         "--rust",
         "--cpp",
         "-o", "src/",
-        "../gadget.fbs",
+        "../zkinterface.fbs",
     ]).output() {
         Ok(flatc) => {
             if !
@@ -23,15 +23,15 @@ fn main() {
 
             // Move C++ file.
             rename(
-                Path::new("src").join("gadget_generated.h"),
-                Path::new("..").join("cpp").join("gadget_generated.h"),
+                Path::new("src").join("zkinterface_generated.h"),
+                Path::new("..").join("cpp").join("zkinterface_generated.h"),
             ).expect("Failed to rename");
 
             // Fix an issue in generated code.
             // The lifetime 'a should be on the return value, not on &self.
             // Published at https://github.com/google/flatbuffers/pull/5140
             {
-                let file = &Path::new("src").join("gadget_generated.rs");
+                let file = &Path::new("src").join("zkinterface_generated.rs");
                 let code = std::fs::read_to_string(file).expect("could not read file");
 
                 let re = regex::Regex::new(
@@ -54,7 +54,7 @@ fn main() {
             }
         }
         Err(_) => {
-            println!("cargo:warning=Install FlatBuffers (flatc) if you modify `gadget.fbs`. Code was not regenerated.");
+            println!("cargo:warning=Install FlatBuffers (flatc) if you modify `zkinterface.fbs`. Code was not regenerated.");
         }
     }
 

@@ -1,6 +1,6 @@
 #include <iostream>
-#include "gadget_generated.h"
-#include "gadget.h"
+#include "zkinterface_generated.h"
+#include "zkinterface.h"
 
 using std::cout;
 using std::endl;
