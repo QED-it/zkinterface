@@ -66,7 +66,9 @@ fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     println!("cargo:include={}", out_dir);
 
-    // To use the C++ part, include the environment variable DEP_ZKSTANDARD_INCLUDE
-    // In Rust CC, add:
+    // To use the C++ part in another Rust project, include the environment variable DEP_ZKSTANDARD_INCLUDE
+    // See https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
+    //
+    // For instance, if you use the cc crate, add:
     //   .include(std::env::var("DEP_ZKSTANDARD_INCLUDE").unwrap())
 }
