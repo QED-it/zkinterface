@@ -60,15 +60,15 @@ fn main() {
 
     let dst = cmake::Config::new("../cpp").build();
     println!("cargo:rustc-link-search=native={}", dst.display());
-    println!("cargo:rustc-link-lib=zkcomponent");
+    println!("cargo:rustc-link-lib=gadget_example");
     println!("cargo:rustc-link-lib=stdc++");
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
     println!("cargo:include={}", out_dir);
 
-    // To use the C++ part in another Rust project, include the environment variable DEP_ZKSTANDARD_INCLUDE
+    // To use the C++ part in another Rust project, include the environment variable DEP_ZKINTERFACE_INCLUDE
     // See https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
     //
     // For instance, if you use the cc crate, add:
-    //   .include(std::env::var("DEP_ZKSTANDARD_INCLUDE").unwrap())
+    //   .include(std::env::var("DEP_ZKINTERFACE_INCLUDE").unwrap())
 }

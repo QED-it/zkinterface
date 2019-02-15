@@ -11,7 +11,7 @@
 using std::vector;
 using namespace libsnark;
 using namespace libff;
-using namespace standard_gadget;
+using namespace zkinterface_libsnark;
 
 
 class sha256_gadget : standard_libsnark_gadget {

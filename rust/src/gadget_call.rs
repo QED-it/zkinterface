@@ -4,9 +4,8 @@
 // @date 2019
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use gadget_generated::gadget::{GadgetInstance, GadgetInstanceArgs};
+use gadget_generated::zkinterface::{GadgetInstance, GadgetInstanceArgs};
 use std::slice;
-
 
 #[allow(improper_ctypes)]
 extern "C" {

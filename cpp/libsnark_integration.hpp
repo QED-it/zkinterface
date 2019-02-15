@@ -11,7 +11,7 @@
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_components.hpp"
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
-using namespace Gadget;
+using namespace zkinterface;
 using flatbuffers::FlatBufferBuilder;
 
 using std::vector;
@@ -22,7 +22,7 @@ using libff::alt_bn128_r_limbs;
 using libff::bit_vector;
 
 
-namespace standard_gadget {
+namespace zkinterface_libsnark {
 
     typedef libff::Fr<libff::alt_bn128_pp> FieldT;
     size_t fieldt_size = 32;

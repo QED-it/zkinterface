@@ -1,5 +1,5 @@
-#ifndef GADGET_H
-#define GADGET_H
+#ifndef ZKINTERFACE_H
+#define ZKINTERFACE_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,4 +51,4 @@ bool call_gadget(
 #ifdef __cplusplus
 } // extern "C"
 #endif
-#endif //GADGET_H
+#endif //ZKINTERFACE_H

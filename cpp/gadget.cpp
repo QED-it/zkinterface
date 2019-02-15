@@ -5,7 +5,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
-using namespace Gadget;
+using namespace zkinterface;
 
 typedef uint64_t VariableId;
 
