@@ -1,6 +1,4 @@
-
-
-@techreport{ZKProofSecurityTrackProceeding,
+@techreport{ZKProofSecurity,
     author = {Jens Groth, Yael Kalai and Muthu Venkitasubramaniam}
     series = {ZKProof Track Proceedings},
     institution= {ZKProof Standards},
@@ -9,8 +7,8 @@
     year = {2018},
     month = {May}
 }
-           
-@techreport{ZKProofImplementationTrackProceeding,
+%
+@techreport{ZKProofImplementation,
     author = {Sean Bowe, Kobi Gurkan, Eran Tromer}
     series = {ZKProof Track Proceedings},
     institution= {ZKProof Standards},
@@ -19,8 +17,8 @@
     year = {2018},
     month = {May}
 }
-          
-@techreport{ZKProofApplicationsTrackProceeding,
+%
+@techreport{ZKProofApplications,
     author = {Daniel Benarroch, Ran Canetti, Andrew Miller}
     series = {ZKProof Track Proceedings},
     institution= {ZKProof Standards},
@@ -28,4 +26,169 @@
     address = {Berkeley, CA},
     year = {2018},
     month = {May}
+}
+%
+@inproceedings{BCGGMTV14zerocash,
+  author    = {{Ben-Sasson}, Eli and Chiesa, Alessandro and Garman, Christina and Green, Matthew and Miers, Ian and Tromer, Eran and Virza, Madars},
+  title     = {Zerocash: Decentralized Anonymous Payments from {Bitcoin}},
+  booktitle = {Proceedings of the 2014 IEEE Symposium on Security and Privacy},
+  series    = {SP~'14},
+  year      = {2014},
+  pages     = {459--474},
+  url       = {https://eprint.iacr.org/2014/349}
+}
+%
+@online{NaorKidWeb,
+  author    = {Naor, Moni},
+  title     = {Applied Kid Cryptography},
+  url       = {http://www.wisdom.weizmann.ac.il/~naor/PUZZLES/waldo_sol.html},
+  urldate   = {2017-06-11}
+}
+%
+@INPROCEEDINGS{NNR99kid,
+    author = {Moni Naor and Yael Naor and Omer Reingold},
+    title = {Applied Kid Cryptography or How To Convince Your Children You Are Not Cheating},
+    booktitle = {Eurocrypt '94},
+    year = {1999},
+    pages = {1--12}
+}
+%
+@inproceedings{GGPR13qsp,
+  author    = {Gennaro, Rosario and Gentry, Craig and Parno, Bryan and Raykova, Mariana},
+  title     = {Quadratic Span Programs and Succinct {NIZK}s without {PCP}s},
+  booktitle = {EUROCRYPT~'13},
+  pages     = {626--645},
+  year      = {2013},
+  url       = {https://eprint.iacr.org/2012/215}
+}
+%
+@inproceedings{PHGR13pinocchio,
+  author    = {Bryan Parno and
+               Jon Howell and
+               Craig Gentry and
+               Mariana Raykova},
+  title     = {Pinocchio: Nearly Practical Verifiable Computation},
+  booktitle = {IEEE Symposium on Security and Privacy},
+  year      = {2013},
+  pages     = {238-252},
+  ee        = {http://doi.ieeecomputersociety.org/10.1109/SP.2013.47},
+  url       = {https://eprint.iacr.org/2013/279}
+}
+%
+@inproceedings{BCTV13von,
+  author    = {{Ben-Sasson}, Eli and Chiesa, Alessandro and Tromer, Eran and Virza, Madars},
+  title     = {Succinct Non-Interactive Zero Knowledge for a von {N}eumann Architecture},
+  booktitle = {USENIX Security 2014},
+  pages     = {781--796},
+  year      = {2014},
+  url       = {http://eprint.iacr.org/2013/879}
+}
+%
+@inproceedings{BCGTV13csnark-crypto,
+  author    = {{Ben-Sasson}, Eli and Chiesa, Alessandro and Genkin, Daniel and Tromer, Eran and Virza, Madars},
+  title     = {{SNARK}s for {C}: Verifying Program Executions Succinctly and in Zero Knowledge},
+  booktitle = {Proceedings of the 33rd Annual International Cryptology Conference},
+  booktitle = {CRYPTO~'13},
+  pages     = {90--108},
+  year      = {2013},
+  note      = {Extended version: \cite{BCGTV13csnark-eprint}}
+}
+%
+@misc{BCGTV13csnark-eprint,
+    author    = {{Ben-Sasson}, Eli and Chiesa, Alessandro and Genkin, Daniel and Tromer, Eran and Virza, Madars},
+    title     = {{SNARK}s for {C}: Verifying Program Executions Succinctly and in Zero Knowledge (extended version)},
+    howpublished = {Cryptology ePrint Archive, Report 2013/507},
+    year         = {2013},
+    url          = {http://eprint.iacr.org/2013/507},
+}
+%
+@inproceedings{GMR85zk,
+ author    = {Goldwasser, Shafi and Micali, Silvio and Rackoff, Charles},
+ title     = {The knowledge complexity of interactive proof-systems},
+ booktitle = {STOC 1985},
+ year      = {1985},
+ pages     = {291--304},
+ XXpublisher = {ACM},
+ url       = {https://people.csail.mit.edu/silvio/Selected%20Scientific%20Papers/Proof%20Systems/The_Knowledge_Complexity_Of_Interactive_Proof_Systems.pdf}
+}
+%
+@Article{BCCGLRThunting,
+  author = {Bitansky, Nir and Canetti, Ran and Chiesa, Alessandro and Goldwasser, Shafi and Lin, Huijia and Rubinstein, Aviad and Tromer, Eran},
+  title   = {The Hunting of the {SNARK}},
+  journal = {Journal of Cryptology},
+  XXyear  = {},
+  note    = {to appear},
+  url     = {https://eprint.iacr.org/2014/580},
+}
+%
+@misc{Green14zkprimer,
+    author       = {Matthew Green},
+    title        = {Zero Knowledge Proofs: An illustrated primer},
+    howpublished = {blog post},
+    year         = {2014},
+    url          = {https://blog.cryptographyengineering.com/2014/11/27/zero-knowledge-proofs-illustrated-primer/},
+}
+%
+@misc{Buterin17hood,
+    author       = {Vitalik Buterin},
+    title        = {{zk-SNARKs}: Under the Hood},
+    howpublished = {blog post},
+    year         = {2017},
+    url          = {https://medium.com/@VitalikButerin/zk-snarks-under-the-hood-b33151a013f6},
+}
+%
+@misc{Gabizon17explain,
+    author       = {Ariel Gabizon},
+    title        = {Explaining SNARKs (parts {I} through {VII})},
+    howpublished = {blog posts},
+    year         = {2017},
+    url          = {https://z.cash/blog/snark-explain.html},
+}
+%
+@misc{Reitwiessner16nutshell,
+    author       = {Christian Reitwiessner},
+    title        = {{zkSNARKs} in a nutshell},
+    howpublished = {blog post},
+    year         = {2016},
+    url          = {https://blog.ethereum.org/2016/12/05/zksnarks-in-a-nutshell/},
+}
+@misc{BIU16verifiable,
+    XXauthor       = {BIU Winter School},
+    title          = {{BIU} Winter School: CRYPTOGRAPHY IN THE CLOUD --- VERIFIABLE COMPUTATION AND SPECIAL ENCRYPTION},
+    howpublished   = {workshop (with video recording)},
+    year           = {2016},
+    url            = {http://cyber.biu.ac.il/event/the-6th-biu-winter-school/},
+}
+%
+@misc{Benarroch17Computing,
+	author       = {Benarroch, Daniel and Zohar, Aviv},
+	title        = {{QED-it}: Trustless Computing on Private Data },
+	howpublished = {blog post},
+	year         = {2017},
+	url          = {http://qed-it.com/2017/06/trustless-computing/},
+}
+%
+@misc{Benarroch17meetup,
+	author       = {Benarroch, Daniel and Gurkan, Kobi and Rouach, Jonathan and Zohar, Aviv},
+	title        = {{Meetup}: Prove-it, Blockchain-it ZKP in Action},
+	howpublished = {blog post},
+	year         = {2017},
+	url          = {http://qed-it.com/2017/07/zkp-in-action/},
+}
+%
+@inproceedings{ST99ecash,
+  author    = {Sander, Tomas and {Ta-Shma}, Amnon},
+  title     = {Auditable, Anonymous Electronic Cash},
+  booktitle = {Proceedings of the 19th Annual International Cryptology Conference on Advances in Cryptology},
+  series    = {CRYPTO~'99},
+  year      = {1999},
+  pages     = {555--572},
+}
+%
+@inproceedings{Groth16size,
+  author    = {Jens Groth},
+  title     = {On the Size of Pairing-Based Non-interactive Arguments},
+  booktitle = {proc.~Eurocrypt '16, Part {II}},
+  pages     = {305--326},
+  year      = {2016},
 }

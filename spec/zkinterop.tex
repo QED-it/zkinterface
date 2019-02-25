@@ -1,66 +1,127 @@
 \documentclass[a4paper,12pt]{article}
 
-	\usepackage[utf8]{inputenc}
-	\usepackage[T1]{fontenc}
-	
-	\usepackage[notes=true]{lib/dtrt}
-	\usepackage{algorithm}
-	\usepackage{algpseudocode}
-	\usepackage{amsmath}
-	\usepackage{xcolor}
-	\usepackage{graphicx}
-	\usepackage{todonotes}
-	\usepackage{listings}
-	\usepackage{pxfonts}
-	\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
-	\usepackage{lib/lang}  % include language definition for protobuf
-	\usepackage{lib/style} % include custom style for proto declarations.	
-	
-	%\usepackage{sagetex}
+\usepackage[notes=true]{lib/dtrt}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{todonotes}
+\usepackage{listings}
+\usepackage{pxfonts}
+\usepackage[margin=1in]{geometry}
 
-	\makeatletter
-	\newcommand{\subparhead}[1]{\smallskip \noindent {\itshape\ignorespaces \dt@MaybeAddPunct{#1}}\hskip 0.9em plus 0.3em minus 0.3em \dt@ignorespacesandimplicitepars}
-	\makeatother
+\usepackage{lib/lang}  % include language definition for protobuf
+\usepackage{lib/style} % include custom style for proto declarations.	
 
-	% Auuthor notes (using dtrt's macros). Switch the dtrt package flag to notes=false to hide.
-	\definecolor{darkgreen}{rgb}{0,0.6,0}
-	\newcommand{\dnote}[1]{\dtcolornote[Daniel]{red}{#1}}
-	\newcommand{\anote}[1]{\dtcolornote[Aurell]{blue}{#1}}
-	\newcommand{\enote}[1]{\dtcolornote[Eran]{darkgreen}{#1}}
+%\usepackage{sagetex}
 
-	\newcommand\dtodo[1]{\todo[color=red!20]{#1}}
-	\newcommand\atodo[1]{\todo[color=green!20]{#1}}
-	\newcommand\etodo[1]{\todo[color=blue!20]{#1}}
-	\def\boxit#1{%
-		\smash{\color{red}\fboxrule=1pt\relax\fboxsep=-2pt\llap{\rlap{\fbox{\strut\makebox[#1]{}}}~}}\ignorespaces
-	}
+\makeatletter
+\newcommand{\subparhead}[1]{\smallskip \noindent {\itshape\ignorespaces \dt@MaybeAddPunct{#1}}\hskip 0.9em plus 0.3em minus 0.3em \dt@ignorespacesandimplicitepars}
+\makeatother
 
-	% Style for identifiers.
-	\newcommand{\textid}[1]{\texttt{#1}}
-	% Note paragraphs.
-	\newcommand{\noteparagraph}[1]{\textbf{#1}.}
+% Auuthor notes (using dtrt's macros). Switch the dtrt package flag to notes=false to hide.
+\definecolor{darkgreen}{rgb}{0,0.6,0}
+\newcommand{\dnote}[1]{\dtcolornote[Daniel]{red}{#1}}
+\newcommand{\anote}[1]{\dtcolornote[Aurell]{blue}{#1}}
+\newcommand{\enote}[1]{\dtcolornote[Eran]{darkgreen}{#1}}
+
+\newcommand\dtodo[1]{\todo[color=red!20]{#1}}
+\newcommand\atodo[1]{\todo[color=green!20]{#1}}
+\newcommand\etodo[1]{\todo[color=blue!20]{#1}}
+\def\boxit#1{%
+	\smash{\color{red}\fboxrule=1pt\relax\fboxsep=-2pt\llap{\rlap{\fbox{\strut\makebox[#1]{}}}~}}\ignorespaces
+}
+
+% Style for identifiers.
+\newcommand{\textid}[1]{\texttt{#1}}
+% Note paragraphs.
+\newcommand{\noteparagraph}[1]{\textbf{#1}.}
+
+%\makeatletter
+%\def\BState{\State\hskip-\ALG@thistlm}
+%\makeatother
+
+\newenvironment{definition}{\parhead{Definition}}{} % XXX
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NP statements
+\definecolor{NPcolor}{rgb}{0,0.3,0}
+
+\newcommand{\NPstatement}[3]{
+{\color{NPcolor}
+\begin{itemize}[nosep]
+\item[] #1;
+\item[] #2;
+\item[] #3.
+\end{itemize}
+}
+}
+
+\newcommand{\NPstatementNOperiod}[3]{
+{\color{NPcolor}
+\begin{itemize}[nosep]
+\item[] #1;
+\item[] #2;
+\item[] #3
+\end{itemize}
+}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Constraint systems
+
+\newcommand{\defem}[1]{\emph{\textbf{#1}}}
+\newcommand{\enlargeparens}{{\rule{0pt}{2.2ex}}}
+\newcommand{\ip}[2]{\left\langle #1 , #2 \right\rangle}
+\newcommand{\bigip}[2]{\ip{\enlargeparens #1}{#2}}
+
+\newcommand{\FieldSize}{q}
+\newcommand{\FieldBits}{n}
+\newcommand{\Field}{\mathbb{F}_{\FieldSize}} %_\FieldSize
+\newcommand{\NumConstr}{n_{\mathsf{c}}}
+\newcommand{\NumWit}{{n_{\mathsf{w}}}}
+\newcommand{\NumInst}{{n_{\mathsf{x}}}}
+\newcommand{\NumConc}{{n_{\mathsf{z}}}}
+\newcommand{\inst}{x}
+\newcommand{\wit}{w}
+\newcommand{\conc}{z}
+\newcommand{\vinst}{\vec{\inst}}
+\newcommand{\vwit}{\vec{\wit}}
+\newcommand{\vconc}{\vec{z}}
+\newcommand{\lcoef}{a}
+\newcommand{\rcoef}{b}
+\newcommand{\ocoef}{c}
+\newcommand{\System}{\mathcal{S}}
+\newcommand{\Rel}{\mathcal{R}}
+\newcommand{\Lang}{\mathcal{L}}
+
+\newcommand{\zo}{\{0,1\}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\ZZ}{\mathbb{Z}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%opening
+\title{zkInterface, a standard tool for zero-knowledge interoperability}
+\author{Daniel Benarroch, Kobi Gurkan, Aurélien Nicolas, Eran Tromer}
 	
-	%\makeatletter
-	%\def\BState{\State\hskip-\ALG@thistlm}
-	%\makeatother
-	
-	%opening
-	\title{zkInterface, a standard tool for zero-knowledge interoperability}
-	\author{Daniel Benarroch, Kobi Gurkan, Aurélien Nicolas, Eran Tromer}
-	
-	\begin{document}
-		
-		\maketitle
-		 
-% \enote{Add abstract}
+\begin{document}
+
+\maketitle
+
+\enote{Add abstract}
+
 \tableofcontents
 %=============================================================================
 \section{Overview}
 This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
 This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{R1CS (i.e., a set of bilinear constraints where linear combinations are ``for free'' is the native language of the numerous ZK schemes based on Quadratic Arithmetic Programs, which are used by most deployment nowadays. Moreover, arithmetic circuits and Boolean circuits can be easily and efficiently reduced to R1CS. Hence the focus on R1CS in this initial revision.}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
-%\enote{Add reference to R1CS. I think the best one, in term of notations and references, we have is the QED-it challenge... We prepared a PDF stand-alone version of that for ZKProof, maybe post it online or attach it as an appendix?}
 
 An implementation of the zkInterface \cite{zkinterface} can be found in the following GitHub repository \href{https://github.com/QED-it/gadget_standard}{QED-it/gadget\_standard}.
 %-----------------------------------------------------------------------------
@@ -89,7 +150,7 @@ Currently, existing frontend are implemented to work best with their correspondi
 	\item It is not possible to generate a constraint system using different frontends
 \end{itemize}   
 
-With this proposal we aim to solve this by creating a R1CS-based interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement.
+With this proposal we aim to solve this by creating an interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement. At present this format is tailored for the R1CS statement representation, defined in Appeneix~\ref{sec:r1cs-def} and discussed below.
 
 \begin{figure}[h!]
 	\includegraphics[width=\linewidth]{graphics/interop.png}
@@ -99,7 +160,7 @@ With this proposal we aim to solve this by creating a R1CS-based interface betwe
 
 %-----------------------------------------------------------------------------
 \subsection{Terminology}
-The terminology follows the Implementation Track proceeding \cite{ZKProofImplementation}, and any new terms and concepts will be defined accordingly.
+The terminology follows the Implementation Track proceeding \cite{ZKProofImplementation}, and any new terms and concepts will be defined accordingly. The R1CS statement representation is introduced and defined in Appeneix~\ref{sec:r1cs-def}.
 
 \subsection{Goals} 
 \label{goals}
@@ -178,7 +239,7 @@ The following are not covered by the present revision of the standard, but shoul
 Going beyond R1CS, we plan on supporting other constraint system representations that are native to some ZK backends. These include Boolean circuits, arithmetic circuits, and algebraic constraint systems.
 
 \subparhead{Uniform constraint systems}
-Some backends can take advantage of uniformity in the constraint system (e.g., when some elements are repeated many times). Support the expression of such uniformity in the constraint system representation, so backends can take utilize it.
+Some backends can take advantage of uniformity in the constraint system (e.g., when some elements are repeated many times). Support the expression of such uniformity in the constraint system representation, so backends can utilize it.
 
 \subparhead{Packaging} Describe self-contained packaging of a component would allow for portable execution of the components (or gadgets) on different platforms.
 
@@ -206,30 +267,127 @@ A copy of the messages definition is hosted at \\
 	label=zkinterface.h]{../cpp/zkinterface.h}
 
 
-\begin{thebibliography}{99}
-	\bibitem{ZKProofSecurity}
-	1st ZKProof Standards Workshop,
-	\emph{Security Track Proceeding}.
-	Online at \href{https://zkproof.org}{ZKProof.org}.
-	Published in Cambridge, Massachusetts, on May, 2018.
+% \begin{thebibliography}{99}
+% 	\bibitem{ZKProofSecurity}
+% 	1st ZKProof Standards Workshop,
+% 	\emph{Security Track Proceeding}.
+% 	Online at \href{https://zkproof.org}{ZKProof.org}.
+% 	Published in Cambridge, Massachusetts, on May, 2018.
+% 
+% 	\bibitem{ZKProofImplementation}
+% 	1st ZKProof Standards Workshop,
+% 	\emph{Implementation Track Proceeding}.
+% 	Online at \href{https://zkproof.org}{ZKProof.org}.
+% 	Published in Cambridge, Massachusetts, on May, 2018.
+% 
+% 	\bibitem{ZKProofApplications}
+% 	1st ZKProof Standards Workshop,
+% 	\emph{Applications Track Proceeding}.
+% 	Online at \href{https://zkproof.org}{ZKProof.org}.
+% 	Published in Cambridge, Massachusetts, on May, 2018.
+% 
+% 	\bibitem{zkinterface}
+% 	D. Benarroch, K. Gurkan, A. Nicolas, E. Tromer, \emph{gadget\_standard: an implementation of zkInterface}.
+% 	Online at \href{https://github.com/QED-it/gadget_standard}{github.com/QED-it/gadget\_standard}.
+% 	Tel Aviv, Israel, 2019.
+% \end{thebibliography}
 
-	\bibitem{ZKProofImplementation}
-	1st ZKProof Standards Workshop,
-	\emph{Implementation Track Proceeding}.
-	Online at \href{https://zkproof.org}{ZKProof.org}.
-	Published in Cambridge, Massachusetts, on May, 2018.
+\enote{The proceedings bib entries from the bib file are different from the commented-out text above, and also from the FHE-standardization convention.}
 
-	\bibitem{ZKProofApplications}
-	1st ZKProof Standards Workshop,
-	\emph{Applications Track Proceeding}.
-	Online at \href{https://zkproof.org}{ZKProof.org}.
-	Published in Cambridge, Massachusetts, on May, 2018.
-
-	\bibitem{zkinterface}
-	D. Benarroch, K. Gurkan, A. Nicolas, E. Tromer, \emph{gadget\_standard: an implementation of zkInterface}.
-	Online at \href{https://github.com/QED-it/gadget_standard}{github.com/QED-it/gadget\_standard}.
-	Tel Aviv, Israel, 2019.
-\end{thebibliography}
+\bibliographystyle{alphaurl}
+\bibliography{references}
  
- 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+\section{R1CS Definition}\label{sec:r1cs-def}
+
+\parhead{Background: statement representations}
+Many known zk-SNARKs are generic and can express any \emph{NP statement} (i.e., any statement expressed as ``for the instance $x$ there exists a witness $r$ such that relation $D$ holds on $x$ and $w$'' where the relation $D$ is efficiently computable) \cite{ZKProofSecurity}. In principle this already includes convenient high-level representations, and indeed there are research prototypes, for example, for SNARKs supporting general C programs~\cite{BCGTV13csnark-crypto}. However, each zk-SNARK cryptographic construction has a ``native language'' which is a specific type of NP languages. Anything else needs to be converted (reduced) to the native representation, with some overhead. In this set (and upcoming one) we will explore such a native, low-level representation, and show how it can be used to efficiently express useful NP statements to be proven by leading zk-SNARK constructions.
+
+Moreover, expressing NP statements for SNARKs differs from usual programming (whether in JavaScript or assembly) in the following sense. Usual programming aims to \emph{compute} the output of some function of the given inputs, whereas the NP statement's relation is already given the instance (e.g., the claimed output of a function on some input), and aim to \emph{check} its correctness given some additional information from the witness. This affects the programming style and creates opportunities for important optimizations, such as providing additional advice within the witness that aid the checking.
+
+\parhead{Constraint systems}
+
+Today's best zk-SNARK constructions have a native language consisting of \emph{constraint systems}, i.e., a set of constraints on the instance and witness variables.%
+%
+\footnote{Colloquially, zk-SNARK developers often refer to constraint systems as ``circuits'', but as we shall soon see, the typical constraint system formalism is more general than Boolean or arithmetic circuits.} %
+%
+The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see \XXX[Security Track document]), and is used in practical deployments.
+This style of constraint system was introduced in~\cite{GGPR13qsp}.%
+%
+\footnote{The initial works~\cite{GGPR13qsp,PHGR13pinocchio} used an equivalent formulation called \emph{Quadratic Arithmetic Programs (QAP)}, where the constraints are expressed in terms of polynomials. Later works tend to abstract this away, and do the conversion into polynomials internally.} %
+%
+The variant defined below is very similar to the definition in \cite[Appendix~E]{BCGTV13csnark-eprint}, used in \href{https://github.com/scipr-lab/libsnark}{libsnark}.%
+%
+\footnote{To be precise, ``R1CS'', as defined here, is the same as the ``system of rank-1 quadratic equations'' defined in \cite[Appendix~E]{BCGTV13csnark-eprint}, with a minor change in notation. In defining BCS we let $\vwit$ denote just the witness, whereas \cite{BCGTV13csnark-eprint} let $\mathbf{w}$ denote the concatenation of the instance and the witness (and thus added corresponding consistency checks between $\mathbf{w}$ and the instance $\mathbf{x}$). These are also essentially identical to the ``Rank 1 Constraint System (R1CS)'' of \href{https://github.com/scipr-lab/libsnark}{libsnark}.}
+
+An R1CS reasons about two vectors: the \emph{instance} consisting of $\NumInst$ elements and denoted $\vinst=(\inst_1,\ldots,\inst_\NumInst)$, and the \emph{witness} consisting of $\NumWit$ elements and denoted $\vwit=(\wit_1,\ldots,\wit_\NumWit)$. The constraint system says that the two are related by some number of constraints, $\NumConstr$, each of which is a quadratic equation of a specific form. All of the elements and operations are over a large prime field $\Field$, which we will represent here as the integers modulo a large prime $p$.%
+\footnote{The specific prime, and the representation of field elements, are related to the elliptic curve used in the QAP-based zkSNARK constructions.}
+
+\begin{definition}
+\label{def:bcs}
+Let $\NumInst,\NumWit,\NumConstr$ be positive integers, and $\NumConc=\NumInst+\NumWit+1$.
+A \defem{Rank 1 Constraint System (R1CS)}, 
+over $\Field$ is a tuple
+$\System = \big((\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j})_{j=1}^{\NumConstr},\NumInst\big)$
+where $\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j} \in \Field^{\NumConc}$.
+Such a system $\System$ is \defem{satisfiable} with an input $\vinst \in \Field^{\NumInst}$ if the following is true:
+
+\NPstatement
+  {For these
+    $\System = \big((\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j})_{j=1}^{\NumConstr},\NumInst\big)$
+   and $\vinst \in \Field^{\NumInst}$}
+  {there exists a witness $\vwit \in \Field^{\NumWit}$}
+  {such that
+  $\bigip{\vec{\lcoef}_{j}}{\vconc} \cdot \bigip{\vec{\rcoef}_{j}}{\vconc}  = \bigip{\vec{\ocoef}_{j}}{\vconc}$ \hskip0.4em for all for $j \in [\NumConstr]$, where $\vconc=(1,\vinst,\vwit)\in \Field^{\NumConc}$
+  }
+\noindent
+Above, $\ip{\cdots}{\cdots}$ denotes inner product of vectors over $\Field$, and $\cdot$ denotes multiplication in $\Field$.
+\end{definition}
+
+For example, the R1CS
+  \begin{equation}\label{eq:bcs-example-formal}
+  \System=\left(\left( 
+  \begin{aligned}
+   \vec{\lcoef}_1 = (0,3,0,0),\, \vec{\rcoef}_1 = (1,1,0,0),\, \vec{\ocoef}_1 = (4,0,5,0) \\
+   \vec{\lcoef}_2 = (0,1,2,0),\, \vec{\rcoef}_2 = (6,0,1,0),\, \vec{\ocoef}_2 = (7,0,0,1)
+  \end{aligned}
+  \right),1 \right)
+  \end{equation}
+represents the two bilinear constraints
+  \begin{equation}
+  \begin{aligned}
+  \bigip{(0,3,0,0)}{\vconc}\cdot\bigip{(1,1,0,0)}{\vconc} &= \bigip{(4,0,5,0)}{\vconc} \\
+  \bigip{(0,1,2,0)}{\vconc}\cdot\bigip{(6,0,1,0)}{\vconc} &= \bigip{(7,0,0,1)}{\vconc} 
+  \end{aligned}
+  \quad \mbox{ where } \vconc=(1,\inst_1,\wit_1,\wit_2)
+  \end{equation}
+or simply:
+  \begin{equation}\label{eq:bcs-example-informal}
+  \begin{aligned}
+  3\inst_1 \cdot (1+\inst_1) &= 5\wit_1 + 4 \\
+  (\inst_1 + 2\wit_1) \cdot (\wit_1+6) &= \wit_2 + 7  
+  \end{aligned}
+  \end{equation}
+%with $\NumInst=1,\NumWit=2,\NumConstr=2$
+
+By definition, this system $\System$ is satisfiable with input $\inst_1$ if the following is true:
+\NPstatementNOperiod
+  {For the instance $\inst_1$}
+  {there exist a witness $\wit_1,\wit_2$}
+  {such that
+  \begin{equation*}
+  \begin{aligned}
+  3\inst_1 \cdot (1+\inst_1) &= 5\wit_1 + 4 \\
+  (\inst_1 + 2\wit_1) \cdot (\wit_1+6) &= \wit_2 + 7  
+  \end{aligned}
+  \end{equation*}
+  }
+
+When we prove this NP statement using zk-SNARK, the instance will be the public input that is visible to the verifer, and the witness will be the additional data that is known only to the prover, and used in the construction of the proof, but whose privacy is protected by the zero-knowledge property.
+
+For backends that consume R1CS natively, typically the cost of producing the zk-SNARK proofs (in time and memory) will depend mostly on the number of constraints, $\NumConstr$. With this in mind, note how variable-by-variable multiplication are ``expensive'' (each bilinear multiplication needs a new constraint and increases $\NumConstr$), but linear combinations come ``for free'' in each constraint. 
+
 \end{document}
