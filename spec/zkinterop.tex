@@ -1,8 +1,9 @@
 \documentclass[a4paper,12pt]{article}
-
+%\documentclass[authoryear]{elsarticle}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
+\usepackage{authblk}
 \usepackage[notes=true]{lib/dtrt}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -106,18 +107,26 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%opening
 \title{zkInterface, a standard tool for zero-knowledge interoperability}
-\author{Daniel Benarroch, Kobi Gurkan, Ron Kahat, Aurélien Nicolas, Eran Tromer}
-	 
-\begin{document}
 
+\author[1]{Daniel Benarroch}
+\author[1]{Kobi Gurkan}
+\author[1]{Ron Kahat}
+\author[1]{Aurélien Nicolas}
+\author[2]{Eran Tromer}
+
+\affil[1]{QED-it}
+\affil[2]{QED-it, Columbia University, Tel Aviv University}
+
+
+\begin{document}
 \maketitle
 
-\enote{Add abstract}
+%\enote{Add abstract}
 
 
 \tableofcontents
+\pagebreak
 %=============================================================================
 \section{Overview}
 This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between zero knowledge proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends (which generate and verify the proofs). The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
@@ -294,7 +303,7 @@ Today's best zk-SNARK constructions have a native language consisting of \emph{c
 %
 \footnote{Colloquially, zk-SNARK developers often refer to constraint systems as ``circuits'', but as we shall soon see, the typical constraint system formalism is more general than Boolean or arithmetic circuits.} %
 %
-The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see \XXX[Security Track document]), and is used in practical deployments.
+The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see \cite{ZKProofImplementation}), and is used in practical deployments.
 This style of constraint system was introduced in~\cite{GGPR13qsp}.%
 %
 \footnote{The initial works~\cite{GGPR13qsp,PHGR13pinocchio} used an equivalent formulation called \emph{Quadratic Arithmetic Programs (QAP)}, where the constraints are expressed in terms of polynomials. Later works tend to abstract this away, and do the conversion into polynomials internally.} %
