@@ -181,7 +181,7 @@ The terminology follows the Implementation Track proceeding \cite{ZKProofImpleme
 \subsection{Goals} 
 \label{goals}
 
-There are several forms of interoperability and we set some of these as goals for this standard. One such form is between different implementations of the same backend construction, providing an interoperable format for the proving and verification keys, as well as the proof. Another form is between backends and frontends, which is the focus of this standard. The following are stronger forms of the latter kind of interoperability which have been identified as desirable by practitioners.
+There are several forms of interoperability and we set some of these as goals for this standard. One such form is between different implementations of the same backend construction, providing an interoperable format for the proving and verification keys, as well as the proof. Another form is between backends and frontends, which is the focus of this standard. The following are stronger forms of the latter kind of interoperability which have been identified as desirable by practitioners \cite{ZKProofImplementation}.
 
 \parhead{Statement instance and witness formats} 
 Specifying a standard format for the statement instance and witness enables users to have their choice of frameworks (frontends and backends) and streaming for storage and communication, and facilitate creation of benchmark test cases that could be executed by any backend accepting these formats.
@@ -249,7 +249,7 @@ The following are not addressed by this standard:
 \subparhead{Programming language and frontend frameworks} We are intentionally agnostic about, and do not aim to standardize, the programming language and programming framework used by frontends.
 
 \parhead{Extensions.}
-The following are not covered by the present revision of the standard, but should be covered by future extensions. Thus, the standard should be flexible enough and easy to extend in a backward-compatible compatible fashion, to achieve the following:
+The following are not covered by the present revision of the standard, but should be covered by future extensions. Thus, the standard should be flexible enough and easy to extend in a backward-compatible fashion, to achieve the following:
 
 \subparhead{Other constraint system representations.}
 Going beyond R1CS, we plan on supporting other constraint system representations that are native to some ZK backends. These include Boolean circuits, arithmetic circuits, and algebraic constraint systems.
