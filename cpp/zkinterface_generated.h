@@ -35,17 +35,19 @@ enum Message {
   Message_GadgetReturn = 2,
   Message_R1CSConstraints = 3,
   Message_AssignedVariables = 4,
+  Message_GadgetInstance = 5,
   Message_MIN = Message_NONE,
-  Message_MAX = Message_AssignedVariables
+  Message_MAX = Message_GadgetInstance
 };
 
-inline const Message (&EnumValuesMessage())[5] {
+inline const Message (&EnumValuesMessage())[6] {
   static const Message values[] = {
     Message_NONE,
     Message_GadgetCall,
     Message_GadgetReturn,
     Message_R1CSConstraints,
-    Message_AssignedVariables
+    Message_AssignedVariables,
+    Message_GadgetInstance
   };
   return values;
 }
@@ -57,13 +59,14 @@ inline const char * const *EnumNamesMessage() {
     "GadgetReturn",
     "R1CSConstraints",
     "AssignedVariables",
+    "GadgetInstance",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessage(Message e) {
-  if (e < Message_NONE || e > Message_AssignedVariables) return "";
+  if (e < Message_NONE || e > Message_GadgetInstance) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamesMessage()[index];
 }
@@ -86,6 +89,10 @@ template<> struct MessageTraits<R1CSConstraints> {
 
 template<> struct MessageTraits<AssignedVariables> {
   static const Message enum_value = Message_AssignedVariables;
+};
+
+template<> struct MessageTraits<GadgetInstance> {
+  static const Message enum_value = Message_GadgetInstance;
 };
 
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
@@ -787,6 +794,9 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const AssignedVariables *message_as_AssignedVariables() const {
     return message_type() == Message_AssignedVariables ? static_cast<const AssignedVariables *>(message()) : nullptr;
   }
+  const GadgetInstance *message_as_GadgetInstance() const {
+    return message_type() == Message_GadgetInstance ? static_cast<const GadgetInstance *>(message()) : nullptr;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_MESSAGE_TYPE) &&
@@ -810,6 +820,10 @@ template<> inline const R1CSConstraints *Root::message_as<R1CSConstraints>() con
 
 template<> inline const AssignedVariables *Root::message_as<AssignedVariables>() const {
   return message_as_AssignedVariables();
+}
+
+template<> inline const GadgetInstance *Root::message_as<GadgetInstance>() const {
+  return message_as_GadgetInstance();
 }
 
 struct RootBuilder {
@@ -862,6 +876,10 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
     }
     case Message_AssignedVariables: {
       auto ptr = reinterpret_cast<const AssignedVariables *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Message_GadgetInstance: {
+      auto ptr = reinterpret_cast<const GadgetInstance *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

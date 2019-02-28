@@ -61,7 +61,9 @@ fn main() {
     let dst = cmake::Config::new("../cpp").build();
     println!("cargo:rustc-link-search=native={}", dst.display());
     println!("cargo:rustc-link-lib=gadget_example");
-    println!("cargo:rustc-link-lib=stdc++");
+
+    println!("cargo:rustc-link-lib=stdc++"); // GCC
+    //println!("cargo:rustc-link-lib=c++"); // Clang
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
     println!("cargo:include={}", out_dir);

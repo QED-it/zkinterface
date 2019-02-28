@@ -5,7 +5,10 @@
 The above section describes a protocol and the format of messages.
 Applications can execute, and exchange messages with
 gadgets and proving systems implementations in a variety of ways.
-We recommend two approaches in this section.
+We recommend different approaches to implementation in this section.
+
+
+\subsection{Execution}
 
 \parhead{In-memory execution}
 \label{inmemory}
@@ -46,6 +49,55 @@ A program that implements a proving system should read messages of type
 from stdin, which should contain all the information needed to perform a pre-processing or to generate proofs.
 
 
+\subsection{Implementation Guide}
+
+Different tools can be implemented or adapted to use zkInterface. The following is a summary of their respective tasks. Refer to section \ref{sec:architecture} for more details.
+
+
+\parhead{Implementing a gadget}
+\begin{itemize}
+    \item A gadget expects a \textid{GadgetCall} message as input.
+
+    \item If the field \textid{generate\_r1cs} is set, it outputs one or more \textid{R1CSConstraints} messages.
+
+    \item If the field \textid{generate\_assignment} is set, it outputs one or more \textid{AssignedVariables} messages.
+
+    \item In both cases, it outputs a \textid{GadgetReturn} message.
+\end{itemize}
+
+
+\parhead{Using a gadget in a frontend}
+\begin{itemize}
+    \item To use a gadget, a frontend prepares a \textid{GadgetCall} message, and calls the gadget code. The frontend also decides how to handle replies from the gadget.
+
+    \item When building a constraint system, the field \textid{generate\_r1cs} is set. The frontend will receive constraints in \textid{R1CSConstraints} messages, and add them into the constraint system being built.
+
+    \item When generating an assignment, the field \textid{generate\_assignment} is set. The frontend will receive values to assign to the gadget variables in \textid{AssignedVariables} messages, and include them into the complete assignment.
+
+    \item In both cases, the frontend will receive a \textid{GadgetReturn} message, which it can use in the rest of the process.
+\end{itemize}
+
+
+\parhead{Implementing a \underline{frontend} for interoperability with standard backends}
+\begin{itemize}
+    \item A frontend describes a constraint system in a \textid{GadgetInstance} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
+
+    \item When building a constraint system, the frontend outputs all constraints in one or more \textid{R1CSConstraints} messages.
+
+    \item When generating a proof, the frontend outputs a complete assignment in one or more \textid{AssignedVariables} messages.
+\end{itemize}
+
+
+\parhead{Implementing a \underline{backend} for interoperability with standard frontends}
+\begin{itemize}
+    \item A backend initializes a constraint system using a \textid{GadgetInstance} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
+
+    \item The backend loads all constraints from \textid{R1CSConstraints} messages. If the backend implements a pre-processing SNARK scheme, this is sufficient to perform a setup.
+
+    \item To generate a proof, the backend loads a complete assignment from \textid{AssignedVariables} messages.
+\end{itemize}
+
+
 \parhead{Demonstration}
 
 An example implementation is provided.
@@ -59,4 +111,6 @@ A test program written in Rust demonstrates
 in-memory execution using the method in section~\ref{inmemory},
 and includes helper functions to process messages.
 
-This code can be found at \href{https://github.com/QED-it/gadget_standard}{https://github.com/QED-it/gadget\_standard}.
+This code is distributed under the MIT license at
+\href{https://github.com/QED-it/gadget_standard}{https://github.com/QED-it/gadget\_standard}.
+
