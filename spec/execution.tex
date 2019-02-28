@@ -12,14 +12,14 @@ We recommend different approaches to implementation in this section.
 
 \parhead{In-memory execution}
 \label{inmemory}
-The application may execute the code of a component in its own process.
+The application may execute the code of a gadget in its own process.
 
-The component exposes its functionnality as a function calleable using the C calling convention of the platform. The component code may be linked statically or be loaded from a shared library.
+The gadget exposes its functionnality as a function calleable using the C calling convention of the platform. The gadget code may be linked statically or be loaded from a shared library.
 
-The application must prepare a \textid{ComponentCall} message in memory, and implement one callback functions to receive the messages of the component,
-and call the component function with pointers to the message and the callbacks.
+The application must prepare a \textid{GadgetCall} message in memory, and implement one callback functions to receive the messages of the gadget,
+and call the gadget function with pointers to the message and the callbacks.
 
-The component function reads the call message and performs its specific computation. It prepares the resulting messages of type
+The gadget function reads the call message and performs its specific computation. It prepares the resulting messages of type
 \textid{R1CSConstraints}, \textid{AssignedVariables}, or \textid{GadgetReturn}
 in memory, and calls the callbacks with pointers to these messages.
 
