@@ -11,7 +11,7 @@ Today's best zk-SNARK constructions have a native language consisting of \emph{c
 %
 \footnote{Colloquially, zk-SNARK developers often refer to constraint systems as ``circuits'', but as we shall soon see, the typical constraint system formalism is more general than Boolean or arithmetic circuits.} %
 %
-The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see \XXX[Security Track document]), and is used in practical deployments.
+The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see~\cite{ZKProofImplementation}), and is used in practical deployments.
 This style of constraint system was introduced in~\cite{GGPR13qsp}.%
 %
 \footnote{The initial works~\cite{GGPR13qsp,PHGR13pinocchio} used an equivalent formulation called \emph{Quadratic Arithmetic Programs (QAP)}, where the constraints are expressed in terms of polynomials. Later works tend to abstract this away, and do the conversion into polynomials internally.} %
