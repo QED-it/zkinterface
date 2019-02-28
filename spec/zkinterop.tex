@@ -109,21 +109,24 @@
 %opening
 \title{zkInterface, a standard tool for zero-knowledge interoperability}
 \author{Daniel Benarroch, Kobi Gurkan, Aurélien Nicolas, Eran Tromer}
-	
+	 
 \begin{document}
 
 \maketitle
 
 \enote{Add abstract}
+\begin{abstract}
+Zero Knowledge Proof (ZKP) systems are usually represented in 
+\end{abstract}
 
 \tableofcontents
 %=============================================================================
 \section{Overview}
-This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between ZK proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends. The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
+This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between zero knowledge proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends (which generate and verify the proofs). The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
-This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{R1CS (i.e., a set of bilinear constraints where linear combinations are ``for free'' is the native language of the numerous ZK schemes based on Quadratic Arithmetic Programs, which are used by most deployment nowadays. Moreover, arithmetic circuits and Boolean circuits can be easily and efficiently reduced to R1CS. Hence the focus on R1CS in this initial revision.}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
+This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{See Appendix \ref{sec:r1cs-def} for a definition of Rank 1 Constraint System}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
 
-An implementation of the zkInterface \cite{zkinterface} can be found in the following GitHub repository \href{https://github.com/QED-it/gadget_standard}{QED-it/gadget\_standard}.
+An implementation of the zkInterface can be found in the following GitHub repository \href{https://github.com/QED-it/gadget_standard}{QED-it/gadget\_standard}.
 %-----------------------------------------------------------------------------
 \subsection{Background}
 
@@ -154,9 +157,7 @@ With this proposal we aim to solve this by creating an interface between fronten
 
 \begin{figure}[h!]
 	\includegraphics[width=\linewidth]{graphics/interop.png}
-	\caption{Interoperability between frontends and backends with zkInterface
-           \enote{Backends \emph{consuming} R1CS. And in Backends, rename ``Bulletproofs'' to ``Dalek Bulletproofs'' (that's the variant that reduces from R1CS)}
-	}
+	\caption{Interoperability between frontends and backends with zkInterface}
 	\label{interface}
 \end{figure}
 
@@ -303,6 +304,93 @@ A copy of the messages definition is hosted at \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
 
-\input{r1cs-def}
+\section{R1CS Definition}\label{sec:r1cs-def}
+
+\parhead{Background: statement representations}
+Many known zk-SNARKs are generic and can express any \emph{NP statement} (i.e., any statement expressed as ``for the instance $x$ there exists a witness $r$ such that relation $D$ holds on $x$ and $w$'' where the relation $D$ is efficiently computable) \cite{ZKProofSecurity}. In principle this already includes convenient high-level representations, and indeed there are research prototypes, for example, for SNARKs supporting general C programs~\cite{BCGTV13csnark-crypto}. However, each zk-SNARK cryptographic construction has a ``native language'' which is a specific type of NP languages. Anything else needs to be converted (reduced) to the native representation, with some overhead. In this set (and upcoming one) we will explore such a native, low-level representation, and show how it can be used to efficiently express useful NP statements to be proven by leading zk-SNARK constructions.
+
+Moreover, expressing NP statements for SNARKs differs from usual programming (whether in JavaScript or assembly) in the following sense. Usual programming aims to \emph{compute} the output of some function of the given inputs, whereas the NP statement's relation is already given the instance (e.g., the claimed output of a function on some input), and aim to \emph{check} its correctness given some additional information from the witness. This affects the programming style and creates opportunities for important optimizations, such as providing additional advice within the witness that aid the checking.
+
+\parhead{Constraint systems}
+
+Today's best zk-SNARK constructions have a native language consisting of \emph{constraint systems}, i.e., a set of constraints on the instance and witness variables.%
+%
+\footnote{Colloquially, zk-SNARK developers often refer to constraint systems as ``circuits'', but as we shall soon see, the typical constraint system formalism is more general than Boolean or arithmetic circuits.} %
+%
+The most common such language is \emph{Rank 1 Constraint System (R1CS)}, also known as \emph{Bilinear Constraint Systems (BCS)}, where each constraint is a (bilinear) quadratic equation over a large finite field.  This is the native language of many efficient zk-SNARKs, such as \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-crypto,BCTV13von,Groth16size} and many others (see \XXX[Security Track document]), and is used in practical deployments.
+This style of constraint system was introduced in~\cite{GGPR13qsp}.%
+%
+\footnote{The initial works~\cite{GGPR13qsp,PHGR13pinocchio} used an equivalent formulation called \emph{Quadratic Arithmetic Programs (QAP)}, where the constraints are expressed in terms of polynomials. Later works tend to abstract this away, and do the conversion into polynomials internally.} %
+%
+The variant defined below is very similar to the definition in \cite[Appendix~E]{BCGTV13csnark-eprint}, used in \href{https://github.com/scipr-lab/libsnark}{libsnark}.%
+%
+\footnote{To be precise, ``R1CS'', as defined here, is the same as the ``system of rank-1 quadratic equations'' defined in \cite[Appendix~E]{BCGTV13csnark-eprint}, with a minor change in notation. In defining BCS we let $\vwit$ denote just the witness, whereas \cite{BCGTV13csnark-eprint} let $\mathbf{w}$ denote the concatenation of the instance and the witness (and thus added corresponding consistency checks between $\mathbf{w}$ and the instance $\mathbf{x}$). These are also essentially identical to the ``Rank 1 Constraint System (R1CS)'' of \href{https://github.com/scipr-lab/libsnark}{libsnark}.}
+
+An R1CS reasons about two vectors: the \emph{instance} consisting of $\NumInst$ elements and denoted $\vinst=(\inst_1,\ldots,\inst_\NumInst)$, and the \emph{witness} consisting of $\NumWit$ elements and denoted $\vwit=(\wit_1,\ldots,\wit_\NumWit)$. The constraint system says that the two are related by some number of constraints, $\NumConstr$, each of which is a quadratic equation of a specific form. All of the elements and operations are over a large prime field $\Field$, which we will represent here as the integers modulo a large prime $p$.%
+\footnote{The specific prime, and the representation of field elements, are related to the elliptic curve used in the QAP-based zkSNARK constructions.}
+
+\begin{definition}
+\label{def:bcs}
+Let $\NumInst,\NumWit,\NumConstr$ be positive integers, and $\NumConc=\NumInst+\NumWit+1$.
+A \defem{Rank 1 Constraint System (R1CS)}, 
+over $\Field$ is a tuple
+$\System = \big((\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j})_{j=1}^{\NumConstr},\NumInst\big)$
+where $\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j} \in \Field^{\NumConc}$.
+Such a system $\System$ is \defem{satisfiable} with an input $\vinst \in \Field^{\NumInst}$ if the following is true:
+
+\NPstatement
+  {For these
+    $\System = \big((\vec{\lcoef}_{j},\vec{\rcoef}_{j},\vec{\ocoef}_{j})_{j=1}^{\NumConstr},\NumInst\big)$
+   and $\vinst \in \Field^{\NumInst}$}
+  {there exists a witness $\vwit \in \Field^{\NumWit}$}
+  {such that
+  $\bigip{\vec{\lcoef}_{j}}{\vconc} \cdot \bigip{\vec{\rcoef}_{j}}{\vconc}  = \bigip{\vec{\ocoef}_{j}}{\vconc}$ \hskip0.4em for all for $j \in [\NumConstr]$, where $\vconc=(1,\vinst,\vwit)\in \Field^{\NumConc}$
+  }
+\noindent
+Above, $\ip{\cdots}{\cdots}$ denotes inner product of vectors over $\Field$, and $\cdot$ denotes multiplication in $\Field$.
+\end{definition}
+
+For example, the R1CS
+  \begin{equation}\label{eq:bcs-example-formal}
+  \System=\left(\left( 
+  \begin{aligned}
+   \vec{\lcoef}_1 = (0,3,0,0),\, \vec{\rcoef}_1 = (1,1,0,0),\, \vec{\ocoef}_1 = (4,0,5,0) \\
+   \vec{\lcoef}_2 = (0,1,2,0),\, \vec{\rcoef}_2 = (6,0,1,0),\, \vec{\ocoef}_2 = (7,0,0,1)
+  \end{aligned}
+  \right),1 \right)
+  \end{equation}
+represents the two bilinear constraints
+  \begin{equation}
+  \begin{aligned}
+  \bigip{(0,3,0,0)}{\vconc}\cdot\bigip{(1,1,0,0)}{\vconc} &= \bigip{(4,0,5,0)}{\vconc} \\
+  \bigip{(0,1,2,0)}{\vconc}\cdot\bigip{(6,0,1,0)}{\vconc} &= \bigip{(7,0,0,1)}{\vconc} 
+  \end{aligned}
+  \quad \mbox{ where } \vconc=(1,\inst_1,\wit_1,\wit_2)
+  \end{equation}
+or simply:
+  \begin{equation}\label{eq:bcs-example-informal}
+  \begin{aligned}
+  3\inst_1 \cdot (1+\inst_1) &= 5\wit_1 + 4 \\
+  (\inst_1 + 2\wit_1) \cdot (\wit_1+6) &= \wit_2 + 7  
+  \end{aligned}
+  \end{equation}
+%with $\NumInst=1,\NumWit=2,\NumConstr=2$
+
+By definition, this system $\System$ is satisfiable with input $\inst_1$ if the following is true:
+\NPstatementNOperiod
+  {For the instance $\inst_1$}
+  {there exist a witness $\wit_1,\wit_2$}
+  {such that
+  \begin{equation*}
+  \begin{aligned}
+  3\inst_1 \cdot (1+\inst_1) &= 5\wit_1 + 4 \\
+  (\inst_1 + 2\wit_1) \cdot (\wit_1+6) &= \wit_2 + 7  
+  \end{aligned}
+  \end{equation*}
+  }
+
+When we prove this NP statement using zk-SNARK, the instance will be the public input that is visible to the verifer, and the witness will be the additional data that is known only to the prover, and used in the construction of the proof, but whose privacy is protected by the zero-knowledge property.
+
+For backends that consume R1CS natively, typically the cost of producing the zk-SNARK proofs (in time and memory) will depend mostly on the number of constraints, $\NumConstr$. With this in mind, note how variable-by-variable multiplication are ``expensive'' (each bilinear multiplication needs a new constraint and increases $\NumConstr$), but linear combinations come ``for free'' in each constraint. 
 
 \end{document}
