@@ -108,33 +108,31 @@
 
 %opening
 \title{zkInterface, a standard tool for zero-knowledge interoperability}
-\author{Daniel Benarroch, Kobi Gurkan, Aurélien Nicolas, Eran Tromer}
+\author{Daniel Benarroch, Kobi Gurkan, Ron Kahat, Aurélien Nicolas, Eran Tromer}
 	 
 \begin{document}
 
 \maketitle
 
 \enote{Add abstract}
-\begin{abstract}
-Zero Knowledge Proof (ZKP) systems are usually represented in 
-\end{abstract}
+
 
 \tableofcontents
 %=============================================================================
 \section{Overview}
 This standard, part of the ZKProof Standardization effort \cite{ZKProofSecurity, ZKProofImplementation, ZKProofApplications}, aims to facilitate interoperability between zero knowledge proof implementations, at the level of the low-constraint systems that are produced by frontends (and represent application-level statements) and consumed by cryptographic backends (which generate and verify the proofs). The high-level goal is to enable decoupling of frontends from backends, allowing application writers to choose the frontend most convenient for their functional and development needs and combine it with the backend that best matches their performance and security needs. This includes communicating constraint systems, communicating variable assignments (for production of proofs), and also construction of constraint systems out of smaller building blocks (gadgets) possibly implemented by different authors and frameworks.
 
-This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{See Appendix \ref{sec:r1cs-def} for a definition of Rank 1 Constraint System}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
+This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation\footnote{See Appendix~\ref{sec:r1cs-def} for a definition of Rank 1 Constraint System}. This includes many, though not all, of the practical general-purpose ZKP schemes currently deployed. While this focus allows us to define concrete formats for interoperability, we recognize that additional constraint system representation styles (e.g., arithmetic and Boolean circuits and algebraic constraints) are in use, and are within scope of future revisions.
 
 An implementation of the zkInterface can be found in the following GitHub repository \href{https://github.com/QED-it/gadget_standard}{QED-it/gadget\_standard}.
 %-----------------------------------------------------------------------------
 \subsection{Background}
 
-Zero-Knowledge Proofs are cryptographic primitives that allow some entity (the prover) to prove to another party (the verifier) the validity of some statement or relation. Today there are many efficient constructions of NIZKs, each with different trade-offs, as well as several implementations of the proving systems. By standardizing zero-knowledge proofs, we aim to foster the proper use of the technology.
+Zero-Knowledge Proofs \cite{GMR85zk} are cryptographic primitives that allow some entity (the prover) to prove to another party (the verifier) the validity of some statement or relation. Today there are many efficient constructions of NIZKs, each with different trade-offs, as well as several implementations of the proving systems. By standardizing zero-knowledge proofs, we aim to foster the proper use of the technology.
 
-Every proving system can be divided \cite{ZKProofImplementation} into the backend, which is the portion of the software that contains the implementation of the underlying cryptographic protocol, and the frontend, which provides means to express statements in a convenient language, allowing to prove such statements in zero knowledge by compiling them into a low-level representation of the statement.
+Every proving system, as described in \cite{ZKProofImplementation}, can be divided into the backend, which is the portion of the software that contains the implementation of the underlying cryptographic protocol, and the frontend, which provides means to express statements in a convenient language, allowing to prove such statements in zero knowledge by compiling them into a low-level representation of the statement.
 
-The backend of a proving system consists of the key generation, proving and verification algorithms. It proves statements where the instance and witness are expressed as variable assignments, and relations are expressed via low-level languages (such as arithmetic circuits, Boolean circuits, R1CS/QAP constraint systems or arithmetic constraint satisfaction problems). There are numerous such backends, including implementations of many of the schemes discussed in the Security Track proceeding \cite{ZKProofSecurity}.
+The backend of a proving system consists of the key generation, proving and verification algorithms. It proves statements where the instance and witness are expressed as variable assignments, and relations are expressed via low-level languages. Some of these languages include arithmetic circuits \cite{GKR08,wahby2018doubly,cryptoeprint:2018:280,mallersonic}, Boolean circuits \cite{giacomelli2016zkboo,chase2017post,ames2017ligero}, R1CS/QAP constraint systems \cite{GGPR13qsp,PHGR13pinocchio,BCGTV13csnark-eprint,BCTV13von,Groth16size,ben2018aurora, kosba2015c,wu2018dizk,bunz2018bulletproofs}, and arithmetic constraint satisfaction problems \cite{ben2013fast,ben2018scalable}, among others. There are numerous such backends, including implementations of many of the schemes discussed in the Security Track proceeding \cite{ZKProofSecurity}.
 
 The frontend consists of the following:
 \begin{itemize}
@@ -147,23 +145,29 @@ The frontend consists of the following:
 
 Since the offerings and features of backends and frontends evolve rapidly, we refer the reader to the curated taxonomy at \url{https://zkp.science} for the latest information.  
 
-Currently, existing frontend are implemented to work best with their corresponding backend, the proving system is usually built end-to-end. The frontend compiles a statement into the native representation used by the cryptographic protocol in the backend, in many cases without explicitly exposing the constraint system compilation to the user. Moreover, if the compilers can output intermediary files and configurations, they are usually in a non-standard format. In practice this means that
+ 
+
+\subsection{Motivation}
+
+Currently, existing frontends are implemented to work best with their corresponding backend, the proving system is usually built end-to-end.
+
+The frontend compiles a statement into the native representation used by the cryptographic protocol in the backend, in many cases without explicitly exposing the constraint system compilation to the user. Moreover, if the compilers can output intermediary files and configurations, they are usually in a non-standard format. In practice this means that
 \begin{itemize}
 	\item There is no portability between different backends and frontends, and
 	\item It is not possible to generate a constraint system using different frontends
 \end{itemize}   
 
-With this proposal we aim to solve this by creating an interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement. At present this format is tailored for the R1CS statement representation, defined in Appeneix~\ref{sec:r1cs-def} and discussed below.
+With this proposal we aim to solve this by creating an interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement. At present this format is tailored for the R1CS statement representation, defined in Appendix~\ref{sec:r1cs-def} and discussed below.
 
 \begin{figure}[h!]
 	\includegraphics[width=\linewidth]{graphics/interop.png}
-	\caption{Interoperability between frontends and backends with zkInterface}
+	\caption{Interoperability between frontends and backends with zkInterface. For further reference, see \href{https://zkp.science}{zkp.science}.}
 	\label{interface}
 \end{figure}
 
 %-----------------------------------------------------------------------------
 \subsection{Terminology}
-The terminology follows the Implementation Track proceeding \cite{ZKProofImplementation}, and any new terms and concepts will be defined accordingly. The R1CS statement representation is introduced and defined in Appeneix~\ref{sec:r1cs-def}.
+The terminology follows the Implementation Track proceeding \cite{ZKProofImplementation}, and any new terms and concepts will be defined accordingly. The R1CS statement representation is introduced and defined in Appendix~\ref{sec:r1cs-def}.
 
 \subsection{Goals} 
 \label{goals}
@@ -204,7 +208,7 @@ This requires communication not of mere data, but invocation of procedural code.
 
 
 \subsection{Desiderata}
-The following requirements that guide our design, within the large space of possibilities for achieving the above goals.
+The following are requirements that guided our design, within the large space of possibilities for achieving the above goals.
 
 \begin{enumerate}
 	\item Interoperability across frontend frameworks and programming languages.
@@ -217,7 +221,7 @@ The following requirements that guide our design, within the large space of poss
 
 \subsection{Scope, limitations and possible extensions}
 
-We present a set of specifications to be standardized to enable the use of an interface between zero-knowledge proof systems. We have identified the minimal items needed to create a standard interface that meets the goals and desired requirements. The following points form the scope of our proposed standard.
+Within the set of specifications to be standardized that enable the use of an interface between zero-knowledge proof systems, we have identified the minimal items needed to create a standard interface that meets the goals and desired requirements. The following list forms the scope of our proposed standard.
 
 \begin{itemize}
 	\item Standard defined messages that the caller and callee exchange.
@@ -269,33 +273,6 @@ A copy of the messages definition is hosted at \\
 	language=C++,style=protobuf,
 	label=zkinterface.h]{../cpp/zkinterface.h}
 
-
-% \begin{thebibliography}{99}
-% 	\bibitem{ZKProofSecurity}
-% 	1st ZKProof Standards Workshop,
-% 	\emph{Security Track Proceeding}.
-% 	Online at \href{https://zkproof.org}{ZKProof.org}.
-% 	Published in Cambridge, Massachusetts, on May, 2018.
-% 
-% 	\bibitem{ZKProofImplementation}
-% 	1st ZKProof Standards Workshop,
-% 	\emph{Implementation Track Proceeding}.
-% 	Online at \href{https://zkproof.org}{ZKProof.org}.
-% 	Published in Cambridge, Massachusetts, on May, 2018.
-% 
-% 	\bibitem{ZKProofApplications}
-% 	1st ZKProof Standards Workshop,
-% 	\emph{Applications Track Proceeding}.
-% 	Online at \href{https://zkproof.org}{ZKProof.org}.
-% 	Published in Cambridge, Massachusetts, on May, 2018.
-% 
-% 	\bibitem{zkinterface}
-% 	D. Benarroch, K. Gurkan, A. Nicolas, E. Tromer, \emph{gadget\_standard: an implementation of zkInterface}.
-% 	Online at \href{https://github.com/QED-it/gadget_standard}{github.com/QED-it/gadget\_standard}.
-% 	Tel Aviv, Israel, 2019.
-% \end{thebibliography}
-
-\enote{The proceedings bib entries from the bib file are different from the commented-out text above, and also from the FHE-standardization convention.}
 
 \bibliographystyle{alphaurl}
 \bibliography{references}
