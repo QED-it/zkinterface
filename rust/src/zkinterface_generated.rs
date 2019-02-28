@@ -21,11 +21,12 @@ pub enum Message {
   GadgetReturn = 2,
   R1CSConstraints = 3,
   AssignedVariables = 4,
+  GadgetInstance = 5,
 
 }
 
 const ENUM_MIN_MESSAGE: u8 = 0;
-const ENUM_MAX_MESSAGE: u8 = 4;
+const ENUM_MAX_MESSAGE: u8 = 5;
 
 impl<'a> flatbuffers::Follow<'a> for Message {
   type Inner = Self;
@@ -59,21 +60,23 @@ impl flatbuffers::Push for Message {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE:[Message; 5] = [
+const ENUM_VALUES_MESSAGE:[Message; 6] = [
   Message::NONE,
   Message::GadgetCall,
   Message::GadgetReturn,
   Message::R1CSConstraints,
-  Message::AssignedVariables
+  Message::AssignedVariables,
+  Message::GadgetInstance
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE:[&'static str; 5] = [
+const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
     "NONE",
     "GadgetCall",
     "GadgetReturn",
     "R1CSConstraints",
-    "AssignedVariables"
+    "AssignedVariables",
+    "GadgetInstance"
 ];
 
 pub fn enum_name_message(e: Message) -> &'static str {
@@ -1082,6 +1085,16 @@ impl<'a> Root<'a> {
   pub fn message_as_assigned_variables(&self) -> Option<AssignedVariables<'a>> {
     if self.message_type() == Message::AssignedVariables {
       self.message().map(|u| AssignedVariables::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_gadget_instance(&self) -> Option<GadgetInstance<'a>> {
+    if self.message_type() == Message::GadgetInstance {
+      self.message().map(|u| GadgetInstance::init_from_table(u))
     } else {
       None
     }
