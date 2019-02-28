@@ -150,7 +150,7 @@ Currently, existing frontend are implemented to work best with their correspondi
 	\item It is not possible to generate a constraint system using different frontends
 \end{itemize}   
 
-With this proposal we aim to solve this by creating an interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programatic design of our interface, a specific component, or gadget, can itself call a sub-component from a different frontend. This enables the use of more than one frontend to generate the complete statement. At present this format is tailored for the R1CS statement representation, defined in Appeneix~\ref{sec:r1cs-def} and discussed below.
+With this proposal we aim to solve this by creating an interface between frontends and backends, as seen in Figure \ref{interface}. We add an explicit formatting layer between the frontends and backends that allows the user to ``pick-and-chose'' which existing frontend and backend they prefer. Furthermore, given the programmatic design of our interface, a specific gadget, can itself call a sub-gadget from a different frontend. This enables the use of more than one frontend to generate the complete statement. At present this format is tailored for the R1CS statement representation, defined in Appeneix~\ref{sec:r1cs-def} and discussed below.
 
 \begin{figure}[h!]
 	\includegraphics[width=\linewidth]{graphics/interop.png}
@@ -184,7 +184,7 @@ Note that correct statement semantics is crucial for security. Two implementatio
 
 Some backends can exploit uniformity or regularity in the constraint system (e.g., repeating patterns or algebraic structure), and could thus take advantage of formats and semantics that convey the requisite information.
 
-Given the typical complexity level of today’s constraint systems, it is often acceptable to handle all of the above manually, by fresh re-implementation based on informal specifications and inspection of prior implementation. Our goal, however, is for the interface to handle the semantics of the components, reducing the predisposition to error as application complexity grows. The following paragraphs expand on how the semantics should be considered for interoperability of gadgets.
+Given the typical complexity level of today’s constraint systems, it is often acceptable to handle all of the above manually, by fresh re-implementation based on informal specifications and inspection of prior implementation. Our goal, however, is for the interface to handle the semantics of the gadgets, reducing the predisposition to error as application complexity grows. The following paragraphs expand on how the semantics should be considered for interoperability of gadgets.
 
 \parhead{Witness reduction}
 Similar considerations arise for the witness reduction, mapping a high-level witness representation for a given statement into the assignment to witness variables (as defined by the instance). For example, a high-level protocol may use Merkle trees of particular depth with a particular hash function, and a high-level instance may include a Merkle authentication path. The witness reduction would need to convert these into witness variables, that contain all of the Merkle authentication path data encoded by some particular convention into field elements and assigned in some particular order. Moreover, it would also need to convert the numerous additional witness variables that occur in the constraints that evaluate the hash function, ensure consistency and Booleanity, amonh others.
@@ -207,7 +207,7 @@ The following requirements that guide our design, within the large space of poss
 
 \begin{enumerate}
 	\item Interoperability across frontend frameworks and programming languages.
-	\item Ability to write components that can be consumed by different frontends and backends.
+	\item Ability to write gadgets that can be consumed by different frontends and backends.
 	\item Minimize copying and duplication of data.
 	\item The overhead of the R1CS construction and witness reduction should be low (and in particular, linear) compared to a native implementation of the same gadgets in existing frameworks.
 	\item Expose details of the backend's interface that are necessary for performance (e.g., constraint system representation and algebraic fields).
@@ -243,7 +243,7 @@ Going beyond R1CS, we plan on supporting other constraint system representations
 \subparhead{Uniform constraint systems}
 Some backends can take advantage of uniformity in the constraint system (e.g., when some elements are repeated many times). Support the expression of such uniformity in the constraint system representation, so backends can utilize it.
 
-\subparhead{Packaging} Describe self-contained packaging of a component would allow for portable execution of the components (or gadgets) on different platforms.
+\subparhead{Packaging} Describe self-contained packaging of a gadget would allow for portable execution of the gadgets on different platforms.
 
 \subparhead{Typing} Enforcing properties of variables using a type system (e.g., a ``boolean variable'' type that ensures a variable is 0 or 1 even when working over a large field).
 
