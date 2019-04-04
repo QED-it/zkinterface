@@ -4,8 +4,9 @@
 // @date 2019
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use zkinterface_generated::zkinterface::{GadgetInstance, GadgetInstanceArgs};
+use reading::CallbackContext;
 use std::slice;
+use zkinterface_generated::zkinterface::{GadgetInstance, GadgetInstanceArgs};
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -37,6 +38,17 @@ fn from_c<'a, CTX>(
     let buf = unsafe { slice::from_raw_parts(response, response_len as usize) };
 
     (context, buf)
+}
+
+/// Collect the stream of any messages into the context.
+extern "C"
+fn callback_c(
+    context_ptr: *mut CallbackContext,
+    message_ptr: *const u8,
+) -> bool {
+    let (context, buf) = from_c(context_ptr, message_ptr);
+
+    context.store_message(Vec::from(buf)).is_ok()
 }
 
 /// Collect the stream of constraints into the context.
@@ -102,16 +114,10 @@ pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String
     }
 }
 
-pub struct CallbackContext {
-    pub constraints_messages: Vec<Vec<u8>>,
-    pub assigned_variables_messages: Vec<Vec<u8>>,
-    pub return_message: Option<Vec<u8>>,
-}
-
 #[derive(Clone, Debug)]
 pub struct InstanceDescription {
     pub incoming_variable_ids: Vec<u64>,
-    pub outgoing_variable_ids: Option<Vec<u64>>,
+    pub outgoing_variable_ids: Vec<u64>,
     pub free_variable_id_before: u64,
     pub field_order: Option<Vec<u8>>,
 //pub configuration: Option<Vec<(String, &'a [u8])>>,
@@ -122,7 +128,7 @@ impl InstanceDescription {
         &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
         let i = GadgetInstanceArgs {
             incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
-            outgoing_variable_ids: self.outgoing_variable_ids.as_ref().map(|s| builder.create_vector(s)),
+            outgoing_variable_ids: Some(builder.create_vector(&self.outgoing_variable_ids)),
             free_variable_id_before: self.free_variable_id_before,
             field_order: self.field_order.as_ref().map(|s| builder.create_vector(s)),
             configuration: None,
@@ -140,7 +146,7 @@ fn test_gadget_request() {
 
     let instance = InstanceDescription {
         incoming_variable_ids: vec![100, 101], // Some input variables.
-        outgoing_variable_ids: Some(vec![102]), // Some output variable.
+        outgoing_variable_ids: vec![102], // Some output variable.
         free_variable_id_before: 103,
         field_order: None,
     };
@@ -148,8 +154,8 @@ fn test_gadget_request() {
     let r1cs_ctx = make_r1cs_request(instance.clone());
 
     println!("Rust received {} constraints messages and {} parent response.",
-             r1cs_ctx.ctx.constraints_messages.len(),
-             if r1cs_ctx.ctx.return_message.is_some() { "a" } else { "no" });
+             r1cs_ctx.constraints_messages.len(),
+             if r1cs_ctx.return_message.is_some() { "a" } else { "no" });
 
     println!("Got constraints:");
     for c in r1cs_ctx.iter_constraints() {
@@ -169,11 +175,11 @@ fn test_gadget_request() {
     let assign_ctx = make_assignment_request(instance, in_elements);
 
     println!("Rust received {} assigned variables messages and {} parent response.",
-             assign_ctx.ctx.assigned_variables_messages.len(),
-             if assign_ctx.ctx.return_message.is_some() { "a" } else { "no" });
+             assign_ctx.assigned_variables_messages.len(),
+             if assign_ctx.return_message.is_some() { "a" } else { "no" });
 
-    assert!(assign_ctx.ctx.assigned_variables_messages.len() == 1);
-    assert!(assign_ctx.ctx.return_message.is_some());
+    assert!(assign_ctx.assigned_variables_messages.len() == 1);
+    assert!(assign_ctx.return_message.is_some());
 
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
@@ -195,7 +201,7 @@ fn test_gadget_request() {
         assert!(free_variable_id_after2 == 103 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 
-        let out_vars = assign_ctx.outgoing_assigned_variables();
+        let out_vars = assign_ctx.outgoing_assigned_variables(&instance.outgoing_variable_ids);
         println!("{:?}", out_vars);
     }
     println!();
