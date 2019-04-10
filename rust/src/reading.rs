@@ -16,15 +16,20 @@ use zkinterface_generated::zkinterface::{
 pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_gadget_call()?;
     let incoming_variable_ids = call.instance()?.incoming_variable_ids()?.safe_slice();
-    let elements = call.witness()?.incoming_elements()?;
-    let stride = elements.len() / incoming_variable_ids.len();
 
-    let assigned = (0..incoming_variable_ids.len()).map(|i|
-        AssignedVariable {
-            id: incoming_variable_ids[i],
-            element: &elements[stride * i..stride * (i + 1)],
-        }
-    ).collect();
+    let assigned = if call.generate_assignment() {
+        let elements = call.witness()?.incoming_elements()?;
+        let stride = elements.len() / incoming_variable_ids.len();
+
+        (0..incoming_variable_ids.len()).map(|i|
+            AssignedVariable {
+                id: incoming_variable_ids[i],
+                element: &elements[stride * i..stride * (i + 1)],
+            }
+        ).collect()
+    } else {
+        vec![]
+    };
 
     Some((call, assigned))
 }
