@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export LIBSNARK_SOURCE_PATH=libsnark
+
+cd $ZOKRATES_HOME &&
+    cargo -Z package-features run $@

@@ -42,7 +42,7 @@ fn from_c<'a, CTX>(
 
 /// Collect the stream of any messages into the context.
 extern "C"
-fn callback_c(
+fn _callback_c(
     context_ptr: *mut CallbackContext,
     message_ptr: *const u8,
 ) -> bool {
@@ -172,7 +172,7 @@ fn test_gadget_request() {
         &[4, 5, 6 as u8] as &[u8],
         &[4, 5, 6],
     ];
-    let assign_ctx = make_assignment_request(instance, in_elements);
+    let assign_ctx = make_assignment_request(&instance, in_elements);
 
     println!("Rust received {} assigned variables messages and {} parent response.",
              assign_ctx.assigned_variables_messages.len(),

@@ -4,12 +4,9 @@ use gadget_call::{
     InstanceDescription,
 };
 use reading::CallbackContext;
-use std::slice::Iter;
 use zkinterface_generated::zkinterface::{
     GadgetCall,
     GadgetCallArgs,
-    GadgetReturn,
-    get_size_prefixed_root_as_root,
     Message,
     Root,
     RootArgs,
@@ -18,7 +15,7 @@ use zkinterface_generated::zkinterface::{
 };
 
 pub fn make_assignment_request(
-    instance: InstanceDescription,
+    instance: &InstanceDescription,
     incoming_elements: Vec<&[u8]>,
 ) -> CallbackContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);

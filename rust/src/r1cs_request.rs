@@ -3,19 +3,13 @@ use gadget_call::{
     call_gadget_wrapper,
     InstanceDescription,
 };
-use reading::AssignedVariable;
 use reading::CallbackContext;
-use std::slice::Iter;
 use zkinterface_generated::zkinterface::{
-    BilinearConstraint,
     GadgetCall,
     GadgetCallArgs,
-    GadgetReturn,
-    get_size_prefixed_root_as_root,
     Message,
     Root,
     RootArgs,
-    VariableValues,
 };
 
 pub fn make_r1cs_request(instance: InstanceDescription) -> CallbackContext {
