@@ -3,4 +3,5 @@
 export LIBSNARK_SOURCE_PATH=libsnark
 
 cd $ZOKRATES_HOME &&
-    cargo -Z package-features run $@
+    #cargo build --release &&
+    target/release/zokrates $@

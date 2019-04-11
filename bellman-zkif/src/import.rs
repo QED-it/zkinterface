@@ -155,7 +155,7 @@ pub fn call_gadget<E, CS>(
     // Allocate and assign outputs.
     for out_id in first_output_id..first_local_id {
         let num = AllocatedNum::alloc(
-            cs.namespace(|| format!("gadget output {}", out_id)), || {
+            cs.namespace(|| format!("output_{}", out_id)), || {
                 let value = if generate_assignment {
                     values.get(&out_id)
                         .map(|v| le_to_fr::<E>(*v))
@@ -172,7 +172,7 @@ pub fn call_gadget<E, CS>(
     // Allocate and assign locals.
     for local_id in first_local_id..last_local_id {
         let var = cs.alloc(
-            || format!("gadget local {}", local_id), || {
+            || format!("local_{}", local_id), || {
                 if generate_assignment {
                     values.get(&local_id)
                         .map(|v| le_to_fr::<E>(*v))
@@ -186,7 +186,7 @@ pub fn call_gadget<E, CS>(
 
     // Add gadget constraints.
     for (i, constraint) in context.iter_constraints().enumerate() {
-        enforce(&mut cs.namespace(|| format!("constraint {}", i)), &vars, &constraint);
+        enforce(&mut cs.namespace(|| format!("constraint_{}", i)), &vars, &constraint);
     }
 
     Ok(outputs)
