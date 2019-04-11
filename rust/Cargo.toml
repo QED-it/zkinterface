@@ -1,5 +1,5 @@
 [package]
-name = "zkstandard"
+name = "zkinterface"
 version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
 build = "build.rs"

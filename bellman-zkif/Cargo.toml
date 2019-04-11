@@ -10,7 +10,7 @@ ff = { git = "https://github.com/zcash/librustzcash" }
 pairing = { git = "https://github.com/zcash/librustzcash" } # "0.14.2"
 bellman = { git = "https://github.com/zcash/librustzcash" } # "0.1.0"
 sapling-crypto = { git = "https://github.com/zcash/librustzcash" }
-zkstandard = { path = "../rust" }
+zkinterface = { path = "../rust" }
 
 [dev-dependencies]
 blake2-rfc = { git = "https://github.com/gtank/blake2-rfc", rev = "7a5b5fc99ae483a0043db7547fb79a6fa44b88a9" }

@@ -1153,7 +1153,7 @@ pub fn get_size_prefixed_root_as_root<'a>(buf: &'a [u8]) -> Root<'a> {
   flatbuffers::get_size_prefixed_root::<Root<'a>>(buf)
 }
 
-pub const ROOT_IDENTIFIER: &'static str = "zkp2";
+pub const ROOT_IDENTIFIER: &'static str = "zkif";
 
 #[inline]
 pub fn root_buffer_has_identifier(buf: &[u8]) -> bool {
@@ -1165,7 +1165,7 @@ pub fn root_size_prefixed_buffer_has_identifier(buf: &[u8]) -> bool {
   return flatbuffers::buffer_has_identifier(buf, ROOT_IDENTIFIER, true);
 }
 
-pub const ROOT_EXTENSION: &'static str = "zkp2";
+pub const ROOT_EXTENSION: &'static str = "zkif";
 
 #[inline]
 pub fn finish_root_buffer<'a, 'b>(

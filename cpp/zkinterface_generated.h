@@ -907,7 +907,7 @@ inline const zkinterface::Root *GetSizePrefixedRoot(const void *buf) {
 }
 
 inline const char *RootIdentifier() {
-  return "zkp2";
+  return "zkif";
 }
 
 inline bool RootBufferHasIdentifier(const void *buf) {
@@ -926,7 +926,7 @@ inline bool VerifySizePrefixedRootBuffer(
 }
 
 inline const char *RootExtension() {
-  return "zkp2";
+  return "zkif";
 }
 
 inline void FinishRootBuffer(

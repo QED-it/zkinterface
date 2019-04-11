@@ -156,8 +156,8 @@ table Root {
 root_type Root;
 
 // When storing messages to files, this extension and identifier should be used.
-file_extension "zkp2";
-file_identifier "zkp2"; // a.k.a. magic bytes.
+file_extension "zkif";
+file_identifier "zkif"; // a.k.a. magic bytes.
 
 // Message framing:
 //

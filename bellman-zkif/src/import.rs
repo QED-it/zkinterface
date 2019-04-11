@@ -8,7 +8,7 @@ use ff::{Field, PrimeField, PrimeFieldRepr};
 use pairing::Engine;
 use sapling_crypto::circuit::num::AllocatedNum;
 use std::collections::HashMap;
-use zkstandard::{
+use zkinterface::{
     flatbuffers::FlatBufferBuilder,
     gadget_call::InstanceDescription,
     reading::{CallbackContext, Constraint, Term},

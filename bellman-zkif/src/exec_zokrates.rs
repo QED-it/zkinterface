@@ -17,7 +17,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::process::{Command, Output};
-use zkstandard::{
+use zkinterface::{
     reading::{
         CallbackContext,
         parse_call,
