@@ -4,11 +4,11 @@
 ./zokrates compute-witness -a 3 4
 ./zokrates generate-proof --backend zkinterface
 
-flatc --json --raw-binary --size-prefixed ../gadget_standard/zkinterface.fbs -- call.zkif          && cat call.json
-flatc --json --raw-binary --size-prefixed ../gadget_standard/zkinterface.fbs -- return_r1cs.zkif   && cat return_r1cs.json
-flatc --json --raw-binary --size-prefixed ../gadget_standard/zkinterface.fbs -- r1cs.zkif          && cat r1cs.json
-flatc --json --raw-binary --size-prefixed ../gadget_standard/zkinterface.fbs -- return_assign.zkif && cat return_assign.json
-flatc --json --raw-binary --size-prefixed ../gadget_standard/zkinterface.fbs -- assign.zkif        && cat assign.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- call.zkif          && cat call.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- return_r1cs.zkif   && cat return_r1cs.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- r1cs.zkif          && cat r1cs.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- return_assign.zkif && cat return_assign.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- assign.zkif        && cat assign.json
 */
 
 use num_bigint::BigUint;
@@ -28,13 +28,11 @@ use zkinterface::{
 pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
 
-    let program = "demo.code"; // "zokrates_cli/examples/simple_add.code";
+    let program = "src/test/demo.code";
+    let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();
     let zokrates_home = env::var("ZOKRATES_HOME").unwrap();
     let zokrates_home = Path::new(&zokrates_home);
-
-    let make_zokrates_command = || {
-        Command::new("./exec_zokrates")
-    };
+    let make_zokrates_command = || { Command::new("src/test/exec_zokrates") };
 
     let mut context = CallbackContext {
         constraints_messages: vec![],
@@ -63,7 +61,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
         // Compile script.
         {
             let mut cmd = make_zokrates_command();
-            cmd.args(&["compile", "--input", program]);
+            cmd.args(&["compile", "--input", &program]);
             let out = exec(&mut cmd);
         }
 

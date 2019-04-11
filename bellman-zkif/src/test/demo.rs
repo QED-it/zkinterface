@@ -3,8 +3,8 @@ use ff::{Field, PrimeField};
 use pairing::bls12_381::{Bls12, Fr, FrRepr};
 use sapling_crypto::circuit::num::AllocatedNum;
 use super::TestConstraintSystem;
-use super::super::exec_zokrates::exec_zokrates;
 use super::super::import::call_gadget;
+use super::exec_zokrates::exec_zokrates;
 
 #[test]
 fn test_import() {
@@ -45,8 +45,8 @@ fn test_import() {
         &exec_zokrates,
     ).unwrap();
 
-    println!("aa + bb = {:?}", aa_bb[0].get_value().unwrap().into_repr());
-    println!("cc + dd = {:?}", cc_dd[0].get_value().unwrap().into_repr());
+    println!("aa + bb = {}", aa_bb[0].get_value().unwrap().into_repr());
+    println!("cc + dd = {}", cc_dd[0].get_value().unwrap().into_repr());
 
     cs.enforce(|| "aa + bb = cc + dd",
                |lc| lc + one,
