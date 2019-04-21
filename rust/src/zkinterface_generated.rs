@@ -236,16 +236,14 @@ impl<'a> GadgetInstance<'a> {
       builder.add_free_variable_id_before(args.free_variable_id_before);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_order { builder.add_field_order(x); }
-      if let Some(x) = args.outgoing_variable_ids { builder.add_outgoing_variable_ids(x); }
       if let Some(x) = args.incoming_variable_ids { builder.add_incoming_variable_ids(x); }
       builder.finish()
     }
 
     pub const VT_INCOMING_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
-    pub const VT_OUTGOING_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
-    pub const VT_FREE_VARIABLE_ID_BEFORE: flatbuffers::VOffsetT = 8;
-    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
+    pub const VT_FREE_VARIABLE_ID_BEFORE: flatbuffers::VOffsetT = 6;
+    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 8;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 10;
 
   /// Incoming Variables to use as connections to the gadget.
   /// Allocated by the caller.
@@ -253,14 +251,6 @@ impl<'a> GadgetInstance<'a> {
   #[inline]
   pub fn incoming_variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(GadgetInstance::VT_INCOMING_VARIABLE_IDS, None)
-  }
-  /// Outgoing Variables to use as connections to the gadget.
-  /// There may be no Outgoing Variables if the gadget is a pure assertion.
-  /// Allocated by the caller.
-  /// Assigned by the called gadget in `GadgetReturn.outgoing_elements`.
-  #[inline]
-  pub fn outgoing_variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(GadgetInstance::VT_OUTGOING_VARIABLE_IDS, None)
   }
   /// First free Variable ID before the call.
   /// The gadget can allocate new Variable IDs starting with this one.
@@ -287,7 +277,6 @@ impl<'a> GadgetInstance<'a> {
 
 pub struct GadgetInstanceArgs<'a> {
     pub incoming_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
-    pub outgoing_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub free_variable_id_before: u64,
     pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
@@ -297,7 +286,6 @@ impl<'a> Default for GadgetInstanceArgs<'a> {
     fn default() -> Self {
         GadgetInstanceArgs {
             incoming_variable_ids: None,
-            outgoing_variable_ids: None,
             free_variable_id_before: 0,
             field_order: None,
             configuration: None,
@@ -312,10 +300,6 @@ impl<'a: 'b, 'b> GadgetInstanceBuilder<'a, 'b> {
   #[inline]
   pub fn add_incoming_variable_ids(&mut self, incoming_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_INCOMING_VARIABLE_IDS, incoming_variable_ids);
-  }
-  #[inline]
-  pub fn add_outgoing_variable_ids(&mut self, outgoing_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetInstance::VT_OUTGOING_VARIABLE_IDS, outgoing_variable_ids);
   }
   #[inline]
   pub fn add_free_variable_id_before(&mut self, free_variable_id_before: u64) {
@@ -558,22 +542,38 @@ impl<'a> GadgetReturn<'a> {
         args: &'args GadgetReturnArgs<'args>) -> flatbuffers::WIPOffset<GadgetReturn<'bldr>> {
       let mut builder = GadgetReturnBuilder::new(_fbb);
       builder.add_free_variable_id_after(args.free_variable_id_after);
-      if let Some(x) = args.outgoing_elements { builder.add_outgoing_elements(x); }
       if let Some(x) = args.error { builder.add_error(x); }
       if let Some(x) = args.info { builder.add_info(x); }
+      if let Some(x) = args.outgoing_elements { builder.add_outgoing_elements(x); }
+      if let Some(x) = args.outgoing_variable_ids { builder.add_outgoing_variable_ids(x); }
       builder.finish()
     }
 
     pub const VT_FREE_VARIABLE_ID_AFTER: flatbuffers::VOffsetT = 4;
-    pub const VT_INFO: flatbuffers::VOffsetT = 6;
-    pub const VT_ERROR: flatbuffers::VOffsetT = 8;
-    pub const VT_OUTGOING_ELEMENTS: flatbuffers::VOffsetT = 10;
+    pub const VT_OUTGOING_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
+    pub const VT_OUTGOING_ELEMENTS: flatbuffers::VOffsetT = 8;
+    pub const VT_INFO: flatbuffers::VOffsetT = 10;
+    pub const VT_ERROR: flatbuffers::VOffsetT = 12;
 
   /// First variable ID free after the gadget call.
   /// A variable ID greater than all IDs allocated by the gadget.
   #[inline]
   pub fn free_variable_id_after(&self) -> u64 {
     self._tab.get::<u64>(GadgetReturn::VT_FREE_VARIABLE_ID_AFTER, Some(0)).unwrap()
+  }
+  /// Outgoing Variables to use as connections to the gadget.
+  /// There may be no Outgoing Variables if the gadget is a pure assertion.
+  /// Allocated by the gadget.
+  /// Assigned by the called gadget in `outgoing_elements`.
+  #[inline]
+  pub fn outgoing_variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(GadgetReturn::VT_OUTGOING_VARIABLE_IDS, None)
+  }
+  /// The values that the gadget assigned to outgoing variables, if any.
+  /// Contiguous BigInts in the same order as `outgoing_variable_ids`.
+  #[inline]
+  pub fn outgoing_elements(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(GadgetReturn::VT_OUTGOING_ELEMENTS, None).map(|v| v.safe_slice())
   }
   /// Optional: Any info that may be useful to the caller.
   #[inline]
@@ -585,28 +585,24 @@ impl<'a> GadgetReturn<'a> {
   pub fn error(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetReturn::VT_ERROR, None)
   }
-  /// The values that the gadget assigned to outgoing variables, if any.
-  /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-  #[inline]
-  pub fn outgoing_elements(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(GadgetReturn::VT_OUTGOING_ELEMENTS, None).map(|v| v.safe_slice())
-  }
 }
 
 pub struct GadgetReturnArgs<'a> {
     pub free_variable_id_after: u64,
+    pub outgoing_variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
+    pub outgoing_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
     pub error: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub outgoing_elements: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
 }
 impl<'a> Default for GadgetReturnArgs<'a> {
     #[inline]
     fn default() -> Self {
         GadgetReturnArgs {
             free_variable_id_after: 0,
+            outgoing_variable_ids: None,
+            outgoing_elements: None,
             info: None,
             error: None,
-            outgoing_elements: None,
         }
     }
 }
@@ -620,16 +616,20 @@ impl<'a: 'b, 'b> GadgetReturnBuilder<'a, 'b> {
     self.fbb_.push_slot::<u64>(GadgetReturn::VT_FREE_VARIABLE_ID_AFTER, free_variable_id_after, 0);
   }
   #[inline]
+  pub fn add_outgoing_variable_ids(&mut self, outgoing_variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_OUTGOING_VARIABLE_IDS, outgoing_variable_ids);
+  }
+  #[inline]
+  pub fn add_outgoing_elements(&mut self, outgoing_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_OUTGOING_ELEMENTS, outgoing_elements);
+  }
+  #[inline]
   pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_INFO, info);
   }
   #[inline]
   pub fn add_error(&mut self, error: flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_ERROR, error);
-  }
-  #[inline]
-  pub fn add_outgoing_elements(&mut self, outgoing_elements: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_OUTGOING_ELEMENTS, outgoing_elements);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetReturnBuilder<'a, 'b> {

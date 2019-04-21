@@ -32,7 +32,6 @@ public:
 
         // Sanity check the function signature.
         assert(instance->incoming_variable_ids()->size() == num_inputs());
-        assert(instance->outgoing_variable_ids()->size() == num_outputs());
     }
 
     size_t num_inputs() { return left.bits.size() + left.bits.size(); }
@@ -115,7 +114,11 @@ bool sha256_gadget_call(
 
         out_elements = gadget.generate_r1cs_witness(in_elements);
 
-        auto assignment_msg = serialize_protoboard_local_assignment(instance, gadget.borrow_protoboard());
+        auto assignment_msg = serialize_protoboard_local_assignment(
+                instance,
+                gadget.num_outputs(),
+                gadget.borrow_protoboard()
+        );
 
         // Report values assigned to local variables.
         if (assigned_variables_callback != nullptr) {
@@ -127,7 +130,7 @@ bool sha256_gadget_call(
     // Response.
     FlatBufferBuilder builder;
 
-    uint64_t num_local_vars = gadget.borrow_protoboard().num_variables() - gadget.num_inputs() - gadget.num_outputs();
+    uint64_t num_local_vars = gadget.borrow_protoboard().num_variables() - gadget.num_inputs();
     uint64_t free_variable_id_after = instance->free_variable_id_before() + num_local_vars;
     auto maybe_out_elements = call->generate_assignment() ? serialize_elements(builder, out_elements) : 0;
 

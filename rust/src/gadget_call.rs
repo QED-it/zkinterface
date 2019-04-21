@@ -122,8 +122,7 @@ fn test_gadget_request() {
 
     let instance = GadgetInstanceSimple {
         incoming_variable_ids: vec![100, 101], // Some input variables.
-        outgoing_variable_ids: vec![102], // Some output variable.
-        free_variable_id_before: 103,
+        free_variable_id_before: 102,
         field_order: None,
     };
 
@@ -140,7 +139,7 @@ fn test_gadget_request() {
 
     let free_variable_id_after = r1cs_ctx.response().unwrap().free_variable_id_after();
     println!("Free variable id after the call: {}", free_variable_id_after);
-    assert!(free_variable_id_after == 103 + 2);
+    assert!(free_variable_id_after == 102 + 1 + 2);
 
     println!();
 
@@ -174,10 +173,10 @@ fn test_gadget_request() {
 
         let free_variable_id_after2 = assign_ctx.response().unwrap().free_variable_id_after();
         println!("Free variable id after the call: {}", free_variable_id_after2);
-        assert!(free_variable_id_after2 == 103 + 2);
+        assert!(free_variable_id_after2 == 102 + 1 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 
-        let out_vars = assign_ctx.outgoing_assigned_variables(&instance.outgoing_variable_ids);
+        let out_vars = assign_ctx.outgoing_assigned_variables();
         println!("{:?}", out_vars);
     }
     println!();

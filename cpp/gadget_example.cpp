@@ -30,14 +30,16 @@ bool r1cs_request(
     }
 
     // Send constraints.
+    uint64_t num_outputs = 1;
+    uint64_t first_local_id = free_variable_id_before + num_outputs;
     uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
 
         vector<uint64_t> variable_ids;
-        variable_ids.push_back(free_variable_id_before); // First variable.
-        variable_ids.push_back(free_variable_id_before + 1); // Second variable.
-        free_variable_id_after = free_variable_id_before + 2;
+        variable_ids.push_back(first_local_id); // First variable.
+        variable_ids.push_back(first_local_id + 1); // Second variable.
+        free_variable_id_after = first_local_id + 2;
 
         vector<uint8_t> elements = {
                 10, 11, 12, // First coefficient.
@@ -105,14 +107,16 @@ bool assignments_request(
     }
 
     // Send an assignment.
+    uint64_t num_outputs = 1;
+    uint64_t first_local_id = free_variable_id_before + num_outputs;
     uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
 
         vector<uint64_t> variable_ids;
-        variable_ids.push_back(free_variable_id_before); // First variable.
-        variable_ids.push_back(free_variable_id_before + 1); // Second variable.
-        free_variable_id_after = free_variable_id_before + 2;
+        variable_ids.push_back(first_local_id); // First variable.
+        variable_ids.push_back(first_local_id + 1); // Second variable.
+        free_variable_id_after = first_local_id + 2;
 
         vector<uint8_t> elements = {
                 10, 11, 12, // First element.

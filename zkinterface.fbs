@@ -36,12 +36,6 @@ table GadgetCall {
         /// Assigned by the caller in `Witness.incoming_elements`.
         incoming_variable_ids   :[uint64];
 
-        /// Outgoing Variables to use as connections to the gadget.
-        /// There may be no Outgoing Variables if the gadget is a pure assertion.
-        /// Allocated by the caller.
-        /// Assigned by the called gadget in `GadgetReturn.outgoing_elements`.
-        outgoing_variable_ids   :[uint64];
-
         /// First free Variable ID before the call.
         /// The gadget can allocate new Variable IDs starting with this one.
         free_variable_id_before :uint64;
@@ -82,15 +76,21 @@ table GadgetReturn {
     /// A variable ID greater than all IDs allocated by the gadget.
     free_variable_id_after :uint64;
 
+    /// Outgoing Variables to use as connections to the gadget.
+    /// There may be no Outgoing Variables if the gadget is a pure assertion.
+    /// Allocated by the gadget.
+    /// Assigned by the called gadget in `outgoing_elements`.
+    outgoing_variable_ids  :[uint64];
+
+    /// The values that the gadget assigned to outgoing variables, if any.
+    /// Contiguous BigInts in the same order as `outgoing_variable_ids`.
+    outgoing_elements      :[ubyte];
+
     /// Optional: Any info that may be useful to the caller.
     info                   :[KeyValue];
 
     /// Optional: An error message. Null if no error.
     error                  :string;
-
-    /// The values that the gadget assigned to outgoing variables, if any.
-    /// Contiguous BigInts in the same order as `instance.outgoing_variable_ids`.
-    outgoing_elements      :[ubyte];
 }
 
 /// Report constraints to be added to the constraints system.

@@ -61,7 +61,6 @@ fn enforce<E, CS>(cs: &mut CS, vars: &HashMap<u64, Variable>, constraint: &Const
 pub fn call_gadget<E, CS>(
     cs: &mut CS,
     inputs: &[AllocatedNum<E>],
-    output_count: u64,
     exec_fn: &Fn(&[u8]) -> Result<CallbackContext, String>,
 ) -> Result<(Vec<AllocatedNum<E>>), SynthesisError>
     where E: Engine,
@@ -71,12 +70,10 @@ pub fn call_gadget<E, CS>(
 
     // Describe the gadget instance.
     let first_input_id = 1;
-    let first_output_id = first_input_id + inputs.len() as u64;
-    let first_local_id = first_output_id + output_count;
+    let first_local_id = first_input_id + inputs.len() as u64;
 
     let instance = GadgetInstanceSimple {
-        incoming_variable_ids: (first_input_id..first_output_id).collect(),
-        outgoing_variable_ids: (first_output_id..first_local_id).collect(),
+        incoming_variable_ids: (first_input_id..first_local_id).collect(),
         free_variable_id_before: first_local_id,
         field_order: None,
     };
@@ -123,12 +120,21 @@ pub fn call_gadget<E, CS>(
     let gadget_return = context.response().ok_or(SynthesisError::Unsatisfiable)?;
     let last_local_id = gadget_return.free_variable_id_after();
 
+    // Track variables by id. Used to convert constraints.
+    let mut vars = HashMap::<u64, Variable>::new();
+
+    vars.insert(0, CS::one());
+
+    for i in 0..inputs.len() {
+        vars.insert(instance.incoming_variable_ids[i], inputs[i].get_variable());
+    }
+
     // Collect assignments. Used by the alloc's below.
     let mut values = HashMap::<u64, &[u8]>::new();
 
     if generate_assignment {
         // Values of outputs.
-        if let Some(assignments) = context.outgoing_assigned_variables(&instance.outgoing_variable_ids) {
+        if let Some(assignments) = context.outgoing_assigned_variables() {
             for assignment in assignments {
                 values.insert(assignment.id, assignment.element);
             }
@@ -140,33 +146,26 @@ pub fn call_gadget<E, CS>(
         }
     }
 
-    // Track variables by id. Used to convert constraints.
-    let mut vars = HashMap::<u64, Variable>::new();
-
-    vars.insert(0, CS::one());
-
-    for i in 0..inputs.len() {
-        vars.insert(instance.incoming_variable_ids[i], inputs[i].get_variable());
-    }
-
     // Collect output variables and values to return.
     let mut outputs = Vec::new();
 
-    // Allocate and assign outputs.
-    for out_id in first_output_id..first_local_id {
-        let num = AllocatedNum::alloc(
-            cs.namespace(|| format!("output_{}", out_id)), || {
-                let value = if generate_assignment {
-                    values.get(&out_id)
-                        .map(|v| le_to_fr::<E>(*v))
-                        .ok_or(SynthesisError::AssignmentMissing)
-                } else {
-                    Ok(E::Fr::zero())
-                };
-                value
-            })?;
-        vars.insert(out_id, num.get_variable());
-        outputs.push(num);
+    // Allocate and assign outputs, if any.
+    if let Some(out_ids) = gadget_return.outgoing_variable_ids() {
+        for out_id in out_ids.safe_slice() {
+            let num = AllocatedNum::alloc(
+                cs.namespace(|| format!("output_{}", out_id)), || {
+                    let value = if generate_assignment {
+                        values.get(out_id)
+                            .map(|v| le_to_fr::<E>(*v))
+                            .ok_or(SynthesisError::AssignmentMissing)
+                    } else {
+                        Ok(E::Fr::zero())
+                    };
+                    value
+                })?;
+            vars.insert(*out_id, num.get_variable());
+            outputs.push(num);
+        }
     }
 
     // Allocate and assign locals.

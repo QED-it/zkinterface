@@ -190,12 +190,13 @@ namespace zkinterface_libsnark {
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const GadgetInstance *instance,
+            size_t num_outputs,
             const protoboard<FieldT> &pb
     ) {
         FlatBufferBuilder builder;
 
         size_t all_vars = pb.num_variables();
-        size_t shared_vars = instance->incoming_variable_ids()->size() + instance->outgoing_variable_ids()->size();
+        size_t shared_vars = instance->incoming_variable_ids()->size() + num_outputs;
         size_t local_vars = all_vars - shared_vars;
 
         vector<uint64_t> variable_ids(local_vars);

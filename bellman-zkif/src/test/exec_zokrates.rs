@@ -21,12 +21,16 @@ use zkinterface::{
     reading::{
         CallbackContext,
         parse_call,
+        is_contiguous,
     },
 };
 
 
 pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
+
+    // Non-contiguous IDs are not supported by ZoKrates yet.
+    assert!(is_contiguous(1, call.instance().unwrap().incoming_variable_ids().unwrap().safe_slice()));
 
     let program = "src/test/demo.code";
     let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();

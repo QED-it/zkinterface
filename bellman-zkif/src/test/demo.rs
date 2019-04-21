@@ -36,19 +36,19 @@ fn test_import() {
     let a2_b2 = call_gadget(
         &mut cs.namespace(|| "a2 + b2"),
         &[a, b],
-        1,
         &exec_zokrates,
     ).unwrap();
 
     let c2 = call_gadget(
         &mut cs.namespace(|| "c2 + zero2"),
         &[c, zero.clone()],
-        1,
         &exec_zokrates,
     ).unwrap();
 
     println!("a2 + b2 = {}", a2_b2[0].get_value().unwrap().into_repr());
     println!("     c2 = {}", c2[0].get_value().unwrap().into_repr());
+    assert_eq!(a2_b2.len(), 1);
+    assert_eq!(c2.len(), 1);
 
     cs.enforce(|| "a2 + b2 = c2 + zero2",
                |lc| lc + one,

@@ -31,6 +31,14 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)
     Some((call, assigned))
 }
 
+pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
+    for id in ids {
+        if *id != first_id { return false; }
+        first_id += 1;
+    }
+    true
+}
+
 /// Collect buffers waiting to be read.
 #[derive(Clone, Debug)]
 pub struct CallbackContext {
@@ -162,7 +170,8 @@ impl CallbackContext {
         }
     }
 
-    pub fn outgoing_assigned_variables(&self, outgoing_variable_ids: &[u64]) -> Option<Vec<AssignedVariable>> {
+    pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
+        let outgoing_variable_ids = self.response()?.outgoing_variable_ids()?.safe_slice();
         let elements = self.response()?.outgoing_elements()?;
 
         let stride = elements.len() / outgoing_variable_ids.len();
