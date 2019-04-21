@@ -1,5 +1,4 @@
 use bellman::ConstraintSystem;
-use ff::{Field, PrimeField};
 use pairing::bls12_381::{Bls12, Fr, FrRepr};
 use sapling_crypto::circuit::num::AllocatedNum;
 use super::exec_zokrates::exec_zokrates;
@@ -11,6 +10,8 @@ fn test_import() {
     /*
         a^2 + b^2 == c^2
     */
+
+    use ff::PrimeField;
 
     let mut cs = TestConstraintSystem::<Bls12>::new();
     let one = TestConstraintSystem::<Bls12>::one();

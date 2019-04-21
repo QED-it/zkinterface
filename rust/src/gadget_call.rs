@@ -3,10 +3,8 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use reading::CallbackContext;
 use std::slice;
-use zkinterface_generated::zkinterface::{GadgetInstance, GadgetInstanceArgs};
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -114,37 +112,15 @@ pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct InstanceDescription {
-    pub incoming_variable_ids: Vec<u64>,
-    pub outgoing_variable_ids: Vec<u64>,
-    pub free_variable_id_before: u64,
-    pub field_order: Option<Vec<u8>>,
-//pub configuration: Option<Vec<(String, &'a [u8])>>,
-}
-
-impl InstanceDescription {
-    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        &'args self, builder: &'mut_bldr mut FlatBufferBuilder<'bldr>) -> WIPOffset<GadgetInstance<'bldr>> {
-        let i = GadgetInstanceArgs {
-            incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
-            outgoing_variable_ids: Some(builder.create_vector(&self.outgoing_variable_ids)),
-            free_variable_id_before: self.free_variable_id_before,
-            field_order: self.field_order.as_ref().map(|s| builder.create_vector(s)),
-            configuration: None,
-        };
-        GadgetInstance::create(builder, &i)
-    }
-}
-
 
 #[test]
 fn test_gadget_request() {
+    use writing::GadgetInstanceSimple;
     use r1cs_request::make_r1cs_request;
     use assignment_request::make_assignment_request;
     println!();
 
-    let instance = InstanceDescription {
+    let instance = GadgetInstanceSimple {
         incoming_variable_ids: vec![100, 101], // Some input variables.
         outgoing_variable_ids: vec![102], // Some output variable.
         free_variable_id_before: 103,

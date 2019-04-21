@@ -1,9 +1,7 @@
 use flatbuffers::FlatBufferBuilder;
-use gadget_call::{
-    call_gadget_wrapper,
-    InstanceDescription,
-};
+use gadget_call::call_gadget_wrapper;
 use reading::CallbackContext;
+use writing::GadgetInstanceSimple;
 use zkinterface_generated::zkinterface::{
     GadgetCall,
     GadgetCallArgs,
@@ -12,7 +10,7 @@ use zkinterface_generated::zkinterface::{
     RootArgs,
 };
 
-pub fn make_r1cs_request(instance: InstanceDescription) -> CallbackContext {
+pub fn make_r1cs_request(instance: GadgetInstanceSimple) -> CallbackContext {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let request = {

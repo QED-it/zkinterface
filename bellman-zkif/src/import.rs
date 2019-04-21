@@ -10,7 +10,7 @@ use sapling_crypto::circuit::num::AllocatedNum;
 use std::collections::HashMap;
 use zkinterface::{
     flatbuffers::FlatBufferBuilder,
-    gadget_call::InstanceDescription,
+    writing::GadgetInstanceSimple,
     reading::{CallbackContext, Constraint, Term},
     zkinterface_generated::zkinterface::{
         GadgetCall,
@@ -74,7 +74,7 @@ pub fn call_gadget<E, CS>(
     let first_output_id = first_input_id + inputs.len() as u64;
     let first_local_id = first_output_id + output_count;
 
-    let mut instance = InstanceDescription {
+    let instance = GadgetInstanceSimple {
         incoming_variable_ids: (first_input_id..first_output_id).collect(),
         outgoing_variable_ids: (first_output_id..first_local_id).collect(),
         free_variable_id_before: first_local_id,
@@ -90,7 +90,7 @@ pub fn call_gadget<E, CS>(
         let witness = if generate_assignment {
             let mut elements = Vec::<u8>::new();
             for i in inputs {
-                i.get_value().unwrap().into_repr().write_le(&mut elements);
+                i.get_value().unwrap().into_repr().write_le(&mut elements)?;
             }
             let incoming_elements = Some(builder.create_vector(&elements));
             Some(Witness::create(&mut builder, &WitnessArgs {

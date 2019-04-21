@@ -45,7 +45,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
             let path = zokrates_home.join(name);
             let mut file = File::open(&path).unwrap();
             let mut buf = Vec::new();
-            file.read_to_end(&mut buf);
+            file.read_to_end(&mut buf).unwrap();
             println!("loaded {} ({} bytes)", name, buf.len());
             context.store_message(buf)
         };
@@ -62,14 +62,14 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
         {
             let mut cmd = make_zokrates_command();
             cmd.args(&["compile", "--input", &program]);
-            let out = exec(&mut cmd);
+            let _out = exec(&mut cmd);
         }
 
         // Get R1CS -> r1cs.zkif
         {
             let mut cmd = make_zokrates_command();
             cmd.args(&["setup", "--backend", "zkinterface", "-p", "r1cs.zkif"]);
-            let out = exec(&mut cmd);
+            let _out = exec(&mut cmd);
 
             load_message("r1cs.zkif")?;
             load_message("return_r1cs.zkif")?;
@@ -86,14 +86,14 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
                     cmd.arg(le_to_decimal(input.element));
                 }
 
-                let out = exec(&mut cmd);
+                let _out = exec(&mut cmd);
             }
 
             // Get assignment -> assign.zkif
             {
                 let mut cmd = make_zokrates_command();
                 cmd.args(&["generate-proof", "--backend", "zkinterface", "-j", "assign.zkif"]);
-                let out = exec(&mut cmd);
+                let _out = exec(&mut cmd);
 
                 load_message("assign.zkif")?;
                 load_message("return_assign.zkif")?;
