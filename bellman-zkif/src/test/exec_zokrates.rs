@@ -38,11 +38,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
     let zokrates_home = Path::new(&zokrates_home);
     let make_zokrates_command = || { Command::new("src/test/exec_zokrates") };
 
-    let mut context = CallbackContext {
-        constraints_messages: vec![],
-        assigned_variables_messages: vec![],
-        return_message: None,
-    };
+    let mut context = CallbackContext::new();
 
     {
         let mut load_message = |name: &str| {
@@ -51,7 +47,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
             let mut buf = Vec::new();
             file.read_to_end(&mut buf).unwrap();
             println!("loaded {} ({} bytes)", name, buf.len());
-            context.store_message(buf)
+            context.push_message(buf)
         };
 
         // Write Call message -> call.zkif

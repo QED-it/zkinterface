@@ -1,14 +1,14 @@
 //! Helpers to read messages.
 
-use std::slice::Iter;
+use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     GadgetCall,
     GadgetReturn,
     get_size_prefixed_root_as_root,
-    Message,
     VariableValues,
 };
+use zkinterface_generated::zkinterface::Root;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_gadget_call()?;
@@ -39,39 +39,110 @@ pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
     true
 }
 
+pub fn read_size(buf: &[u8]) -> usize {
+    if buf.len() < SIZE_UOFFSET { return 0; }
+    let size = read_scalar_at::<UOffsetT>(buf, 0) as usize;
+    SIZE_UOFFSET + size
+}
+
+pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
+    let mut bufs = vec![];
+    loop {
+        let size = read_size(buf);
+        if size == 0 { break; }
+        bufs.push(&buf[..size]);
+        buf = &buf[size..];
+    }
+    bufs
+}
+
 /// Collect buffers waiting to be read.
 #[derive(Clone, Debug)]
 pub struct CallbackContext {
-    pub constraints_messages: Vec<Vec<u8>>,
-    pub assigned_variables_messages: Vec<Vec<u8>>,
-    pub return_message: Option<Vec<u8>>,
+    pub messages: Vec<Vec<u8>>,
 }
 
 impl CallbackContext {
     pub fn new() -> CallbackContext {
         CallbackContext {
-            constraints_messages: vec![],
-            assigned_variables_messages: vec![],
-            return_message: None,
+            messages: vec![],
         }
     }
 
-    pub fn store_message(&mut self, buf: Vec<u8>) -> Result<(), String> {
-        let typ = get_size_prefixed_root_as_root(&buf).message_type();
-        match typ {
-            Message::R1CSConstraints => self.constraints_messages.push(buf),
-            Message::AssignedVariables => self.assigned_variables_messages.push(buf),
-            Message::GadgetReturn => self.return_message = Some(buf),
-            _ => return Err("Unexpected message type".to_string())
-        }
+    pub fn push_message(&mut self, buf: Vec<u8>) -> Result<(), String> {
+        self.messages.push(buf);
         Ok(())
     }
 
     // Return message
-    pub fn response(&self) -> Option<GadgetReturn> {
-        let buf = self.return_message.as_ref()?;
-        let message = get_size_prefixed_root_as_root(buf);
-        message.message_as_gadget_return()
+    pub fn last_gadget_return(&self) -> Option<GadgetReturn> {
+        let returns = self.gadget_returns();
+        if returns.len() > 0 {
+            Some(returns[returns.len() - 1])
+        } else { None }
+    }
+
+    pub fn gadget_returns(&self) -> Vec<GadgetReturn> {
+        let mut returns = vec![];
+        for message in self {
+            match message.message_as_gadget_return() {
+                Some(ret) => returns.push(ret),
+                None => continue,
+            };
+        }
+        returns
+    }
+}
+
+impl<'a> IntoIterator for &'a CallbackContext {
+    type Item = Root<'a>;
+    type IntoIter = MessageIterator<'a>;
+
+    fn into_iter(self) -> MessageIterator<'a> {
+        MessageIterator {
+            bufs: &self.messages,
+            offset: 0,
+        }
+    }
+}
+
+pub struct MessageIterator<'a> {
+    bufs: &'a [Vec<u8>],
+    offset: usize,
+}
+
+impl<'a> Iterator for MessageIterator<'a> {
+    type Item = Root<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.bufs.len() == 0 { return None; }
+
+            let buf = &self.bufs[0][self.offset..];
+
+            let size = {
+                let size = read_size(buf);
+                if size <= buf.len() {
+                    size
+                } else {
+                    buf.len()
+                }
+            };
+
+            if size == 0 {
+                // Move to the next buffer.
+                self.bufs = &self.bufs[1..];
+                self.offset = 0;
+                continue;
+            }
+
+            // Move to the next message in the current buffer.
+            self.offset += size;
+
+            // Parse the current message.
+            let root = get_size_prefixed_root_as_root(&buf[..size]);
+            return Some(root);
+        }
     }
 }
 
@@ -80,7 +151,7 @@ impl CallbackContext {
 impl CallbackContext {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
-            messages_iter: self.constraints_messages.iter(),
+            messages_iter: self.into_iter(),
             constraints_count: 0,
             next_constraint: 0,
             constraints: None,
@@ -99,7 +170,7 @@ pub struct Constraint<'a> {
 
 pub struct R1CSIterator<'a> {
     // Iterate over messages.
-    messages_iter: Iter<'a, Vec<u8>>,
+    messages_iter: MessageIterator<'a>,
 
     // Iterate over constraints in the current message.
     constraints_count: usize,
@@ -113,11 +184,10 @@ impl<'a> Iterator for R1CSIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.next_constraint >= self.constraints_count {
             // Grab the next message, or terminate if none.
-            let buf: &[u8] = self.messages_iter.next()?;
+            let message = self.messages_iter.next()?;
 
-            // Parse the message, or fail if invalid.
-            let message = get_size_prefixed_root_as_root(buf).message_as_r1csconstraints();
-            let constraints = match message {
+            // Parse the message, skip irrelevant message types, or fail if invalid.
+            let constraints = match message.message_as_r1csconstraints() {
                 Some(message) => message.constraints().unwrap(),
                 None => continue,
             };
@@ -163,7 +233,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
 impl CallbackContext {
     pub fn iter_assignment(&self) -> AssignedVariablesIterator {
         AssignedVariablesIterator {
-            messages_iter: self.assigned_variables_messages.iter(),
+            messages_iter: self.into_iter(),
             var_ids: &[],
             elements: &[],
             next_element: 0,
@@ -171,8 +241,8 @@ impl CallbackContext {
     }
 
     pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
-        let outgoing_variable_ids = self.response()?.outgoing_variable_ids()?.safe_slice();
-        let elements = self.response()?.outgoing_elements()?;
+        let outgoing_variable_ids = self.last_gadget_return()?.outgoing_variable_ids()?.safe_slice();
+        let elements = self.last_gadget_return()?.outgoing_elements()?;
 
         let stride = elements.len() / outgoing_variable_ids.len();
         if stride == 0 { panic!("Empty elements data."); }
@@ -196,7 +266,7 @@ pub struct AssignedVariable<'a> {
 
 pub struct AssignedVariablesIterator<'a> {
     // Iterate over messages.
-    messages_iter: Iter<'a, Vec<u8>>,
+    messages_iter: MessageIterator<'a>,
 
     // Iterate over variables in the current message.
     var_ids: &'a [u64],
@@ -210,11 +280,10 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.next_element >= self.var_ids.len() {
             // Grab the next message, or terminate if none.
-            let buf: &[u8] = self.messages_iter.next()?;
+            let message = self.messages_iter.next()?;
 
-            // Parse the message, or fail if invalid.
-            let message = get_size_prefixed_root_as_root(buf).message_as_assigned_variables();
-            let assigned_variables = match message {
+            // Parse the message, skip irrelevant message types, or fail if invalid.
+            let assigned_variables = match message.message_as_assigned_variables() {
                 Some(message) => message.values().unwrap(),
                 None => continue,
             };

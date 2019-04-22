@@ -40,68 +40,27 @@ fn from_c<'a, CTX>(
 
 /// Collect the stream of any messages into the context.
 extern "C"
-fn _callback_c(
+fn callback_c(
     context_ptr: *mut CallbackContext,
     message_ptr: *const u8,
 ) -> bool {
     let (context, buf) = from_c(context_ptr, message_ptr);
 
-    context.store_message(Vec::from(buf)).is_ok()
-}
-
-/// Collect the stream of constraints into the context.
-extern "C"
-fn constraints_callback_c(
-    context_ptr: *mut CallbackContext,
-    message_ptr: *const u8,
-) -> bool {
-    let (context, buf) = from_c(context_ptr, message_ptr);
-
-    context.constraints_messages.push(Vec::from(buf));
-    true
-}
-
-/// Collect the stream of assigned variables into the context.
-extern "C"
-fn assigned_variables_callback_c(
-    context_ptr: *mut CallbackContext,
-    message_ptr: *const u8,
-) -> bool {
-    let (context, buf) = from_c(context_ptr, message_ptr);
-
-    context.assigned_variables_messages.push(Vec::from(buf));
-    true
-}
-
-/// Collect the final response into the context.
-extern "C"
-fn return_callback_c(
-    context_ptr: *mut CallbackContext,
-    return_ptr: *const u8,
-) -> bool {
-    let (context, buf) = from_c(context_ptr, return_ptr);
-
-    context.return_message = Some(Vec::from(buf));
-    true
+    context.push_message(Vec::from(buf)).is_ok()
 }
 
 pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String> {
     let message_ptr = message_buf.as_ptr();
 
-    let mut context = CallbackContext {
-        constraints_messages: vec![],
-        assigned_variables_messages: vec![],
-        return_message: None,
-    };
-
+    let mut context = CallbackContext::new();
     let ok = unsafe {
         call_gadget(
             message_ptr,
-            constraints_callback_c,
+            callback_c,
             &mut context as *mut CallbackContext,
-            assigned_variables_callback_c,
+            callback_c,
             &mut context as *mut CallbackContext,
-            return_callback_c,
+            callback_c,
             &mut context as *mut CallbackContext,
         )
     };
@@ -128,17 +87,20 @@ fn test_gadget_request() {
 
     let r1cs_ctx = make_r1cs_request(instance.clone());
 
-    println!("Rust received {} constraints messages and {} parent response.",
-             r1cs_ctx.constraints_messages.len(),
-             if r1cs_ctx.return_message.is_some() { "a" } else { "no" });
+    println!("R1CS: Rust received {} messages including {} gadget return.",
+             r1cs_ctx.messages.len(),
+             r1cs_ctx.gadget_returns().len());
 
-    println!("Got constraints:");
+    assert!(r1cs_ctx.messages.len() == 2);
+    assert!(r1cs_ctx.gadget_returns().len() == 1);
+
+    println!("R1CS: Got constraints:");
     for c in r1cs_ctx.iter_constraints() {
         println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
     }
 
-    let free_variable_id_after = r1cs_ctx.response().unwrap().free_variable_id_after();
-    println!("Free variable id after the call: {}", free_variable_id_after);
+    let free_variable_id_after = r1cs_ctx.last_gadget_return().unwrap().free_variable_id_after();
+    println!("R1CS: Free variable id after the call: {}", free_variable_id_after);
     assert!(free_variable_id_after == 102 + 1 + 2);
 
     println!();
@@ -149,17 +111,17 @@ fn test_gadget_request() {
     ];
     let assign_ctx = make_assignment_request(&instance, in_elements);
 
-    println!("Rust received {} assigned variables messages and {} parent response.",
-             assign_ctx.assigned_variables_messages.len(),
-             if assign_ctx.return_message.is_some() { "a" } else { "no" });
+    println!("Assignment: Rust received {} messages including {} gadget return.",
+             assign_ctx.messages.len(),
+             assign_ctx.gadget_returns().len());
 
-    assert!(assign_ctx.assigned_variables_messages.len() == 1);
-    assert!(assign_ctx.return_message.is_some());
+    assert!(assign_ctx.messages.len() == 2);
+    assert!(assign_ctx.gadget_returns().len() == 1);
 
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
 
-        println!("Got assigned_variables:");
+        println!("Assignment: Got assigned_variables:");
         for var in assignment.iter() {
             println!("{} = {:?}", var.id, var.element);
         }
@@ -171,8 +133,8 @@ fn test_gadget_request() {
         assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
         assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
 
-        let free_variable_id_after2 = assign_ctx.response().unwrap().free_variable_id_after();
-        println!("Free variable id after the call: {}", free_variable_id_after2);
+        let free_variable_id_after2 = assign_ctx.last_gadget_return().unwrap().free_variable_id_after();
+        println!("Assignment: Free variable id after the call: {}", free_variable_id_after2);
         assert!(free_variable_id_after2 == 102 + 1 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 

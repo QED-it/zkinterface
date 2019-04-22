@@ -18,6 +18,7 @@ use zkinterface_generated::zkinterface::{
 
 // ==== Gadget Call ====
 
+#[derive(Clone, Debug)]
 pub struct GadgetCallSimple {
     pub instance: GadgetInstanceSimple,
     pub generate_r1cs: bool,
@@ -32,6 +33,7 @@ pub struct GadgetInstanceSimple {
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
+#[derive(Clone, Debug)]
 pub struct WitnessSimple {
     pub incoming_elements: Vec<Vec<u8>>,
     // pub info: Option<Vec<(String, &'a [u8])>>,
@@ -110,6 +112,7 @@ impl WitnessSimple {
 
 // ==== Gadget Return ====
 
+#[derive(Clone, Debug)]
 pub struct GadgetReturnSimple {
     pub free_variable_id_after: u64,
     pub outgoing_variable_ids: Vec<u64>,

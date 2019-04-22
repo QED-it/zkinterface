@@ -117,7 +117,7 @@ pub fn call_gadget<E, CS>(
     let context = exec_fn(call_buf).or(Err(SynthesisError::Unsatisfiable))?;
 
     // Parse Return message to find out how many local variables were used.
-    let gadget_return = context.response().ok_or(SynthesisError::Unsatisfiable)?;
+    let gadget_return = context.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
     let last_local_id = gadget_return.free_variable_id_after();
 
     // Track variables by id. Used to convert constraints.
