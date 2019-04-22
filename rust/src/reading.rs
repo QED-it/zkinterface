@@ -58,13 +58,13 @@ pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
 
 /// Collect buffers waiting to be read.
 #[derive(Clone, Debug)]
-pub struct CallbackContext {
+pub struct Messages {
     pub messages: Vec<Vec<u8>>,
 }
 
-impl CallbackContext {
-    pub fn new() -> CallbackContext {
-        CallbackContext {
+impl Messages {
+    pub fn new() -> Messages {
+        Messages {
             messages: vec![],
         }
     }
@@ -94,7 +94,7 @@ impl CallbackContext {
     }
 }
 
-impl<'a> IntoIterator for &'a CallbackContext {
+impl<'a> IntoIterator for &'a Messages {
     type Item = Root<'a>;
     type IntoIter = MessageIterator<'a>;
 
@@ -148,7 +148,7 @@ impl<'a> Iterator for MessageIterator<'a> {
 
 
 // R1CS messages
-impl CallbackContext {
+impl Messages {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
             messages_iter: self.into_iter(),
@@ -230,7 +230,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
 
 
 // Assignment messages
-impl CallbackContext {
+impl Messages {
     pub fn iter_assignment(&self) -> AssignedVariablesIterator {
         AssignedVariablesIterator {
             messages_iter: self.into_iter(),

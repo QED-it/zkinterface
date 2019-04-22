@@ -19,14 +19,14 @@ use std::path::Path;
 use std::process::{Command, Output};
 use zkinterface::{
     reading::{
-        CallbackContext,
+        Messages,
         parse_call,
         is_contiguous,
     },
 };
 
 
-pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
+pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
 
     // Non-contiguous IDs are not supported by ZoKrates yet.
@@ -38,7 +38,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<CallbackContext, String> {
     let zokrates_home = Path::new(&zokrates_home);
     let make_zokrates_command = || { Command::new("src/test/exec_zokrates") };
 
-    let mut context = CallbackContext::new();
+    let mut context = Messages::new();
 
     {
         let mut load_message = |name: &str| {

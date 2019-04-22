@@ -1,6 +1,6 @@
 use flatbuffers::FlatBufferBuilder;
 use gadget_call::call_gadget_wrapper;
-use reading::CallbackContext;
+use reading::Messages;
 use writing::GadgetInstanceSimple;
 use zkinterface_generated::zkinterface::{
     GadgetCall,
@@ -15,7 +15,7 @@ use zkinterface_generated::zkinterface::{
 pub fn make_assignment_request(
     instance: &GadgetInstanceSimple,
     incoming_elements: Vec<&[u8]>,
-) -> CallbackContext {
+) -> Messages {
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
 
     let size = incoming_elements.len() * incoming_elements[0].len();

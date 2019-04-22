@@ -3,19 +3,19 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-use reading::CallbackContext;
+use reading::Messages;
 use std::slice;
 
 #[allow(improper_ctypes)]
 extern "C" {
     fn call_gadget(
         call_msg: *const u8,
-        constraints_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
-        constraints_context: *mut CallbackContext,
-        assigned_variables_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
-        assigned_variables_context: *mut CallbackContext,
-        return_callback: extern fn(context_ptr: *mut CallbackContext, message: *const u8) -> bool,
-        return_context: *mut CallbackContext,
+        constraints_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
+        constraints_context: *mut Messages,
+        assigned_variables_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
+        assigned_variables_context: *mut Messages,
+        return_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
+        return_context: *mut Messages,
     ) -> bool;
 }
 
@@ -41,7 +41,7 @@ fn from_c<'a, CTX>(
 /// Collect the stream of any messages into the context.
 extern "C"
 fn callback_c(
-    context_ptr: *mut CallbackContext,
+    context_ptr: *mut Messages,
     message_ptr: *const u8,
 ) -> bool {
     let (context, buf) = from_c(context_ptr, message_ptr);
@@ -49,19 +49,19 @@ fn callback_c(
     context.push_message(Vec::from(buf)).is_ok()
 }
 
-pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<CallbackContext, String> {
+pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<Messages, String> {
     let message_ptr = message_buf.as_ptr();
 
-    let mut context = CallbackContext::new();
+    let mut context = Messages::new();
     let ok = unsafe {
         call_gadget(
             message_ptr,
             callback_c,
-            &mut context as *mut CallbackContext,
+            &mut context as *mut Messages,
             callback_c,
-            &mut context as *mut CallbackContext,
+            &mut context as *mut Messages,
             callback_c,
-            &mut context as *mut CallbackContext,
+            &mut context as *mut Messages,
         )
     };
 

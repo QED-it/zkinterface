@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use zkinterface::{
     flatbuffers::FlatBufferBuilder,
     writing::GadgetInstanceSimple,
-    reading::{CallbackContext, Constraint, Term},
+    reading::{Messages, Constraint, Term},
     zkinterface_generated::zkinterface::{
         GadgetCall,
         GadgetCallArgs,
@@ -61,7 +61,7 @@ fn enforce<E, CS>(cs: &mut CS, vars: &HashMap<u64, Variable>, constraint: &Const
 pub fn call_gadget<E, CS>(
     cs: &mut CS,
     inputs: &[AllocatedNum<E>],
-    exec_fn: &Fn(&[u8]) -> Result<CallbackContext, String>,
+    exec_fn: &Fn(&[u8]) -> Result<Messages, String>,
 ) -> Result<(Vec<AllocatedNum<E>>), SynthesisError>
     where E: Engine,
           CS: ConstraintSystem<E>
