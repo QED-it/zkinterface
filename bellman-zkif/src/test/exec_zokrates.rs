@@ -30,7 +30,9 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
 
     // Non-contiguous IDs are not supported by ZoKrates yet.
-    assert!(is_contiguous(1, call.inputs().unwrap().variable_ids().unwrap().safe_slice()));
+    let input_ids = call.inputs().unwrap().variable_ids().unwrap().safe_slice();
+    assert!(is_contiguous(1, input_ids));
+    assert_eq!(1 + input_ids.len() as u64, call.inputs().unwrap().free_variable_id());
 
     let program = "src/test/demo.code";
     let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();

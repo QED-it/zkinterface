@@ -239,19 +239,22 @@ impl Messages {
         }
     }
 
-    pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
+    pub fn outgoing_assigned_variables(&self, first_id: u64) -> Option<Vec<AssignedVariable>> {
         let outputs = self.last_gadget_return()?.outputs()?;
         let output_var_ids = outputs.variable_ids()?.safe_slice();
         let values = outputs.values()?;
 
         let stride = values.len() / output_var_ids.len();
 
-        let assigned = (0..output_var_ids.len()).map(|i|
-            AssignedVariable {
-                id: output_var_ids[i],
-                element: &values[stride * i..stride * (i + 1)],
+        let mut assigned = vec![];
+        for i in 0..output_var_ids.len() {
+            if output_var_ids[i] >= first_id {
+                assigned.push(AssignedVariable {
+                    id: output_var_ids[i],
+                    element: &values[stride * i..stride * (i + 1)],
+                });
             }
-        ).collect();
+        }
 
         Some(assigned)
     }

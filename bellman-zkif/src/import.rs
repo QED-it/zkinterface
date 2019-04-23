@@ -109,12 +109,12 @@ pub fn call_gadget<E, CS>(
     };
 
     // Call.
-    let context = exec_fn(call_buf).or(Err(SynthesisError::Unsatisfiable))?;
+    let messages = exec_fn(call_buf).or(Err(SynthesisError::Unsatisfiable))?;
 
     // Parse Return message to find out how many local variables were used.
-    let gadget_return = context.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
+    let gadget_return = messages.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
     let outputs_conn = gadget_return.outputs().unwrap();
-    let last_local_id = outputs_conn.free_variable_id();
+    let free_variable_id = outputs_conn.free_variable_id();
 
     // Track variables by id. Used to convert constraints.
     let mut vars = HashMap::<u64, Variable>::new();
@@ -130,14 +130,14 @@ pub fn call_gadget<E, CS>(
 
     if generate_assignment {
         // Values of outputs.
-        if let Some(assignments) = context.outgoing_assigned_variables() {
+        if let Some(assignments) = messages.outgoing_assigned_variables(first_local_id) {
             for assignment in assignments {
                 values.insert(assignment.id, assignment.element);
             }
         };
 
         // Values of local variables.
-        for assignment in context.iter_assignment() {
+        for assignment in messages.iter_assignment() {
             values.insert(assignment.id, assignment.element);
         }
     }
@@ -148,6 +148,9 @@ pub fn call_gadget<E, CS>(
     // Allocate and assign outputs, if any.
     if let Some(out_ids) = outputs_conn.variable_ids() {
         for out_id in out_ids.safe_slice() {
+            if *out_id < first_local_id {
+                continue;
+            }
 
             // Allocate output.
             let num = AllocatedNum::alloc(
@@ -170,7 +173,7 @@ pub fn call_gadget<E, CS>(
     }
 
     // Allocate and assign locals.
-    for local_id in first_local_id..last_local_id {
+    for local_id in first_local_id..free_variable_id {
         let var = cs.alloc(
             || format!("local_{}", local_id), || {
                 if generate_assignment {
@@ -185,7 +188,7 @@ pub fn call_gadget<E, CS>(
     }
 
     // Add gadget constraints.
-    for (i, constraint) in context.iter_constraints().enumerate() {
+    for (i, constraint) in messages.iter_constraints().enumerate() {
         enforce(&mut cs.namespace(|| format!("constraint_{}", i)), &vars, &constraint);
     }
 
