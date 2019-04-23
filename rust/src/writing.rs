@@ -2,17 +2,15 @@
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use zkinterface_generated::zkinterface::{
+    Connection,
+    ConnectionArgs,
     GadgetCall,
     GadgetCallArgs,
-    GadgetInstance,
-    GadgetInstanceArgs,
     GadgetReturn,
     GadgetReturnArgs,
     Message,
     Root,
     RootArgs,
-    Witness,
-    WitnessArgs,
 };
 
 
@@ -20,22 +18,19 @@ use zkinterface_generated::zkinterface::{
 
 #[derive(Clone, Debug)]
 pub struct GadgetCallSimple {
-    pub instance: GadgetInstanceSimple,
+    pub inputs: ConnectionSimple,
     pub generate_r1cs: bool,
-    pub witness: Option<WitnessSimple>,
-}
+    // generate_assignment deduced from the presence of inputs.values
 
-#[derive(Clone, Debug)]
-pub struct GadgetInstanceSimple {
-    pub incoming_variable_ids: Vec<u64>,
-    pub free_variable_id_before: u64,
     pub field_order: Option<Vec<u8>>,
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
 #[derive(Clone, Debug)]
-pub struct WitnessSimple {
-    pub incoming_elements: Vec<Vec<u8>>,
+pub struct ConnectionSimple {
+    pub free_variable_id: u64,
+    pub variable_ids: Vec<u64>,
+    pub values: Option<Vec<u8>>,
     // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
@@ -45,15 +40,19 @@ impl GadgetCallSimple {
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
     ) -> WIPOffset<Root<'bldr>>
     {
-        let instance = Some(self.instance.build(builder));
-        let witness = self.witness.as_ref().map(|w| w.build(builder));
+        let inputs = Some(self.inputs.build(builder));
+
+        let field_order = self.field_order.as_ref().map(|s|
+            builder.create_vector(s));
 
         let call = GadgetCall::create(builder, &GadgetCallArgs {
-            instance,
+            inputs,
             generate_r1cs: self.generate_r1cs,
-            generate_assignment: self.witness.is_some(),
-            witness,
+            generate_assignment: self.inputs.values.is_some(),
+            field_order,
+            configuration: None,
         });
+
         Root::create(builder, &RootArgs {
             message_type: Message::GadgetCall,
             message: Some(call.as_union_value()),
@@ -61,50 +60,58 @@ impl GadgetCallSimple {
     }
 }
 
-impl GadgetInstanceSimple {
-    pub fn minimal(num_inputs: u64) -> GadgetInstanceSimple {
+impl ConnectionSimple {
+    pub fn simple_inputs(num_inputs: u64) -> ConnectionSimple {
         let first_input_id = 1;
         let first_local_id = first_input_id + num_inputs;
 
-        GadgetInstanceSimple {
-            incoming_variable_ids: (first_input_id..first_local_id).collect(),
-            free_variable_id_before: first_local_id,
-            field_order: None,
+        ConnectionSimple {
+            free_variable_id: first_local_id,
+            variable_ids: (first_input_id..first_local_id).collect(),
+            values: None,
+        }
+    }
+
+    pub fn simple_outputs(num_inputs: u64, num_outputs: u64, num_locals: u64) -> ConnectionSimple {
+        let first_input_id = 1;
+        let first_output_id = first_input_id + num_inputs;
+        let first_local_id = first_output_id + num_outputs;
+
+        ConnectionSimple {
+            free_variable_id: first_local_id + num_locals,
+            variable_ids: (first_output_id..first_local_id).collect(),
+            values: None,
         }
     }
 
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<GadgetInstance<'bldr>> {
-        let i = GadgetInstanceArgs {
-            incoming_variable_ids: Some(builder.create_vector(&self.incoming_variable_ids)),
-            free_variable_id_before: self.free_variable_id_before,
-            field_order: self.field_order.as_ref().map(|s| builder.create_vector(s)),
-            configuration: None,
-        };
-        GadgetInstance::create(builder, &i)
-    }
-}
+    ) -> WIPOffset<Connection<'bldr>>
+    {
+        let variable_ids = Some(builder.create_vector(&self.variable_ids));
 
-impl WitnessSimple {
-    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        &'args self,
-        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Witness<'bldr>> {
-        let elements = &self.incoming_elements;
-        let total_size = elements.len() * elements[0].len();
-        builder.start_vector::<u8>(total_size);
-        for element in elements.iter().rev() {
-            for i in (0..element.len()).rev() {
-                builder.push(element[i]);
-            }
-        }
-        let incoming_bytes = builder.end_vector(elements.len());
+        let values = self.values.as_ref().map(|values|
+            builder.create_vector(values));
 
-        Witness::create(builder, &WitnessArgs {
-            incoming_elements: Some(incoming_bytes),
+        Connection::create(builder, &ConnectionArgs {
+            free_variable_id: self.free_variable_id,
+            variable_ids,
+            values,
             info: None,
+        })
+    }
+
+    pub fn parse(conn: &Connection) -> Option<ConnectionSimple> {
+        let variable_ids = Vec::from(conn.variable_ids()?.safe_slice());
+
+        let values = conn.values().map(|bytes|
+            Vec::from(bytes));
+
+        Some(ConnectionSimple {
+            free_variable_id: conn.free_variable_id(),
+            variable_ids,
+            values,
         })
     }
 }
@@ -114,58 +121,52 @@ impl WitnessSimple {
 
 #[derive(Clone, Debug)]
 pub struct GadgetReturnSimple {
-    pub free_variable_id_after: u64,
-    pub outgoing_variable_ids: Vec<u64>,
-    pub outgoing_elements: Option<Vec<Vec<u8>>>,
+    pub outputs: ConnectionSimple,
     // pub error: Option<String>,
-    // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
 impl GadgetReturnSimple {
-    pub fn minimal(num_inputs: u64, num_outputs: u64, num_locals: u64) -> GadgetReturnSimple {
-        let first_input_id = 1;
-        let first_output_id = first_input_id + num_inputs;
-        let first_local_id = first_output_id + num_outputs;
-
-        GadgetReturnSimple {
-            free_variable_id_after: first_local_id + num_locals,
-            outgoing_variable_ids: (first_output_id..first_local_id).collect(),
-            outgoing_elements: None,
-        }
-    }
-
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
     ) -> WIPOffset<Root<'bldr>> {
-        let outgoing_variable_ids = Some(builder.create_vector(&self.outgoing_variable_ids));
+        let outputs = Some(self.outputs.build(builder));
 
-        let outgoing_elements = self.outgoing_elements.as_ref().map(|elements| {
-            let total_size = if elements.len() == 0 {
-                0
-            } else {
-                elements.len() * elements[0].len()
-            };
-            builder.start_vector::<u8>(total_size);
-            for element in elements.iter().rev() {
-                for i in (0..element.len()).rev() {
-                    builder.push(element[i]);
-                }
-            }
-            builder.end_vector(total_size)
-        });
-
-        let ret = GadgetReturn::create(builder, &GadgetReturnArgs {
-            free_variable_id_after: self.free_variable_id_after,
-            outgoing_variable_ids,
-            outgoing_elements,
+        let gadget_return = GadgetReturn::create(builder, &GadgetReturnArgs {
+            outputs,
             error: None,
-            info: None,
         });
-
         Root::create(builder, &RootArgs {
             message_type: Message::GadgetReturn,
-            message: Some(ret.as_union_value()),
+            message: Some(gadget_return.as_union_value()),
         })
     }
 }
+
+
+// ==== Helpers ====
+
+/*
+pub fn concatenate_values(builder, values) {
+    let total_size = if values.len() == 0 {
+        0
+    } else {
+        values.len() * values[0].len()
+    };
+    builder.start_vector::<u8>(total_size);
+    for value in values.iter().rev() {
+        for i in (0..value.len()).rev() {
+            builder.push(value[i]);
+        }
+    }
+    builder.end_vector(total_size)
+}
+
+pub fn split_values(values) {
+    let stride = bytes.len() / variable_ids.len();
+
+    (0..variable_ids.len()).map(|i|
+        Vec::from(&bytes[stride * i..stride * (i + 1)])
+    ).collect()
+}
+*/

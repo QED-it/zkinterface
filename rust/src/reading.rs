@@ -12,16 +12,16 @@ use zkinterface_generated::zkinterface::Root;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_gadget_call()?;
-    let incoming_variable_ids = call.instance()?.incoming_variable_ids()?.safe_slice();
+    let input_var_ids = call.inputs()?.variable_ids()?.safe_slice();
 
     let assigned = if call.generate_assignment() {
-        let elements = call.witness()?.incoming_elements()?;
-        let stride = elements.len() / incoming_variable_ids.len();
+        let bytes = call.inputs()?.values()?;
+        let stride = bytes.len() / input_var_ids.len();
 
-        (0..incoming_variable_ids.len()).map(|i|
+        (0..input_var_ids.len()).map(|i|
             AssignedVariable {
-                id: incoming_variable_ids[i],
-                element: &elements[stride * i..stride * (i + 1)],
+                id: input_var_ids[i],
+                element: &bytes[stride * i..stride * (i + 1)],
             }
         ).collect()
     } else {
@@ -204,15 +204,14 @@ impl<'a> Iterator for R1CSIterator<'a> {
         fn to_vec<'a>(lc: VariableValues<'a>) -> Vec<Term<'a>> {
             let mut terms = vec![];
             let var_ids: &[u64] = lc.variable_ids().unwrap().safe_slice();
-            let elements: &[u8] = lc.elements().unwrap();
+            let values: &[u8] = lc.values().unwrap();
 
-            let stride = elements.len() / var_ids.len();
-            if stride == 0 { panic!("Empty elements data."); }
+            let stride = values.len() / var_ids.len();
 
             for i in 0..var_ids.len() {
                 terms.push(Term {
                     id: var_ids[i],
-                    element: &elements[stride * i..stride * (i + 1)],
+                    element: &values[stride * i..stride * (i + 1)],
                 });
             }
 
@@ -235,22 +234,22 @@ impl Messages {
         AssignedVariablesIterator {
             messages_iter: self.into_iter(),
             var_ids: &[],
-            elements: &[],
+            values: &[],
             next_element: 0,
         }
     }
 
     pub fn outgoing_assigned_variables(&self) -> Option<Vec<AssignedVariable>> {
-        let outgoing_variable_ids = self.last_gadget_return()?.outgoing_variable_ids()?.safe_slice();
-        let elements = self.last_gadget_return()?.outgoing_elements()?;
+        let outputs = self.last_gadget_return()?.outputs()?;
+        let output_var_ids = outputs.variable_ids()?.safe_slice();
+        let values = outputs.values()?;
 
-        let stride = elements.len() / outgoing_variable_ids.len();
-        if stride == 0 { panic!("Empty elements data."); }
+        let stride = values.len() / output_var_ids.len();
 
-        let assigned = (0..outgoing_variable_ids.len()).map(|i|
+        let assigned = (0..output_var_ids.len()).map(|i|
             AssignedVariable {
-                id: outgoing_variable_ids[i],
-                element: &elements[stride * i..stride * (i + 1)],
+                id: output_var_ids[i],
+                element: &values[stride * i..stride * (i + 1)],
             }
         ).collect();
 
@@ -270,7 +269,7 @@ pub struct AssignedVariablesIterator<'a> {
 
     // Iterate over variables in the current message.
     var_ids: &'a [u64],
-    elements: &'a [u8],
+    values: &'a [u8],
     next_element: usize,
 }
 
@@ -288,21 +287,21 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
                 None => continue,
             };
 
-            // Start iterating the elements of the current message.
+            // Start iterating the values of the current message.
             self.var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
-            self.elements = assigned_variables.elements().unwrap();
+            self.values = assigned_variables.values().unwrap();
             self.next_element = 0;
         }
 
-        let stride = self.elements.len() / self.var_ids.len();
-        if stride == 0 { panic!("Empty elements data."); }
+        let stride = self.values.len() / self.var_ids.len();
+        //if stride == 0 { panic!("Empty values data."); }
 
         let i = self.next_element;
         self.next_element += 1;
 
         Some(AssignedVariable {
             id: self.var_ids[i],
-            element: &self.elements[stride * i..stride * (i + 1)],
+            element: &self.values[stride * i..stride * (i + 1)],
         })
     }
     // TODO: Replace unwrap and panic with Result.

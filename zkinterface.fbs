@@ -11,14 +11,17 @@ union Message {
     R1CSConstraints,
     AssignedVariables,
 
-    GadgetInstance,
+    Connection,
 }
 
 /// Caller calls a gadget.
 table GadgetCall {
-    /// All details necessary to construct the instance.
-    /// The same instance must be provided for R1CS and assignment generation.
-    instance            :GadgetInstance;
+    /// Incoming Variables to use as connections to the gadget.
+    /// Allocated by the caller.
+    /// Includes the first free Variable ID; the gadget can allocate new IDs
+    /// starting with `inputs.free_variable_id`.
+    /// The same structure must be provided for R1CS and assignment generation.
+    inputs              :Connection;
 
     /// Whether constraints should be generated.
     generate_r1cs       :bool;
@@ -26,41 +29,49 @@ table GadgetCall {
     /// Whether an assignment should be generated.
     /// Provide witness values to the gadget.
     generate_assignment :bool;
-    witness             :Witness;
+
+    /// The order of the field used by the current system.
+    /// A BigInt.
+    field_order             :[ubyte];
+
+    /// Optional: Any static parameter that may influence the instance
+    /// construction. Parameters can be standard, conventional, or custom.
+    /// Example: function_name, if a gadget supports multiple function variants.
+    /// Example: the depth of a Merkle tree.
+    /// Counter-example: a Merkle path is not configuration (rather witness).
+    configuration           :[KeyValue];
 }
 
-    /// Description of a particular instance of a gadget.
-    table GadgetInstance {
-        /// Incoming Variables to use as connections to the gadget.
-        /// Allocated by the caller.
-        /// Assigned by the caller in `Witness.incoming_elements`.
-        incoming_variable_ids   :[uint64];
+/// The gadget returns to the caller. This is the final message
+/// after all R1CSConstraints or AssignedVariables have been sent.
+table GadgetReturn {
+    /// Outgoing Variables to use as connections to the gadget.
+    /// There may be no Outgoing Variables if the gadget is a pure assertion.
+    /// Allocated by the gadget.
+    /// Include the first variable ID free after the gadget call;
+    /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
+    outputs :Connection;
 
-        /// First free Variable ID before the call.
-        /// The gadget can allocate new Variable IDs starting with this one.
-        free_variable_id_before :uint64;
+    /// Optional: An error message. Null if no error.
+    error   :string;
+}
 
-        /// The order of the field used by the current system.
-        /// A BigInt.
-        field_order             :[ubyte];
+    /// A connection into a sub-circuits.
+    table Connection {
+        /// First variable ID free after this connection.
+        /// A variable ID greater than all IDs allocated at the time.
+        free_variable_id :uint64;
 
-        /// Optional: Any static parameter that may influence the instance
-        /// construction. Parameters can be standard, conventional, or custom.
-        /// Example: function_name, if a gadget supports multiple function variants.
-        /// Example: the depth of a Merkle tree.
-        /// Counter-example: a Merkle path is not configuration (rather witness).
-        configuration           :[KeyValue];
-    }
+        /// Variables to use as connections to the sub-circuit.
+        variable_ids  :[uint64];
 
-    /// Details necessary to compute an assignment.
-    table Witness {
-        /// The values that the caller assigned to Incoming Variables.
-        /// Contiguous BigInts in the same order as `incoming_variable_ids`.
-        incoming_elements :[ubyte];
+        /// Optional: The values assigned to variables, if any.
+        /// Contiguous BigInts in the same order as `variable_ids`.
+        values      :[ubyte];
 
-        /// Optional: Any custom data useful to the gadget to compute assignments.
+        /// Optional: Any info that may be useful to the recipient.
         /// Example: a Merkle authentication path.
-        info              :[KeyValue];
+        info                   :[KeyValue];
     }
 
     /// Generic key-value for custom attributes.
@@ -68,30 +79,6 @@ table GadgetCall {
         key   :string;
         value :[ubyte];
     }
-
-/// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or AssignedVariables have been sent.
-table GadgetReturn {
-    /// First variable ID free after the gadget call.
-    /// A variable ID greater than all IDs allocated by the gadget.
-    free_variable_id_after :uint64;
-
-    /// Outgoing Variables to use as connections to the gadget.
-    /// There may be no Outgoing Variables if the gadget is a pure assertion.
-    /// Allocated by the gadget.
-    /// Assigned by the called gadget in `outgoing_elements`.
-    outgoing_variable_ids  :[uint64];
-
-    /// The values that the gadget assigned to outgoing variables, if any.
-    /// Contiguous BigInts in the same order as `outgoing_variable_ids`.
-    outgoing_elements      :[ubyte];
-
-    /// Optional: Any info that may be useful to the caller.
-    info                   :[KeyValue];
-
-    /// Optional: An error message. Null if no error.
-    error                  :string;
-}
 
 /// Report constraints to be added to the constraints system.
 /// To send to the stream of constraints.
@@ -130,7 +117,7 @@ table AssignedVariables {
         ///
         /// The element representation may be truncated and therefore shorter
         /// than the canonical representation. Truncated bytes are treated as zeros.
-        elements       :[ubyte];
+        values         :[ubyte];
     }
 
     // type Variable ID = uint64

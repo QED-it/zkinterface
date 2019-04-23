@@ -10,16 +10,14 @@ use sapling_crypto::circuit::num::AllocatedNum;
 use std::collections::HashMap;
 use zkinterface::{
     flatbuffers::FlatBufferBuilder,
-    writing::GadgetInstanceSimple,
-    reading::{Messages, Constraint, Term},
+    reading::{Constraint, Messages, Term},
+    writing::ConnectionSimple,
     zkinterface_generated::zkinterface::{
         GadgetCall,
         GadgetCallArgs,
         Message,
         Root,
         RootArgs,
-        Witness,
-        WitnessArgs,
     },
 };
 
@@ -68,41 +66,38 @@ pub fn call_gadget<E, CS>(
 {
     let generate_assignment = inputs.len() > 0 && inputs[0].get_value().is_some();
 
-    // Describe the gadget instance.
+    // Serialize input values.
+    let values = if generate_assignment {
+        let mut values = Vec::<u8>::new();
+        for i in inputs {
+            i.get_value().unwrap().into_repr().write_le(&mut values)?;
+        }
+        Some(values)
+    } else {
+        None
+    };
+
+    // Describe the inputs connection.
     let first_input_id = 1;
     let first_local_id = first_input_id + inputs.len() as u64;
 
-    let instance = GadgetInstanceSimple {
-        incoming_variable_ids: (first_input_id..first_local_id).collect(),
-        free_variable_id_before: first_local_id,
-        field_order: None,
+    let inputs_conn = ConnectionSimple {
+        free_variable_id: first_local_id,
+        variable_ids: (first_input_id..first_local_id).collect(),
+        values,
     };
 
     // Prepare the call.
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
     let call_buf = {
-        let instance = Some(instance.build(&mut builder));
-
-        // Serialize inputs.
-        let witness = if generate_assignment {
-            let mut elements = Vec::<u8>::new();
-            for i in inputs {
-                i.get_value().unwrap().into_repr().write_le(&mut elements)?;
-            }
-            let incoming_elements = Some(builder.create_vector(&elements));
-            Some(Witness::create(&mut builder, &WitnessArgs {
-                incoming_elements,
-                info: None,
-            }))
-        } else {
-            None
-        };
+        let inputs = Some(inputs_conn.build(&mut builder));
 
         let call = GadgetCall::create(&mut builder, &GadgetCallArgs {
-            instance,
+            inputs,
             generate_r1cs: true,
             generate_assignment,
-            witness,
+            field_order: None,
+            configuration: None,
         });
 
         let root = Root::create(&mut builder, &RootArgs {
@@ -118,7 +113,8 @@ pub fn call_gadget<E, CS>(
 
     // Parse Return message to find out how many local variables were used.
     let gadget_return = context.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
-    let last_local_id = gadget_return.free_variable_id_after();
+    let outputs_conn = gadget_return.outputs().unwrap();
+    let last_local_id = outputs_conn.free_variable_id();
 
     // Track variables by id. Used to convert constraints.
     let mut vars = HashMap::<u64, Variable>::new();
@@ -126,7 +122,7 @@ pub fn call_gadget<E, CS>(
     vars.insert(0, CS::one());
 
     for i in 0..inputs.len() {
-        vars.insert(instance.incoming_variable_ids[i], inputs[i].get_variable());
+        vars.insert(inputs_conn.variable_ids[i], inputs[i].get_variable());
     }
 
     // Collect assignments. Used by the alloc's below.
@@ -150,10 +146,13 @@ pub fn call_gadget<E, CS>(
     let mut outputs = Vec::new();
 
     // Allocate and assign outputs, if any.
-    if let Some(out_ids) = gadget_return.outgoing_variable_ids() {
+    if let Some(out_ids) = outputs_conn.variable_ids() {
         for out_id in out_ids.safe_slice() {
+
+            // Allocate output.
             let num = AllocatedNum::alloc(
                 cs.namespace(|| format!("output_{}", out_id)), || {
+                    // Parse value if any.
                     let value = if generate_assignment {
                         values.get(out_id)
                             .map(|v| le_to_fr::<E>(*v))
@@ -163,6 +162,8 @@ pub fn call_gadget<E, CS>(
                     };
                     value
                 })?;
+
+            // Track output variable.
             vars.insert(*out_id, num.get_variable());
             outputs.push(num);
         }
