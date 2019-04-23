@@ -4,7 +4,6 @@ use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     GadgetCall,
-    GadgetReturn,
     get_size_prefixed_root_as_root,
     VariableValues,
 };
@@ -75,17 +74,17 @@ impl Messages {
     }
 
     // Return message
-    pub fn last_gadget_return(&self) -> Option<GadgetReturn> {
+    pub fn last_gadget_return(&self) -> Option<GadgetCall> {
         let returns = self.gadget_returns();
         if returns.len() > 0 {
             Some(returns[returns.len() - 1])
         } else { None }
     }
 
-    pub fn gadget_returns(&self) -> Vec<GadgetReturn> {
+    pub fn gadget_returns(&self) -> Vec<GadgetCall> {
         let mut returns = vec![];
         for message in self {
-            match message.message_as_gadget_return() {
+            match message.message_as_gadget_call() {
                 Some(ret) => returns.push(ret),
                 None => continue,
             };
@@ -240,7 +239,7 @@ impl Messages {
     }
 
     pub fn outgoing_assigned_variables(&self, first_id: u64) -> Option<Vec<AssignedVariable>> {
-        let outputs = self.last_gadget_return()?.outputs()?;
+        let outputs = self.last_gadget_return()?.inputs()?;
         let output_var_ids = outputs.variable_ids()?.safe_slice();
         let values = outputs.values()?;
 

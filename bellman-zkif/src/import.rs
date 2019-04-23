@@ -113,7 +113,7 @@ pub fn call_gadget<E, CS>(
 
     // Parse Return message to find out how many local variables were used.
     let gadget_return = messages.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
-    let outputs_conn = gadget_return.outputs().unwrap();
+    let outputs_conn = gadget_return.inputs().unwrap();
     let free_variable_id = outputs_conn.free_variable_id();
 
     // Track variables by id. Used to convert constraints.
