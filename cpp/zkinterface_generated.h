@@ -99,7 +99,7 @@ bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffers::Vec
 /// Caller calls a gadget.
 struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_INPUTS = 4,
+    VT_CONNECTIONS = 4,
     VT_GENERATE_R1CS = 6,
     VT_GENERATE_ASSIGNMENT = 8,
     VT_FIELD_ORDER = 10,
@@ -110,8 +110,8 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   /// Includes the first free Variable ID; the gadget can allocate new IDs
   /// starting with `inputs.free_variable_id`.
   /// The same structure must be provided for R1CS and assignment generation.
-  const Connection *inputs() const {
-    return GetPointer<const Connection *>(VT_INPUTS);
+  const Connection *connections() const {
+    return GetPointer<const Connection *>(VT_CONNECTIONS);
   }
   /// Whether constraints should be generated.
   bool generate_r1cs() const {
@@ -137,8 +137,8 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_INPUTS) &&
-           verifier.VerifyTable(inputs()) &&
+           VerifyOffset(verifier, VT_CONNECTIONS) &&
+           verifier.VerifyTable(connections()) &&
            VerifyField<uint8_t>(verifier, VT_GENERATE_R1CS) &&
            VerifyField<uint8_t>(verifier, VT_GENERATE_ASSIGNMENT) &&
            VerifyOffset(verifier, VT_FIELD_ORDER) &&
@@ -153,8 +153,8 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct GadgetCallBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_inputs(flatbuffers::Offset<Connection> inputs) {
-    fbb_.AddOffset(GadgetCall::VT_INPUTS, inputs);
+  void add_connections(flatbuffers::Offset<Connection> connections) {
+    fbb_.AddOffset(GadgetCall::VT_CONNECTIONS, connections);
   }
   void add_generate_r1cs(bool generate_r1cs) {
     fbb_.AddElement<uint8_t>(GadgetCall::VT_GENERATE_R1CS, static_cast<uint8_t>(generate_r1cs), 0);
@@ -182,7 +182,7 @@ struct GadgetCallBuilder {
 
 inline flatbuffers::Offset<GadgetCall> CreateGadgetCall(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> inputs = 0,
+    flatbuffers::Offset<Connection> connections = 0,
     bool generate_r1cs = false,
     bool generate_assignment = false,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order = 0,
@@ -190,7 +190,7 @@ inline flatbuffers::Offset<GadgetCall> CreateGadgetCall(
   GadgetCallBuilder builder_(_fbb);
   builder_.add_configuration(configuration);
   builder_.add_field_order(field_order);
-  builder_.add_inputs(inputs);
+  builder_.add_connections(connections);
   builder_.add_generate_assignment(generate_assignment);
   builder_.add_generate_r1cs(generate_r1cs);
   return builder_.Finish();
@@ -198,7 +198,7 @@ inline flatbuffers::Offset<GadgetCall> CreateGadgetCall(
 
 inline flatbuffers::Offset<GadgetCall> CreateGadgetCallDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> inputs = 0,
+    flatbuffers::Offset<Connection> connections = 0,
     bool generate_r1cs = false,
     bool generate_assignment = false,
     const std::vector<uint8_t> *field_order = nullptr,
@@ -207,7 +207,7 @@ inline flatbuffers::Offset<GadgetCall> CreateGadgetCallDirect(
   auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*configuration) : 0;
   return zkinterface::CreateGadgetCall(
       _fbb,
-      inputs,
+      connections,
       generate_r1cs,
       generate_assignment,
       field_order__,

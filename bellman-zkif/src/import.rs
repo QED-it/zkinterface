@@ -90,10 +90,10 @@ pub fn call_gadget<E, CS>(
     // Prepare the call.
     let mut builder = &mut FlatBufferBuilder::new_with_capacity(1024);
     let call_buf = {
-        let inputs = Some(inputs_conn.build(&mut builder));
+        let connections = Some(inputs_conn.build(&mut builder));
 
         let call = GadgetCall::create(&mut builder, &GadgetCallArgs {
-            inputs,
+            connections,
             generate_r1cs: true,
             generate_assignment,
             field_order: None,
@@ -113,7 +113,7 @@ pub fn call_gadget<E, CS>(
 
     // Parse Return message to find out how many local variables were used.
     let gadget_return = messages.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
-    let outputs_conn = gadget_return.inputs().unwrap();
+    let outputs_conn = gadget_return.connections().unwrap();
     let free_variable_id = outputs_conn.free_variable_id();
 
     // Track variables by id. Used to convert constraints.

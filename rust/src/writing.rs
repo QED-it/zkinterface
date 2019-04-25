@@ -18,9 +18,9 @@ use zkinterface_generated::zkinterface::{
 
 #[derive(Clone, Debug)]
 pub struct GadgetCallSimple {
-    pub inputs: ConnectionSimple,
+    pub connection: ConnectionSimple,
     pub generate_r1cs: bool,
-    // generate_assignment deduced from the presence of inputs.values
+    // generate_assignment deduced from the presence of connection.values
 
     pub field_order: Option<Vec<u8>>,
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
@@ -40,15 +40,15 @@ impl GadgetCallSimple {
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
     ) -> WIPOffset<Root<'bldr>>
     {
-        let inputs = Some(self.inputs.build(builder));
+        let connections = Some(self.connection.build(builder));
 
         let field_order = self.field_order.as_ref().map(|s|
             builder.create_vector(s));
 
         let call = GadgetCall::create(builder, &GadgetCallArgs {
-            inputs,
+            connections,
             generate_r1cs: self.generate_r1cs,
-            generate_assignment: self.inputs.values.is_some(),
+            generate_assignment: self.connection.values.is_some(),
             field_order,
             configuration: None,
         });

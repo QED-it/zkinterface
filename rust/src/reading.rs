@@ -11,10 +11,10 @@ use zkinterface_generated::zkinterface::Root;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_gadget_call()?;
-    let input_var_ids = call.inputs()?.variable_ids()?.safe_slice();
+    let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
     let assigned = if call.generate_assignment() {
-        let bytes = call.inputs()?.values()?;
+        let bytes = call.connections()?.values()?;
         let stride = bytes.len() / input_var_ids.len();
 
         (0..input_var_ids.len()).map(|i|
@@ -239,7 +239,7 @@ impl Messages {
     }
 
     pub fn outgoing_assigned_variables(&self, first_id: u64) -> Option<Vec<AssignedVariable>> {
-        let outputs = self.last_gadget_return()?.inputs()?;
+        let outputs = self.last_gadget_return()?.connections()?;
         let output_var_ids = outputs.variable_ids()?.safe_slice();
         let values = outputs.values()?;
 

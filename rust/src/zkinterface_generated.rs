@@ -117,13 +117,13 @@ impl<'a> GadgetCall<'a> {
       let mut builder = GadgetCallBuilder::new(_fbb);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_order { builder.add_field_order(x); }
-      if let Some(x) = args.inputs { builder.add_inputs(x); }
+      if let Some(x) = args.connections { builder.add_connections(x); }
       builder.add_generate_assignment(args.generate_assignment);
       builder.add_generate_r1cs(args.generate_r1cs);
       builder.finish()
     }
 
-    pub const VT_INPUTS: flatbuffers::VOffsetT = 4;
+    pub const VT_CONNECTIONS: flatbuffers::VOffsetT = 4;
     pub const VT_GENERATE_R1CS: flatbuffers::VOffsetT = 6;
     pub const VT_GENERATE_ASSIGNMENT: flatbuffers::VOffsetT = 8;
     pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
@@ -135,8 +135,8 @@ impl<'a> GadgetCall<'a> {
   /// starting with `inputs.free_variable_id`.
   /// The same structure must be provided for R1CS and assignment generation.
   #[inline]
-  pub fn inputs(&self) -> Option<Connection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(GadgetCall::VT_INPUTS, None)
+  pub fn connections(&self) -> Option<Connection<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(GadgetCall::VT_CONNECTIONS, None)
   }
   /// Whether constraints should be generated.
   #[inline]
@@ -167,7 +167,7 @@ impl<'a> GadgetCall<'a> {
 }
 
 pub struct GadgetCallArgs<'a> {
-    pub inputs: Option<flatbuffers::WIPOffset<Connection<'a >>>,
+    pub connections: Option<flatbuffers::WIPOffset<Connection<'a >>>,
     pub generate_r1cs: bool,
     pub generate_assignment: bool,
     pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
@@ -177,7 +177,7 @@ impl<'a> Default for GadgetCallArgs<'a> {
     #[inline]
     fn default() -> Self {
         GadgetCallArgs {
-            inputs: None,
+            connections: None,
             generate_r1cs: false,
             generate_assignment: false,
             field_order: None,
@@ -191,8 +191,8 @@ pub struct GadgetCallBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GadgetCallBuilder<'a, 'b> {
   #[inline]
-  pub fn add_inputs(&mut self, inputs: flatbuffers::WIPOffset<Connection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(GadgetCall::VT_INPUTS, inputs);
+  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Connection<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(GadgetCall::VT_CONNECTIONS, connections);
   }
   #[inline]
   pub fn add_generate_r1cs(&mut self, generate_r1cs: bool) {

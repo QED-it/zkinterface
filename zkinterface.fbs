@@ -21,7 +21,7 @@ table GadgetCall {
     /// Includes the first free Variable ID; the gadget can allocate new IDs
     /// starting with `inputs.free_variable_id`.
     /// The same structure must be provided for R1CS and assignment generation.
-    inputs              :Connection;
+    connections         :Connection;
 
     /// Whether constraints should be generated.
     generate_r1cs       :bool;
