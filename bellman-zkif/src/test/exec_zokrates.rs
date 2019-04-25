@@ -5,9 +5,9 @@
 ./zokrates generate-proof --backend zkinterface
 
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- call.zkif          && cat call.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- return_r1cs.zkif   && cat return_r1cs.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_r1cs.zkif   && cat circuit_r1cs.json
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- r1cs.zkif          && cat r1cs.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- return_assign.zkif && cat return_assign.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_assign.zkif && cat circuit_assign.json
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- assign.zkif        && cat assign.json
 */
 
@@ -75,10 +75,10 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
             let _out = exec(&mut cmd);
 
             load_message("r1cs.zkif")?;
-            load_message("return_r1cs.zkif")?;
+            load_message("circuit_r1cs.zkif")?;
         }
 
-        if call.generate_assignment() {
+        if call.witness_generation() {
             // Compute assignment.
             {
                 let mut cmd = make_zokrates_command();
@@ -99,7 +99,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
                 let _out = exec(&mut cmd);
 
                 load_message("assign.zkif")?;
-                load_message("return_assign.zkif")?;
+                load_message("circuit_assign.zkif")?;
             }
         }
     }

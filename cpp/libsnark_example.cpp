@@ -38,14 +38,14 @@ public:
 
     size_t num_outputs() { return output.bits.size(); }
 
-    void generate_r1cs_constraints() {
-        left.generate_r1cs_constraints();
-        right.generate_r1cs_constraints();
-        output.generate_r1cs_constraints();
-        hasher.generate_r1cs_constraints();
+    void r1cs_generation_constraints() {
+        left.r1cs_generation_constraints();
+        right.r1cs_generation_constraints();
+        output.r1cs_generation_constraints();
+        hasher.r1cs_generation_constraints();
     }
 
-    vector<FieldT> generate_r1cs_witness(const vector<FieldT> &in_elements) {
+    vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements) {
         assert(in_elements.size() == num_inputs());
         size_t half_inputs = in_elements.size() / 2;
 
@@ -58,9 +58,9 @@ public:
             right_bits[i] = (in_elements[half_inputs + i] == 1);
         }
 
-        left.generate_r1cs_witness(left_bits);
-        right.generate_r1cs_witness(right_bits);
-        hasher.generate_r1cs_witness();
+        left.r1cs_generation_witness(left_bits);
+        right.r1cs_generation_witness(right_bits);
+        hasher.r1cs_generation_witness();
 
         return output.bits.get_vals(pb);
     }
@@ -82,11 +82,11 @@ bool sha256_gadget_call(
 ) {
     auto root = GetSizePrefixedRoot(call_msg);
 
-    if (root->message_type() != Message_GadgetCall) {
+    if (root->message_type() != Message_Circuit) {
         return return_error(return_callback, return_context, "Unexpected message");
     }
 
-    const GadgetCall *call = root->message_as_GadgetCall();
+    const Circuit *call = root->message_as_Circuit();
     const GadgetInstance *instance = call->instance();
 
     libff::alt_bn128_pp::init_public_params();
@@ -94,8 +94,8 @@ bool sha256_gadget_call(
     sha256_gadget gadget(instance);
 
     // Instance reduction.
-    if (call->generate_r1cs()) {
-        gadget.generate_r1cs_constraints();
+    if (call->r1cs_generation()) {
+        gadget.r1cs_generation_constraints();
 
         auto constraints_msg = serialize_protoboard_constraints(instance, gadget.borrow_protoboard());
 
@@ -109,10 +109,10 @@ bool sha256_gadget_call(
     // Witness reduction.
     vector<FieldT> out_elements;
 
-    if (call->generate_assignment()) {
+    if (call->witness_generation()) {
         vector<FieldT> in_elements = deserialize_incoming_elements(call);
 
-        out_elements = gadget.generate_r1cs_witness(in_elements);
+        out_elements = gadget.r1cs_generation_witness(in_elements);
 
         auto assignment_msg = serialize_protoboard_local_assignment(
                 instance,
@@ -132,7 +132,7 @@ bool sha256_gadget_call(
 
     uint64_t num_local_vars = gadget.borrow_protoboard().num_variables() - gadget.num_inputs();
     uint64_t free_variable_id_after = instance->free_variable_id_before() + num_local_vars;
-    auto maybe_out_elements = call->generate_assignment() ? serialize_elements(builder, out_elements) : 0;
+    auto maybe_out_elements = call->witness_generation() ? serialize_elements(builder, out_elements) : 0;
 
     auto response = CreateGadgetReturn(
             builder,

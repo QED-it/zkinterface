@@ -17,7 +17,7 @@ pub mod zkinterface {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Message {
   NONE = 0,
-  GadgetCall = 1,
+  Circuit = 1,
   GadgetReturn = 2,
   R1CSConstraints = 3,
   AssignedVariables = 4,
@@ -62,7 +62,7 @@ impl flatbuffers::Push for Message {
 #[allow(non_camel_case_types)]
 const ENUM_VALUES_MESSAGE:[Message; 6] = [
   Message::NONE,
-  Message::GadgetCall,
+  Message::Circuit,
   Message::GadgetReturn,
   Message::R1CSConstraints,
   Message::AssignedVariables,
@@ -72,7 +72,7 @@ const ENUM_VALUES_MESSAGE:[Message; 6] = [
 #[allow(non_camel_case_types)]
 const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
     "NONE",
-    "GadgetCall",
+    "Circuit",
     "GadgetReturn",
     "R1CSConstraints",
     "AssignedVariables",
@@ -85,16 +85,18 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
-/// Caller calls a gadget.
-pub enum GadgetCallOffset {}
+/// A description of a circuit or sub-circuit.
+/// This can be a complete circuit ready for proving,
+/// or a part of a circuit being built.
+pub enum CircuitOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct GadgetCall<'a> {
+pub struct Circuit<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GadgetCall<'a> {
-    type Inner = GadgetCall<'a>;
+impl<'a> flatbuffers::Follow<'a> for Circuit<'a> {
+    type Inner = Circuit<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -103,29 +105,29 @@ impl<'a> flatbuffers::Follow<'a> for GadgetCall<'a> {
     }
 }
 
-impl<'a> GadgetCall<'a> {
+impl<'a> Circuit<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        GadgetCall {
+        Circuit {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args GadgetCallArgs<'args>) -> flatbuffers::WIPOffset<GadgetCall<'bldr>> {
-      let mut builder = GadgetCallBuilder::new(_fbb);
+        args: &'args CircuitArgs<'args>) -> flatbuffers::WIPOffset<Circuit<'bldr>> {
+      let mut builder = CircuitBuilder::new(_fbb);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_order { builder.add_field_order(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
-      builder.add_generate_assignment(args.generate_assignment);
-      builder.add_generate_r1cs(args.generate_r1cs);
+      builder.add_witness_generation(args.witness_generation);
+      builder.add_r1cs_generation(args.r1cs_generation);
       builder.finish()
     }
 
     pub const VT_CONNECTIONS: flatbuffers::VOffsetT = 4;
-    pub const VT_GENERATE_R1CS: flatbuffers::VOffsetT = 6;
-    pub const VT_GENERATE_ASSIGNMENT: flatbuffers::VOffsetT = 8;
+    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 6;
+    pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 8;
     pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
 
@@ -136,24 +138,24 @@ impl<'a> GadgetCall<'a> {
   /// The same structure must be provided for R1CS and assignment generation.
   #[inline]
   pub fn connections(&self) -> Option<Connection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(GadgetCall::VT_CONNECTIONS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(Circuit::VT_CONNECTIONS, None)
   }
   /// Whether constraints should be generated.
   #[inline]
-  pub fn generate_r1cs(&self) -> bool {
-    self._tab.get::<bool>(GadgetCall::VT_GENERATE_R1CS, Some(false)).unwrap()
+  pub fn r1cs_generation(&self) -> bool {
+    self._tab.get::<bool>(Circuit::VT_R1CS_GENERATION, Some(false)).unwrap()
   }
   /// Whether an assignment should be generated.
   /// Provide witness values to the gadget.
   #[inline]
-  pub fn generate_assignment(&self) -> bool {
-    self._tab.get::<bool>(GadgetCall::VT_GENERATE_ASSIGNMENT, Some(false)).unwrap()
+  pub fn witness_generation(&self) -> bool {
+    self._tab.get::<bool>(Circuit::VT_WITNESS_GENERATION, Some(false)).unwrap()
   }
   /// The order of the field used by the current system.
   /// A BigInt.
   #[inline]
   pub fn field_order(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(GadgetCall::VT_FIELD_ORDER, None).map(|v| v.safe_slice())
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_ORDER, None).map(|v| v.safe_slice())
   }
   /// Optional: Any static parameter that may influence the instance
   /// construction. Parameters can be standard, conventional, or custom.
@@ -162,64 +164,64 @@ impl<'a> GadgetCall<'a> {
   /// Counter-example: a Merkle path is not configuration (rather witness).
   #[inline]
   pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(GadgetCall::VT_CONFIGURATION, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Circuit::VT_CONFIGURATION, None)
   }
 }
 
-pub struct GadgetCallArgs<'a> {
+pub struct CircuitArgs<'a> {
     pub connections: Option<flatbuffers::WIPOffset<Connection<'a >>>,
-    pub generate_r1cs: bool,
-    pub generate_assignment: bool,
+    pub r1cs_generation: bool,
+    pub witness_generation: bool,
     pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
-impl<'a> Default for GadgetCallArgs<'a> {
+impl<'a> Default for CircuitArgs<'a> {
     #[inline]
     fn default() -> Self {
-        GadgetCallArgs {
+        CircuitArgs {
             connections: None,
-            generate_r1cs: false,
-            generate_assignment: false,
+            r1cs_generation: false,
+            witness_generation: false,
             field_order: None,
             configuration: None,
         }
     }
 }
-pub struct GadgetCallBuilder<'a: 'b, 'b> {
+pub struct CircuitBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> GadgetCallBuilder<'a, 'b> {
+impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
   pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Connection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(GadgetCall::VT_CONNECTIONS, connections);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(Circuit::VT_CONNECTIONS, connections);
   }
   #[inline]
-  pub fn add_generate_r1cs(&mut self, generate_r1cs: bool) {
-    self.fbb_.push_slot::<bool>(GadgetCall::VT_GENERATE_R1CS, generate_r1cs, false);
+  pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
+    self.fbb_.push_slot::<bool>(Circuit::VT_R1CS_GENERATION, r1cs_generation, false);
   }
   #[inline]
-  pub fn add_generate_assignment(&mut self, generate_assignment: bool) {
-    self.fbb_.push_slot::<bool>(GadgetCall::VT_GENERATE_ASSIGNMENT, generate_assignment, false);
+  pub fn add_witness_generation(&mut self, witness_generation: bool) {
+    self.fbb_.push_slot::<bool>(Circuit::VT_WITNESS_GENERATION, witness_generation, false);
   }
   #[inline]
   pub fn add_field_order(&mut self, field_order: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetCall::VT_FIELD_ORDER, field_order);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_ORDER, field_order);
   }
   #[inline]
   pub fn add_configuration(&mut self, configuration: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetCall::VT_CONFIGURATION, configuration);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_CONFIGURATION, configuration);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetCallBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CircuitBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    GadgetCallBuilder {
+    CircuitBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GadgetCall<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<Circuit<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -936,9 +938,9 @@ impl<'a> Root<'a> {
   }
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadget_call(&self) -> Option<GadgetCall<'a>> {
-    if self.message_type() == Message::GadgetCall {
-      self.message().map(|u| GadgetCall::init_from_table(u))
+  pub fn message_as_circuit(&self) -> Option<Circuit<'a>> {
+    if self.message_type() == Message::Circuit {
+      self.message().map(|u| Circuit::init_from_table(u))
     } else {
       None
     }

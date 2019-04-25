@@ -36,9 +36,9 @@ namespace zkinterface_libsnark {
 
         virtual size_t num_outputs();
 
-        virtual void generate_r1cs_constraints();
+        virtual void r1cs_generation_constraints();
 
-        virtual vector<FieldT> generate_r1cs_witness(const vector<FieldT> &in_elements);
+        virtual vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements);
     };
 
 
@@ -99,8 +99,8 @@ namespace zkinterface_libsnark {
         return le_into_elements(from_bytes->data(), num_elements, element_size);
     }
 
-    // Extract the incoming elements from a GadgetCall.
-    vector<FieldT> deserialize_incoming_elements(const GadgetCall *call) {
+    // Extract the incoming elements from a Circuit.
+    vector<FieldT> deserialize_incoming_elements(const Circuit *call) {
         auto num_elements = call->instance()->incoming_variable_ids()->size();
         auto in_elements_bytes = call->witness()->incoming_elements();
         return deserialize_elements(in_elements_bytes, num_elements);

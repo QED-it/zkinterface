@@ -3,8 +3,8 @@ use gadget_call::call_gadget_wrapper;
 use reading::Messages;
 use writing::GadgetInstanceSimple;
 use zkinterface_generated::zkinterface::{
-    GadgetCall,
-    GadgetCallArgs,
+    Circuit,
+    CircuitArgs,
     Message,
     Root,
     RootArgs,
@@ -15,16 +15,16 @@ pub fn make_r1cs_request(instance: GadgetInstanceSimple) -> Messages {
 
     let request = {
         let i = instance.build(&mut builder);
-        GadgetCall::create(&mut builder, &GadgetCallArgs {
+        Circuit::create(&mut builder, &CircuitArgs {
             instance: Some(i),
-            generate_r1cs: true,
-            generate_assignment: false,
+            r1cs_generation: true,
+            witness_generation: false,
             witness: None,
         })
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::GadgetCall,
+        message_type: Message::Circuit,
         message: Some(request.as_union_value()),
     });
 

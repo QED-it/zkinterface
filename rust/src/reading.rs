@@ -3,17 +3,17 @@
 use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
-    GadgetCall,
+    Circuit,
     get_size_prefixed_root_as_root,
     VariableValues,
 };
 use zkinterface_generated::zkinterface::Root;
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(GadgetCall, Vec<AssignedVariable>)> {
-    let call = get_size_prefixed_root_as_root(call_msg).message_as_gadget_call()?;
+pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<AssignedVariable>)> {
+    let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
     let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
-    let assigned = if call.generate_assignment() {
+    let assigned = if call.witness_generation() {
         let bytes = call.connections()?.values()?;
         let stride = bytes.len() / input_var_ids.len();
 
@@ -73,18 +73,17 @@ impl Messages {
         Ok(())
     }
 
-    // Return message
-    pub fn last_gadget_return(&self) -> Option<GadgetCall> {
-        let returns = self.gadget_returns();
+    pub fn last_circuit(&self) -> Option<Circuit> {
+        let returns = self.circuits();
         if returns.len() > 0 {
             Some(returns[returns.len() - 1])
         } else { None }
     }
 
-    pub fn gadget_returns(&self) -> Vec<GadgetCall> {
+    pub fn circuits(&self) -> Vec<Circuit> {
         let mut returns = vec![];
         for message in self {
-            match message.message_as_gadget_call() {
+            match message.message_as_circuit() {
                 Some(ret) => returns.push(ret),
                 None => continue,
             };
@@ -239,7 +238,7 @@ impl Messages {
     }
 
     pub fn outgoing_assigned_variables(&self, first_id: u64) -> Option<Vec<AssignedVariable>> {
-        let outputs = self.last_gadget_return()?.connections()?;
+        let outputs = self.last_circuit()?.connections()?;
         let output_var_ids = outputs.variable_ids()?.safe_slice();
         let values = outputs.values()?;
 

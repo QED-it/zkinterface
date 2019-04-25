@@ -11,7 +11,7 @@ typedef uint64_t VariableId;
 
 
 bool r1cs_request(
-        const GadgetCall *request,
+        const Circuit *request,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -88,7 +88,7 @@ bool r1cs_request(
 
 
 bool assignments_request(
-        const GadgetCall *call,
+        const Circuit *call,
 
         gadget_callback_t result_stream_callback,
         void *result_stream_context,
@@ -172,13 +172,13 @@ bool call_gadget(
 ) {
     auto root = GetSizePrefixedRoot(call_msg);
 
-    if (root->message_type() != Message_GadgetCall) {
+    if (root->message_type() != Message_Circuit) {
         return false; // Error, unknown request.
     }
 
-    auto call = root->message_as_GadgetCall();
+    auto call = root->message_as_Circuit();
 
-    if (call->generate_r1cs()) {
+    if (call->r1cs_generation()) {
         bool ok = r1cs_request(
                 call,
                 constraints_callback, constraints_context,
@@ -187,7 +187,7 @@ bool call_gadget(
         if (!ok) return false;
     }
 
-    if (call->generate_assignment()) {
+    if (call->witness_generation()) {
         bool ok = assignments_request(
                 call,
                 assigned_variables_callback, assigned_variables_context,

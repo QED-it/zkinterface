@@ -13,8 +13,8 @@ use zkinterface::{
     reading::{Constraint, Messages, Term},
     writing::ConnectionSimple,
     zkinterface_generated::zkinterface::{
-        GadgetCall,
-        GadgetCallArgs,
+        Circuit,
+        CircuitArgs,
         Message,
         Root,
         RootArgs,
@@ -64,10 +64,10 @@ pub fn call_gadget<E, CS>(
     where E: Engine,
           CS: ConstraintSystem<E>
 {
-    let generate_assignment = inputs.len() > 0 && inputs[0].get_value().is_some();
+    let witness_generation = inputs.len() > 0 && inputs[0].get_value().is_some();
 
     // Serialize input values.
-    let values = if generate_assignment {
+    let values = if witness_generation {
         let mut values = Vec::<u8>::new();
         for i in inputs {
             i.get_value().unwrap().into_repr().write_le(&mut values)?;
@@ -92,16 +92,16 @@ pub fn call_gadget<E, CS>(
     let call_buf = {
         let connections = Some(inputs_conn.build(&mut builder));
 
-        let call = GadgetCall::create(&mut builder, &GadgetCallArgs {
+        let call = Circuit::create(&mut builder, &CircuitArgs {
             connections,
-            generate_r1cs: true,
-            generate_assignment,
+            r1cs_generation: true,
+            witness_generation,
             field_order: None,
             configuration: None,
         });
 
         let root = Root::create(&mut builder, &RootArgs {
-            message_type: Message::GadgetCall,
+            message_type: Message::Circuit,
             message: Some(call.as_union_value()),
         });
         builder.finish_size_prefixed(root, None);
@@ -112,7 +112,7 @@ pub fn call_gadget<E, CS>(
     let messages = exec_fn(call_buf).or(Err(SynthesisError::Unsatisfiable))?;
 
     // Parse Return message to find out how many local variables were used.
-    let gadget_return = messages.last_gadget_return().ok_or(SynthesisError::Unsatisfiable)?;
+    let gadget_return = messages.last_circuit().ok_or(SynthesisError::Unsatisfiable)?;
     let outputs_conn = gadget_return.connections().unwrap();
     let free_variable_id = outputs_conn.free_variable_id();
 
@@ -128,7 +128,7 @@ pub fn call_gadget<E, CS>(
     // Collect assignments. Used by the alloc's below.
     let mut values = HashMap::<u64, &[u8]>::new();
 
-    if generate_assignment {
+    if witness_generation {
         // Values of outputs.
         if let Some(assignments) = messages.outgoing_assigned_variables(first_local_id) {
             for assignment in assignments {
@@ -156,7 +156,7 @@ pub fn call_gadget<E, CS>(
             let num = AllocatedNum::alloc(
                 cs.namespace(|| format!("output_{}", out_id)), || {
                     // Parse value if any.
-                    let value = if generate_assignment {
+                    let value = if witness_generation {
                         values.get(out_id)
                             .map(|v| le_to_fr::<E>(*v))
                             .ok_or(SynthesisError::AssignmentMissing)
@@ -176,7 +176,7 @@ pub fn call_gadget<E, CS>(
     for local_id in first_local_id..free_variable_id {
         let var = cs.alloc(
             || format!("local_{}", local_id), || {
-                if generate_assignment {
+                if witness_generation {
                     values.get(&local_id)
                         .map(|v| le_to_fr::<E>(*v))
                         .ok_or(SynthesisError::AssignmentMissing)

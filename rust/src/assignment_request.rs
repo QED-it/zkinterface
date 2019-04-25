@@ -3,8 +3,8 @@ use gadget_call::call_gadget_wrapper;
 use reading::Messages;
 use writing::GadgetInstanceSimple;
 use zkinterface_generated::zkinterface::{
-    GadgetCall,
-    GadgetCallArgs,
+    Circuit,
+    CircuitArgs,
     Message,
     Root,
     RootArgs,
@@ -33,16 +33,16 @@ pub fn make_assignment_request(
             incoming_elements: Some(incoming_bytes),
             info: None,
         });
-        GadgetCall::create(&mut builder, &GadgetCallArgs {
+        Circuit::create(&mut builder, &CircuitArgs {
             instance: Some(i),
-            generate_r1cs: false,
-            generate_assignment: true,
+            r1cs_generation: false,
+            witness_generation: true,
             witness: Some(witness),
         })
     };
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::GadgetCall,
+        message_type: Message::Circuit,
         message: Some(request.as_union_value()),
     });
 

@@ -5,7 +5,7 @@ namespace zkinterface;
 
 /// The messages that the caller and gadget can exchange.
 union Message {
-    GadgetCall,
+    Circuit,
     GadgetReturn,
 
     R1CSConstraints,
@@ -14,8 +14,10 @@ union Message {
     Connection,
 }
 
-/// Caller calls a gadget.
-table GadgetCall {
+/// A description of a circuit or sub-circuit.
+/// This can be a complete circuit ready for proving,
+/// or a part of a circuit being built.
+table Circuit {
     /// Incoming Variables to use as connections to the gadget.
     /// Allocated by the caller.
     /// Includes the first free Variable ID; the gadget can allocate new IDs
@@ -24,11 +26,11 @@ table GadgetCall {
     connections         :Connection;
 
     /// Whether constraints should be generated.
-    generate_r1cs       :bool;
+    r1cs_generation       :bool;
 
     /// Whether an assignment should be generated.
     /// Provide witness values to the gadget.
-    generate_assignment :bool;
+    witness_generation :bool;
 
     /// The order of the field used by the current system.
     /// A BigInt.

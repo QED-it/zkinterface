@@ -4,8 +4,8 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use zkinterface_generated::zkinterface::{
     Connection,
     ConnectionArgs,
-    GadgetCall,
-    GadgetCallArgs,
+    Circuit,
+    CircuitArgs,
     GadgetReturn,
     GadgetReturnArgs,
     Message,
@@ -17,10 +17,10 @@ use zkinterface_generated::zkinterface::{
 // ==== Gadget Call ====
 
 #[derive(Clone, Debug)]
-pub struct GadgetCallSimple {
+pub struct CircuitSimple {
     pub connection: ConnectionSimple,
-    pub generate_r1cs: bool,
-    // generate_assignment deduced from the presence of connection.values
+    pub r1cs_generation: bool,
+    // witness_generation deduced from the presence of connection.values
 
     pub field_order: Option<Vec<u8>>,
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
@@ -34,7 +34,7 @@ pub struct ConnectionSimple {
     // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
-impl GadgetCallSimple {
+impl CircuitSimple {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
@@ -45,16 +45,16 @@ impl GadgetCallSimple {
         let field_order = self.field_order.as_ref().map(|s|
             builder.create_vector(s));
 
-        let call = GadgetCall::create(builder, &GadgetCallArgs {
+        let call = Circuit::create(builder, &CircuitArgs {
             connections,
-            generate_r1cs: self.generate_r1cs,
-            generate_assignment: self.connection.values.is_some(),
+            r1cs_generation: self.r1cs_generation,
+            witness_generation: self.connection.values.is_some(),
             field_order,
             configuration: None,
         });
 
         Root::create(builder, &RootArgs {
-            message_type: Message::GadgetCall,
+            message_type: Message::Circuit,
             message: Some(call.as_union_value()),
         })
     }

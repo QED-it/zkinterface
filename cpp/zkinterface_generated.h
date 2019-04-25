@@ -8,7 +8,7 @@
 
 namespace zkinterface {
 
-struct GadgetCall;
+struct Circuit;
 
 struct GadgetReturn;
 
@@ -29,7 +29,7 @@ struct Root;
 /// The messages that the caller and gadget can exchange.
 enum Message {
   Message_NONE = 0,
-  Message_GadgetCall = 1,
+  Message_Circuit = 1,
   Message_GadgetReturn = 2,
   Message_R1CSConstraints = 3,
   Message_AssignedVariables = 4,
@@ -41,7 +41,7 @@ enum Message {
 inline const Message (&EnumValuesMessage())[6] {
   static const Message values[] = {
     Message_NONE,
-    Message_GadgetCall,
+    Message_Circuit,
     Message_GadgetReturn,
     Message_R1CSConstraints,
     Message_AssignedVariables,
@@ -53,7 +53,7 @@ inline const Message (&EnumValuesMessage())[6] {
 inline const char * const *EnumNamesMessage() {
   static const char * const names[] = {
     "NONE",
-    "GadgetCall",
+    "Circuit",
     "GadgetReturn",
     "R1CSConstraints",
     "AssignedVariables",
@@ -73,8 +73,8 @@ template<typename T> struct MessageTraits {
   static const Message enum_value = Message_NONE;
 };
 
-template<> struct MessageTraits<GadgetCall> {
-  static const Message enum_value = Message_GadgetCall;
+template<> struct MessageTraits<Circuit> {
+  static const Message enum_value = Message_Circuit;
 };
 
 template<> struct MessageTraits<GadgetReturn> {
@@ -96,12 +96,14 @@ template<> struct MessageTraits<Connection> {
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
 bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
-/// Caller calls a gadget.
-struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+/// A description of a circuit or sub-circuit.
+/// This can be a complete circuit ready for proving,
+/// or a part of a circuit being built.
+struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONNECTIONS = 4,
-    VT_GENERATE_R1CS = 6,
-    VT_GENERATE_ASSIGNMENT = 8,
+    VT_R1CS_GENERATION = 6,
+    VT_WITNESS_GENERATION = 8,
     VT_FIELD_ORDER = 10,
     VT_CONFIGURATION = 12
   };
@@ -114,13 +116,13 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetPointer<const Connection *>(VT_CONNECTIONS);
   }
   /// Whether constraints should be generated.
-  bool generate_r1cs() const {
-    return GetField<uint8_t>(VT_GENERATE_R1CS, 0) != 0;
+  bool r1cs_generation() const {
+    return GetField<uint8_t>(VT_R1CS_GENERATION, 0) != 0;
   }
   /// Whether an assignment should be generated.
   /// Provide witness values to the gadget.
-  bool generate_assignment() const {
-    return GetField<uint8_t>(VT_GENERATE_ASSIGNMENT, 0) != 0;
+  bool witness_generation() const {
+    return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
   }
   /// The order of the field used by the current system.
   /// A BigInt.
@@ -139,8 +141,8 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_CONNECTIONS) &&
            verifier.VerifyTable(connections()) &&
-           VerifyField<uint8_t>(verifier, VT_GENERATE_R1CS) &&
-           VerifyField<uint8_t>(verifier, VT_GENERATE_ASSIGNMENT) &&
+           VerifyField<uint8_t>(verifier, VT_R1CS_GENERATION) &&
+           VerifyField<uint8_t>(verifier, VT_WITNESS_GENERATION) &&
            VerifyOffset(verifier, VT_FIELD_ORDER) &&
            verifier.VerifyVector(field_order()) &&
            VerifyOffset(verifier, VT_CONFIGURATION) &&
@@ -150,66 +152,66 @@ struct GadgetCall FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct GadgetCallBuilder {
+struct CircuitBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_connections(flatbuffers::Offset<Connection> connections) {
-    fbb_.AddOffset(GadgetCall::VT_CONNECTIONS, connections);
+    fbb_.AddOffset(Circuit::VT_CONNECTIONS, connections);
   }
-  void add_generate_r1cs(bool generate_r1cs) {
-    fbb_.AddElement<uint8_t>(GadgetCall::VT_GENERATE_R1CS, static_cast<uint8_t>(generate_r1cs), 0);
+  void add_r1cs_generation(bool r1cs_generation) {
+    fbb_.AddElement<uint8_t>(Circuit::VT_R1CS_GENERATION, static_cast<uint8_t>(r1cs_generation), 0);
   }
-  void add_generate_assignment(bool generate_assignment) {
-    fbb_.AddElement<uint8_t>(GadgetCall::VT_GENERATE_ASSIGNMENT, static_cast<uint8_t>(generate_assignment), 0);
+  void add_witness_generation(bool witness_generation) {
+    fbb_.AddElement<uint8_t>(Circuit::VT_WITNESS_GENERATION, static_cast<uint8_t>(witness_generation), 0);
   }
   void add_field_order(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order) {
-    fbb_.AddOffset(GadgetCall::VT_FIELD_ORDER, field_order);
+    fbb_.AddOffset(Circuit::VT_FIELD_ORDER, field_order);
   }
   void add_configuration(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration) {
-    fbb_.AddOffset(GadgetCall::VT_CONFIGURATION, configuration);
+    fbb_.AddOffset(Circuit::VT_CONFIGURATION, configuration);
   }
-  explicit GadgetCallBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CircuitBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  GadgetCallBuilder &operator=(const GadgetCallBuilder &);
-  flatbuffers::Offset<GadgetCall> Finish() {
+  CircuitBuilder &operator=(const CircuitBuilder &);
+  flatbuffers::Offset<Circuit> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GadgetCall>(end);
+    auto o = flatbuffers::Offset<Circuit>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<GadgetCall> CreateGadgetCall(
+inline flatbuffers::Offset<Circuit> CreateCircuit(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<Connection> connections = 0,
-    bool generate_r1cs = false,
-    bool generate_assignment = false,
+    bool r1cs_generation = false,
+    bool witness_generation = false,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration = 0) {
-  GadgetCallBuilder builder_(_fbb);
+  CircuitBuilder builder_(_fbb);
   builder_.add_configuration(configuration);
   builder_.add_field_order(field_order);
   builder_.add_connections(connections);
-  builder_.add_generate_assignment(generate_assignment);
-  builder_.add_generate_r1cs(generate_r1cs);
+  builder_.add_witness_generation(witness_generation);
+  builder_.add_r1cs_generation(r1cs_generation);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<GadgetCall> CreateGadgetCallDirect(
+inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<Connection> connections = 0,
-    bool generate_r1cs = false,
-    bool generate_assignment = false,
+    bool r1cs_generation = false,
+    bool witness_generation = false,
     const std::vector<uint8_t> *field_order = nullptr,
     const std::vector<flatbuffers::Offset<KeyValue>> *configuration = nullptr) {
   auto field_order__ = field_order ? _fbb.CreateVector<uint8_t>(*field_order) : 0;
   auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*configuration) : 0;
-  return zkinterface::CreateGadgetCall(
+  return zkinterface::CreateCircuit(
       _fbb,
       connections,
-      generate_r1cs,
-      generate_assignment,
+      r1cs_generation,
+      witness_generation,
       field_order__,
       configuration__);
 }
@@ -699,8 +701,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetPointer<const void *>(VT_MESSAGE);
   }
   template<typename T> const T *message_as() const;
-  const GadgetCall *message_as_GadgetCall() const {
-    return message_type() == Message_GadgetCall ? static_cast<const GadgetCall *>(message()) : nullptr;
+  const Circuit *message_as_Circuit() const {
+    return message_type() == Message_Circuit ? static_cast<const Circuit *>(message()) : nullptr;
   }
   const GadgetReturn *message_as_GadgetReturn() const {
     return message_type() == Message_GadgetReturn ? static_cast<const GadgetReturn *>(message()) : nullptr;
@@ -723,8 +725,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-template<> inline const GadgetCall *Root::message_as<GadgetCall>() const {
-  return message_as_GadgetCall();
+template<> inline const Circuit *Root::message_as<Circuit>() const {
+  return message_as_Circuit();
 }
 
 template<> inline const GadgetReturn *Root::message_as<GadgetReturn>() const {
@@ -779,8 +781,8 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
     case Message_NONE: {
       return true;
     }
-    case Message_GadgetCall: {
-      auto ptr = reinterpret_cast<const GadgetCall *>(obj);
+    case Message_Circuit: {
+      auto ptr = reinterpret_cast<const Circuit *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_GadgetReturn: {
