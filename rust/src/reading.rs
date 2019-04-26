@@ -1,12 +1,16 @@
 //! Helpers to read messages.
 
 use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
     get_size_prefixed_root_as_root,
     VariableValues,
 };
+use zkinterface_generated::zkinterface::Connections;
 use zkinterface_generated::zkinterface::Root;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<AssignedVariable>)> {
@@ -71,6 +75,14 @@ impl Messages {
     pub fn push_message(&mut self, buf: Vec<u8>) -> Result<(), String> {
         self.messages.push(buf);
         Ok(())
+    }
+
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) {
+        let mut file = File::open(&path).unwrap();
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf).unwrap();
+        println!("loaded {:?} ({} bytes)", path.as_ref(), buf.len());
+        self.push_message(buf).unwrap();
     }
 
     pub fn last_circuit(&self) -> Option<Circuit> {
@@ -258,10 +270,55 @@ impl Messages {
     }
 }
 
+pub fn collect_connection_variables<'a>(conn: &'a Connections, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+    let var_ids = conn.variable_ids()?.safe_slice();
+
+    let values = match conn.values() {
+        Some(values) => values,
+        None => &[], // No values, only variable ids and empty values.
+    };
+
+    let stride = values.len() / var_ids.len();
+
+    let vars = (0..var_ids.len())
+        .filter(|i| // Ignore variables below first_id, if any.
+            var_ids[*i] >= first_id
+        ).map(|i|          // Extract value of each variable.
+        AssignedVariable {
+            id: var_ids[i],
+            element: &values[stride * i..stride * (i + 1)],
+        }
+    ).collect();
+
+    Some(vars)
+}
+
+pub fn collect_unassigned_private_variables<'a>(conn: &'a Connections, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+    let var_ids = conn.variable_ids()?.safe_slice();
+
+    let vars = (first_id..conn.free_variable_id())
+        .filter(|id| // Ignore variables already in the connections.
+            !var_ids.contains(id)
+        ).map(|id|          // Variable without value.
+        AssignedVariable {
+            id,
+            element: &[],
+        }
+    ).collect();
+
+    Some(vars)
+}
+
 #[derive(Debug)]
 pub struct AssignedVariable<'a> {
     pub id: u64,
     pub element: &'a [u8],
+}
+
+impl<'a> AssignedVariable<'a> {
+    pub fn has_value(&self) -> bool {
+        self.element.len() > 0
+    }
 }
 
 pub struct AssignedVariablesIterator<'a> {

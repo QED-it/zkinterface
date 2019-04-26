@@ -11,19 +11,19 @@ union Message {
     R1CSConstraints,
     AssignedVariables,
 
-    Connection,
+    Connections,
 }
 
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 table Circuit {
-    /// Incoming Variables to use as connections to the gadget.
+    /// Incoming Variables to use as connection to the gadget.
     /// Allocated by the caller.
     /// Includes the first free Variable ID; the gadget can allocate new IDs
     /// starting with `inputs.free_variable_id`.
     /// The same structure must be provided for R1CS and assignment generation.
-    connections         :Connection;
+    connections         :Connections;
 
     /// Whether constraints should be generated.
     r1cs_generation       :bool;
@@ -47,24 +47,24 @@ table Circuit {
 /// The gadget returns to the caller. This is the final message
 /// after all R1CSConstraints or AssignedVariables have been sent.
 table GadgetReturn {
-    /// Outgoing Variables to use as connections to the gadget.
+    /// Outgoing Variables to use as connection to the gadget.
     /// There may be no Outgoing Variables if the gadget is a pure assertion.
     /// Allocated by the gadget.
     /// Include the first variable ID free after the gadget call;
     /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
-    outputs :Connection;
+    outputs :Connections;
 
     /// Optional: An error message. Null if no error.
     error   :string;
 }
 
     /// A connection into a sub-circuits.
-    table Connection {
+    table Connections {
         /// First variable ID free after this connection.
         /// A variable ID greater than all IDs allocated at the time.
         free_variable_id :uint64;
 
-        /// Variables to use as connections to the sub-circuit.
+        /// Variables to use as connection to the sub-circuit.
         variable_ids  :[uint64];
 
         /// Optional: The values assigned to variables, if any.

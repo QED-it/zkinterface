@@ -7,8 +7,8 @@
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- call.zkif          && cat call.json
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_r1cs.zkif   && cat circuit_r1cs.json
 flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- r1cs.zkif          && cat r1cs.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_assign.zkif && cat circuit_assign.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- assign.zkif        && cat assign.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_witness.zkif && cat circuit_witness.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- witness.zkif        && cat witness.json
 */
 
 use num_bigint::BigUint;
@@ -30,10 +30,10 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
 
     // Non-contiguous IDs are not supported by ZoKrates yet.
-    let connection = call.connections().unwrap();
-    let input_ids = connection.variable_ids().unwrap().safe_slice();
+    let connections = call.connections().unwrap();
+    let input_ids = connections.variable_ids().unwrap().safe_slice();
     assert!(is_contiguous(1, input_ids));
-    assert_eq!(1 + input_ids.len() as u64, connection.free_variable_id());
+    assert_eq!(1 + input_ids.len() as u64, connections.free_variable_id());
 
     let program = "src/test/demo.code";
     let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();
@@ -92,14 +92,14 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
                 let _out = exec(&mut cmd);
             }
 
-            // Get assignment -> assign.zkif
+            // Get assignment -> witness.zkif
             {
                 let mut cmd = make_zokrates_command();
-                cmd.args(&["generate-proof", "--backend", "zkinterface", "-j", "assign.zkif"]);
+                cmd.args(&["generate-proof", "--backend", "zkinterface", "-j", "witness.zkif"]);
                 let _out = exec(&mut cmd);
 
-                load_message("assign.zkif")?;
-                load_message("circuit_assign.zkif")?;
+                load_message("witness.zkif")?;
+                load_message("circuit_witness.zkif")?;
             }
         }
     }

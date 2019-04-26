@@ -12,7 +12,7 @@ struct Circuit;
 
 struct GadgetReturn;
 
-struct Connection;
+struct Connections;
 
 struct KeyValue;
 
@@ -33,9 +33,9 @@ enum Message {
   Message_GadgetReturn = 2,
   Message_R1CSConstraints = 3,
   Message_AssignedVariables = 4,
-  Message_Connection = 5,
+  Message_Connections = 5,
   Message_MIN = Message_NONE,
-  Message_MAX = Message_Connection
+  Message_MAX = Message_Connections
 };
 
 inline const Message (&EnumValuesMessage())[6] {
@@ -45,7 +45,7 @@ inline const Message (&EnumValuesMessage())[6] {
     Message_GadgetReturn,
     Message_R1CSConstraints,
     Message_AssignedVariables,
-    Message_Connection
+    Message_Connections
   };
   return values;
 }
@@ -57,14 +57,14 @@ inline const char * const *EnumNamesMessage() {
     "GadgetReturn",
     "R1CSConstraints",
     "AssignedVariables",
-    "Connection",
+    "Connections",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessage(Message e) {
-  if (e < Message_NONE || e > Message_Connection) return "";
+  if (e < Message_NONE || e > Message_Connections) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamesMessage()[index];
 }
@@ -89,8 +89,8 @@ template<> struct MessageTraits<AssignedVariables> {
   static const Message enum_value = Message_AssignedVariables;
 };
 
-template<> struct MessageTraits<Connection> {
-  static const Message enum_value = Message_Connection;
+template<> struct MessageTraits<Connections> {
+  static const Message enum_value = Message_Connections;
 };
 
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
@@ -107,13 +107,13 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FIELD_ORDER = 10,
     VT_CONFIGURATION = 12
   };
-  /// Incoming Variables to use as connections to the gadget.
+  /// Incoming Variables to use as connection to the gadget.
   /// Allocated by the caller.
   /// Includes the first free Variable ID; the gadget can allocate new IDs
   /// starting with `inputs.free_variable_id`.
   /// The same structure must be provided for R1CS and assignment generation.
-  const Connection *connections() const {
-    return GetPointer<const Connection *>(VT_CONNECTIONS);
+  const Connections *connections() const {
+    return GetPointer<const Connections *>(VT_CONNECTIONS);
   }
   /// Whether constraints should be generated.
   bool r1cs_generation() const {
@@ -155,7 +155,7 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct CircuitBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_connections(flatbuffers::Offset<Connection> connections) {
+  void add_connections(flatbuffers::Offset<Connections> connections) {
     fbb_.AddOffset(Circuit::VT_CONNECTIONS, connections);
   }
   void add_r1cs_generation(bool r1cs_generation) {
@@ -184,7 +184,7 @@ struct CircuitBuilder {
 
 inline flatbuffers::Offset<Circuit> CreateCircuit(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> connections = 0,
+    flatbuffers::Offset<Connections> connections = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order = 0,
@@ -200,7 +200,7 @@ inline flatbuffers::Offset<Circuit> CreateCircuit(
 
 inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> connections = 0,
+    flatbuffers::Offset<Connections> connections = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
     const std::vector<uint8_t> *field_order = nullptr,
@@ -223,13 +223,13 @@ struct GadgetReturn FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_OUTPUTS = 4,
     VT_ERROR = 6
   };
-  /// Outgoing Variables to use as connections to the gadget.
+  /// Outgoing Variables to use as connection to the gadget.
   /// There may be no Outgoing Variables if the gadget is a pure assertion.
   /// Allocated by the gadget.
   /// Include the first variable ID free after the gadget call;
   /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
-  const Connection *outputs() const {
-    return GetPointer<const Connection *>(VT_OUTPUTS);
+  const Connections *outputs() const {
+    return GetPointer<const Connections *>(VT_OUTPUTS);
   }
   /// Optional: An error message. Null if no error.
   const flatbuffers::String *error() const {
@@ -248,7 +248,7 @@ struct GadgetReturn FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct GadgetReturnBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_outputs(flatbuffers::Offset<Connection> outputs) {
+  void add_outputs(flatbuffers::Offset<Connections> outputs) {
     fbb_.AddOffset(GadgetReturn::VT_OUTPUTS, outputs);
   }
   void add_error(flatbuffers::Offset<flatbuffers::String> error) {
@@ -268,7 +268,7 @@ struct GadgetReturnBuilder {
 
 inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturn(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> outputs = 0,
+    flatbuffers::Offset<Connections> outputs = 0,
     flatbuffers::Offset<flatbuffers::String> error = 0) {
   GadgetReturnBuilder builder_(_fbb);
   builder_.add_error(error);
@@ -278,7 +278,7 @@ inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturn(
 
 inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturnDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connection> outputs = 0,
+    flatbuffers::Offset<Connections> outputs = 0,
     const char *error = nullptr) {
   auto error__ = error ? _fbb.CreateString(error) : 0;
   return zkinterface::CreateGadgetReturn(
@@ -288,7 +288,7 @@ inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturnDirect(
 }
 
 /// A connection into a sub-circuits.
-struct Connection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Connections FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_FREE_VARIABLE_ID = 4,
     VT_VARIABLE_IDS = 6,
@@ -300,7 +300,7 @@ struct Connection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t free_variable_id() const {
     return GetField<uint64_t>(VT_FREE_VARIABLE_ID, 0);
   }
-  /// Variables to use as connections to the sub-circuit.
+  /// Variables to use as connection to the sub-circuit.
   const flatbuffers::Vector<uint64_t> *variable_ids() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_VARIABLE_IDS);
   }
@@ -328,40 +328,40 @@ struct Connection FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct ConnectionBuilder {
+struct ConnectionsBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_free_variable_id(uint64_t free_variable_id) {
-    fbb_.AddElement<uint64_t>(Connection::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+    fbb_.AddElement<uint64_t>(Connections::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
   void add_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids) {
-    fbb_.AddOffset(Connection::VT_VARIABLE_IDS, variable_ids);
+    fbb_.AddOffset(Connections::VT_VARIABLE_IDS, variable_ids);
   }
   void add_values(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values) {
-    fbb_.AddOffset(Connection::VT_VALUES, values);
+    fbb_.AddOffset(Connections::VT_VALUES, values);
   }
   void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info) {
-    fbb_.AddOffset(Connection::VT_INFO, info);
+    fbb_.AddOffset(Connections::VT_INFO, info);
   }
-  explicit ConnectionBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ConnectionsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ConnectionBuilder &operator=(const ConnectionBuilder &);
-  flatbuffers::Offset<Connection> Finish() {
+  ConnectionsBuilder &operator=(const ConnectionsBuilder &);
+  flatbuffers::Offset<Connections> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Connection>(end);
+    auto o = flatbuffers::Offset<Connections>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Connection> CreateConnection(
+inline flatbuffers::Offset<Connections> CreateConnections(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t free_variable_id = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info = 0) {
-  ConnectionBuilder builder_(_fbb);
+  ConnectionsBuilder builder_(_fbb);
   builder_.add_free_variable_id(free_variable_id);
   builder_.add_info(info);
   builder_.add_values(values);
@@ -369,7 +369,7 @@ inline flatbuffers::Offset<Connection> CreateConnection(
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Connection> CreateConnectionDirect(
+inline flatbuffers::Offset<Connections> CreateConnectionsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t free_variable_id = 0,
     const std::vector<uint64_t> *variable_ids = nullptr,
@@ -378,7 +378,7 @@ inline flatbuffers::Offset<Connection> CreateConnectionDirect(
   auto variable_ids__ = variable_ids ? _fbb.CreateVector<uint64_t>(*variable_ids) : 0;
   auto values__ = values ? _fbb.CreateVector<uint8_t>(*values) : 0;
   auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*info) : 0;
-  return zkinterface::CreateConnection(
+  return zkinterface::CreateConnections(
       _fbb,
       free_variable_id,
       variable_ids__,
@@ -713,8 +713,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const AssignedVariables *message_as_AssignedVariables() const {
     return message_type() == Message_AssignedVariables ? static_cast<const AssignedVariables *>(message()) : nullptr;
   }
-  const Connection *message_as_Connection() const {
-    return message_type() == Message_Connection ? static_cast<const Connection *>(message()) : nullptr;
+  const Connections *message_as_Connections() const {
+    return message_type() == Message_Connections ? static_cast<const Connections *>(message()) : nullptr;
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -741,8 +741,8 @@ template<> inline const AssignedVariables *Root::message_as<AssignedVariables>()
   return message_as_AssignedVariables();
 }
 
-template<> inline const Connection *Root::message_as<Connection>() const {
-  return message_as_Connection();
+template<> inline const Connections *Root::message_as<Connections>() const {
+  return message_as_Connections();
 }
 
 struct RootBuilder {
@@ -797,8 +797,8 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       auto ptr = reinterpret_cast<const AssignedVariables *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_Connection: {
-      auto ptr = reinterpret_cast<const Connection *>(obj);
+    case Message_Connections: {
+      auto ptr = reinterpret_cast<const Connections *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

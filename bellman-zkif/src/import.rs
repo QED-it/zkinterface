@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use zkinterface::{
     flatbuffers::FlatBufferBuilder,
     reading::{Constraint, Messages, Term},
-    writing::ConnectionSimple,
+    writing::ConnectionsSimple,
     zkinterface_generated::zkinterface::{
         Circuit,
         CircuitArgs,
@@ -23,7 +23,11 @@ use zkinterface::{
 
 
 /// Convert zkInterface little-endian bytes to bellman Fr.
-fn le_to_fr<E: Engine>(bytes_le: &[u8]) -> E::Fr {
+pub fn le_to_fr<E: Engine>(bytes_le: &[u8]) -> E::Fr {
+    if bytes_le.len() == 0 {
+        return E::Fr::zero();
+    }
+
     let mut repr = <E::Fr as PrimeField>::Repr::default();
     let mut bytes_le = Vec::from(bytes_le);
     let words = (E::Fr::NUM_BITS + 63) / 64;
@@ -33,7 +37,7 @@ fn le_to_fr<E: Engine>(bytes_le: &[u8]) -> E::Fr {
 }
 
 /// Convert zkInterface terms to bellman LinearCombination.
-fn terms_to_lc<E: Engine>(vars: &HashMap<u64, Variable>, terms: &[Term]) -> LinearCombination<E> {
+pub fn terms_to_lc<E: Engine>(vars: &HashMap<u64, Variable>, terms: &[Term]) -> LinearCombination<E> {
     let mut lc = LinearCombination::zero();
     for term in terms {
         let coeff = le_to_fr::<E>(term.element);
@@ -44,7 +48,7 @@ fn terms_to_lc<E: Engine>(vars: &HashMap<u64, Variable>, terms: &[Term]) -> Line
 }
 
 /// Enforce a zkInterface constraint in bellman CS.
-fn enforce<E, CS>(cs: &mut CS, vars: &HashMap<u64, Variable>, constraint: &Constraint)
+pub fn enforce<E, CS>(cs: &mut CS, vars: &HashMap<u64, Variable>, constraint: &Constraint)
     where E: Engine,
           CS: ConstraintSystem<E>
 {
@@ -77,11 +81,11 @@ pub fn call_gadget<E, CS>(
         None
     };
 
-    // Describe the inputs connection.
+    // Describe the input connections.
     let first_input_id = 1;
     let first_local_id = first_input_id + inputs.len() as u64;
 
-    let inputs_conn = ConnectionSimple {
+    let inputs_conn = ConnectionsSimple {
         free_variable_id: first_local_id,
         variable_ids: (first_input_id..first_local_id).collect(),
         values,

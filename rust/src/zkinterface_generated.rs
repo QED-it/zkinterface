@@ -21,7 +21,7 @@ pub enum Message {
   GadgetReturn = 2,
   R1CSConstraints = 3,
   AssignedVariables = 4,
-  Connection = 5,
+  Connections = 5,
 
 }
 
@@ -66,7 +66,7 @@ const ENUM_VALUES_MESSAGE:[Message; 6] = [
   Message::GadgetReturn,
   Message::R1CSConstraints,
   Message::AssignedVariables,
-  Message::Connection
+  Message::Connections
 ];
 
 #[allow(non_camel_case_types)]
@@ -76,7 +76,7 @@ const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
     "GadgetReturn",
     "R1CSConstraints",
     "AssignedVariables",
-    "Connection"
+    "Connections"
 ];
 
 pub fn enum_name_message(e: Message) -> &'static str {
@@ -131,14 +131,14 @@ impl<'a> Circuit<'a> {
     pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
 
-  /// Incoming Variables to use as connections to the gadget.
+  /// Incoming Variables to use as connection to the gadget.
   /// Allocated by the caller.
   /// Includes the first free Variable ID; the gadget can allocate new IDs
   /// starting with `inputs.free_variable_id`.
   /// The same structure must be provided for R1CS and assignment generation.
   #[inline]
-  pub fn connections(&self) -> Option<Connection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(Circuit::VT_CONNECTIONS, None)
+  pub fn connections(&self) -> Option<Connections<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Connections<'a>>>(Circuit::VT_CONNECTIONS, None)
   }
   /// Whether constraints should be generated.
   #[inline]
@@ -169,7 +169,7 @@ impl<'a> Circuit<'a> {
 }
 
 pub struct CircuitArgs<'a> {
-    pub connections: Option<flatbuffers::WIPOffset<Connection<'a >>>,
+    pub connections: Option<flatbuffers::WIPOffset<Connections<'a >>>,
     pub r1cs_generation: bool,
     pub witness_generation: bool,
     pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
@@ -193,8 +193,8 @@ pub struct CircuitBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
-  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Connection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(Circuit::VT_CONNECTIONS, connections);
+  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Connections<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connections>>(Circuit::VT_CONNECTIONS, connections);
   }
   #[inline]
   pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
@@ -266,14 +266,14 @@ impl<'a> GadgetReturn<'a> {
     pub const VT_OUTPUTS: flatbuffers::VOffsetT = 4;
     pub const VT_ERROR: flatbuffers::VOffsetT = 6;
 
-  /// Outgoing Variables to use as connections to the gadget.
+  /// Outgoing Variables to use as connection to the gadget.
   /// There may be no Outgoing Variables if the gadget is a pure assertion.
   /// Allocated by the gadget.
   /// Include the first variable ID free after the gadget call;
   /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
   #[inline]
-  pub fn outputs(&self) -> Option<Connection<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connection<'a>>>(GadgetReturn::VT_OUTPUTS, None)
+  pub fn outputs(&self) -> Option<Connections<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Connections<'a>>>(GadgetReturn::VT_OUTPUTS, None)
   }
   /// Optional: An error message. Null if no error.
   #[inline]
@@ -283,7 +283,7 @@ impl<'a> GadgetReturn<'a> {
 }
 
 pub struct GadgetReturnArgs<'a> {
-    pub outputs: Option<flatbuffers::WIPOffset<Connection<'a >>>,
+    pub outputs: Option<flatbuffers::WIPOffset<Connections<'a >>>,
     pub error: Option<flatbuffers::WIPOffset<&'a  str>>,
 }
 impl<'a> Default for GadgetReturnArgs<'a> {
@@ -301,8 +301,8 @@ pub struct GadgetReturnBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GadgetReturnBuilder<'a, 'b> {
   #[inline]
-  pub fn add_outputs(&mut self, outputs: flatbuffers::WIPOffset<Connection<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connection>>(GadgetReturn::VT_OUTPUTS, outputs);
+  pub fn add_outputs(&mut self, outputs: flatbuffers::WIPOffset<Connections<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connections>>(GadgetReturn::VT_OUTPUTS, outputs);
   }
   #[inline]
   pub fn add_error(&mut self, error: flatbuffers::WIPOffset<&'b  str>) {
@@ -324,15 +324,15 @@ impl<'a: 'b, 'b> GadgetReturnBuilder<'a, 'b> {
 }
 
 /// A connection into a sub-circuits.
-pub enum ConnectionOffset {}
+pub enum ConnectionsOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct Connection<'a> {
+pub struct Connections<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for Connection<'a> {
-    type Inner = Connection<'a>;
+impl<'a> flatbuffers::Follow<'a> for Connections<'a> {
+    type Inner = Connections<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -341,18 +341,18 @@ impl<'a> flatbuffers::Follow<'a> for Connection<'a> {
     }
 }
 
-impl<'a> Connection<'a> {
+impl<'a> Connections<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Connection {
+        Connections {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args ConnectionArgs<'args>) -> flatbuffers::WIPOffset<Connection<'bldr>> {
-      let mut builder = ConnectionBuilder::new(_fbb);
+        args: &'args ConnectionsArgs<'args>) -> flatbuffers::WIPOffset<Connections<'bldr>> {
+      let mut builder = ConnectionsBuilder::new(_fbb);
       builder.add_free_variable_id(args.free_variable_id);
       if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.values { builder.add_values(x); }
@@ -369,37 +369,37 @@ impl<'a> Connection<'a> {
   /// A variable ID greater than all IDs allocated at the time.
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
-    self._tab.get::<u64>(Connection::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
+    self._tab.get::<u64>(Connections::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
-  /// Variables to use as connections to the sub-circuit.
+  /// Variables to use as connection to the sub-circuit.
   #[inline]
   pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(Connection::VT_VARIABLE_IDS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(Connections::VT_VARIABLE_IDS, None)
   }
   /// Optional: The values assigned to variables, if any.
   /// Contiguous BigInts in the same order as `variable_ids`.
   #[inline]
   pub fn values(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Connection::VT_VALUES, None).map(|v| v.safe_slice())
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Connections::VT_VALUES, None).map(|v| v.safe_slice())
   }
   /// Optional: Any info that may be useful to the recipient.
   /// Example: a Merkle authentication path.
   #[inline]
   pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Connection::VT_INFO, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Connections::VT_INFO, None)
   }
 }
 
-pub struct ConnectionArgs<'a> {
+pub struct ConnectionsArgs<'a> {
     pub free_variable_id: u64,
     pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub values: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
-impl<'a> Default for ConnectionArgs<'a> {
+impl<'a> Default for ConnectionsArgs<'a> {
     #[inline]
     fn default() -> Self {
-        ConnectionArgs {
+        ConnectionsArgs {
             free_variable_id: 0,
             variable_ids: None,
             values: None,
@@ -407,37 +407,37 @@ impl<'a> Default for ConnectionArgs<'a> {
         }
     }
 }
-pub struct ConnectionBuilder<'a: 'b, 'b> {
+pub struct ConnectionsBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> ConnectionBuilder<'a, 'b> {
+impl<'a: 'b, 'b> ConnectionsBuilder<'a, 'b> {
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
-    self.fbb_.push_slot::<u64>(Connection::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+    self.fbb_.push_slot::<u64>(Connections::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
   #[inline]
   pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connection::VT_VARIABLE_IDS, variable_ids);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_VARIABLE_IDS, variable_ids);
   }
   #[inline]
   pub fn add_values(&mut self, values: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connection::VT_VALUES, values);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_VALUES, values);
   }
   #[inline]
   pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connection::VT_INFO, info);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_INFO, info);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ConnectionBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ConnectionsBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    ConnectionBuilder {
+    ConnectionsBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Connection<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<Connections<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -978,9 +978,9 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_connection(&self) -> Option<Connection<'a>> {
-    if self.message_type() == Message::Connection {
-      self.message().map(|u| Connection::init_from_table(u))
+  pub fn message_as_connections(&self) -> Option<Connections<'a>> {
+    if self.message_type() == Message::Connections {
+      self.message().map(|u| Connections::init_from_table(u))
     } else {
       None
     }

@@ -10,6 +10,7 @@ ff = { git = "https://github.com/zcash/librustzcash" }
 pairing = { git = "https://github.com/zcash/librustzcash" } # "0.14.2"
 bellman = { git = "https://github.com/zcash/librustzcash" } # "0.1.0"
 sapling-crypto = { git = "https://github.com/zcash/librustzcash" }
+rand = "0.4"
 zkinterface = { path = "../rust" }
 
 [dev-dependencies]
