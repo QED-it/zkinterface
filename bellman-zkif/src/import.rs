@@ -10,7 +10,7 @@ use sapling_crypto::circuit::num::AllocatedNum;
 use std::collections::HashMap;
 use zkinterface::{
     reading::{Constraint, Messages, Term},
-    writing::{CircuitSimple, ConnectionsSimple},
+    writing::{CircuitOwned, ConnectionsOwned},
 };
 
 
@@ -77,8 +77,8 @@ pub fn call_gadget<E, CS>(
     let first_input_id = 1;
     let free_variable_id = first_input_id + inputs.len() as u64;
 
-    let call = CircuitSimple {
-        connections: ConnectionsSimple {
+    let call = CircuitOwned {
+        connections: ConnectionsOwned {
             free_variable_id,
             variable_ids: (first_input_id..free_variable_id).collect(),
             values,
