@@ -217,9 +217,9 @@ namespace zkinterface_libsnark {
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
 
-        auto assigned_variables = CreateAssignedVariables(builder, values);
+        auto witness = CreateWitness(builder, values);
 
-        auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
+        auto root = CreateRoot(builder, Message_Witness, witness.Union());
         builder.FinishSizePrefixed(root);
         return builder;
     }

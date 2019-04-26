@@ -74,8 +74,8 @@ bool sha256_gadget_call(
         gadget_callback_t constraints_callback,
         void *constraints_context,
 
-        gadget_callback_t assigned_variables_callback,
-        void *assigned_variables_context,
+        gadget_callback_t witness_callback,
+        void *witness_context,
 
         gadget_callback_t return_callback,
         void *return_context
@@ -121,8 +121,8 @@ bool sha256_gadget_call(
         );
 
         // Report values assigned to local variables.
-        if (assigned_variables_callback != nullptr) {
-            assigned_variables_callback(assigned_variables_context, assignment_msg.GetBufferPointer());
+        if (witness_callback != nullptr) {
+            witness_callback(witness_context, assignment_msg.GetBufferPointer());
         }
         // Releasing assignment_msg...
     }

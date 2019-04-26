@@ -12,8 +12,8 @@ extern "C" {
         call_msg: *const u8,
         constraints_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
         constraints_context: *mut Messages,
-        assigned_variables_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
-        assigned_variables_context: *mut Messages,
+        witness_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
+        witness_context: *mut Messages,
         return_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
         return_context: *mut Messages,
     ) -> bool;
@@ -121,7 +121,7 @@ fn test_gadget_request() {
     {
         let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
 
-        println!("Assignment: Got assigned_variables:");
+        println!("Assignment: Got witness:");
         for var in assignment.iter() {
             println!("{} = {:?}", var.id, var.element);
         }

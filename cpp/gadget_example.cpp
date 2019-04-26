@@ -128,9 +128,9 @@ bool assignments_request(
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
 
-        auto assigned_variables = CreateAssignedVariables(builder, values);
+        auto witness = CreateWitness(builder, values);
 
-        auto root = CreateRoot(builder, Message_AssignedVariables, assigned_variables.Union());
+        auto root = CreateRoot(builder, Message_Witness, witness.Union());
         builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != nullptr) {
@@ -164,8 +164,8 @@ bool call_gadget(
         gadget_callback_t constraints_callback,
         void *constraints_context,
 
-        gadget_callback_t assigned_variables_callback,
-        void *assigned_variables_context,
+        gadget_callback_t witness_callback,
+        void *witness_context,
 
         gadget_callback_t return_callback,
         void *return_context
@@ -190,7 +190,7 @@ bool call_gadget(
     if (call->witness_generation()) {
         bool ok = assignments_request(
                 call,
-                assigned_variables_callback, assigned_variables_context,
+                witness_callback, witness_context,
                 return_callback, return_context
         );
         if (!ok) return false;

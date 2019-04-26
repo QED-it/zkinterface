@@ -23,8 +23,8 @@ typedef bool (*gadget_callback_t)(
     It receives a `Circuit` message, callbacks, and callback contexts.
     It calls `constraints_callback` zero or more times with
     `constraints_context` and a `R1CSConstraints` message.
-    It calls `assigned_variables_callback` zero or more times with
-    `assigned_variables_context` and a `AssignedVariables` message.
+    It calls `witness_callback` zero or more times with
+    `witness_context` and a `Witness` message.
     Finally, it calls `return_callback` once with `return_context` and a
     `GadgetReturn` message.
     The callbacks and the contexts pointers may be identical and may be NULL.
@@ -40,8 +40,8 @@ bool call_gadget(
         gadget_callback_t constraints_callback,
         void *constraints_context,
 
-        gadget_callback_t assigned_variables_callback,
-        void *assigned_variables_context,
+        gadget_callback_t witness_callback,
+        void *witness_context,
 
         gadget_callback_t return_callback,
         void *return_context

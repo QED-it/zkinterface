@@ -9,7 +9,7 @@ union Message {
     GadgetReturn,
 
     R1CSConstraints,
-    AssignedVariables,
+    Witness,
 
     Connections,
 }
@@ -45,7 +45,7 @@ table Circuit {
 }
 
 /// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or AssignedVariables have been sent.
+/// after all R1CSConstraints or Witness have been sent.
 table GadgetReturn {
     /// Outgoing Variables to use as connection to the gadget.
     /// There may be no Outgoing Variables if the gadget is a pure assertion.
@@ -99,7 +99,7 @@ table R1CSConstraints {
 /// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
 /// Does not include input and output variables.
-table AssignedVariables {
+table Witness {
     values :VariableValues;
 }
 

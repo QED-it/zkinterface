@@ -20,7 +20,7 @@ pub enum Message {
   Circuit = 1,
   GadgetReturn = 2,
   R1CSConstraints = 3,
-  AssignedVariables = 4,
+  Witness = 4,
   Connections = 5,
 
 }
@@ -65,7 +65,7 @@ const ENUM_VALUES_MESSAGE:[Message; 6] = [
   Message::Circuit,
   Message::GadgetReturn,
   Message::R1CSConstraints,
-  Message::AssignedVariables,
+  Message::Witness,
   Message::Connections
 ];
 
@@ -75,7 +75,7 @@ const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
     "Circuit",
     "GadgetReturn",
     "R1CSConstraints",
-    "AssignedVariables",
+    "Witness",
     "Connections"
 ];
 
@@ -228,7 +228,7 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
 }
 
 /// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or AssignedVariables have been sent.
+/// after all R1CSConstraints or Witness have been sent.
 pub enum GadgetReturnOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -714,15 +714,15 @@ impl<'a: 'b, 'b> BilinearConstraintBuilder<'a, 'b> {
 /// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
 /// Does not include input and output variables.
-pub enum AssignedVariablesOffset {}
+pub enum WitnessOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct AssignedVariables<'a> {
+pub struct Witness<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for AssignedVariables<'a> {
-    type Inner = AssignedVariables<'a>;
+impl<'a> flatbuffers::Follow<'a> for Witness<'a> {
+    type Inner = Witness<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -731,18 +731,18 @@ impl<'a> flatbuffers::Follow<'a> for AssignedVariables<'a> {
     }
 }
 
-impl<'a> AssignedVariables<'a> {
+impl<'a> Witness<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        AssignedVariables {
+        Witness {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args AssignedVariablesArgs<'args>) -> flatbuffers::WIPOffset<AssignedVariables<'bldr>> {
-      let mut builder = AssignedVariablesBuilder::new(_fbb);
+        args: &'args WitnessArgs<'args>) -> flatbuffers::WIPOffset<Witness<'bldr>> {
+      let mut builder = WitnessBuilder::new(_fbb);
       if let Some(x) = args.values { builder.add_values(x); }
       builder.finish()
     }
@@ -751,40 +751,40 @@ impl<'a> AssignedVariables<'a> {
 
   #[inline]
   pub fn values(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(AssignedVariables::VT_VALUES, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Witness::VT_VALUES, None)
   }
 }
 
-pub struct AssignedVariablesArgs<'a> {
+pub struct WitnessArgs<'a> {
     pub values: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
 }
-impl<'a> Default for AssignedVariablesArgs<'a> {
+impl<'a> Default for WitnessArgs<'a> {
     #[inline]
     fn default() -> Self {
-        AssignedVariablesArgs {
+        WitnessArgs {
             values: None,
         }
     }
 }
-pub struct AssignedVariablesBuilder<'a: 'b, 'b> {
+pub struct WitnessBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> AssignedVariablesBuilder<'a, 'b> {
+impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
   #[inline]
   pub fn add_values(&mut self, values: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(AssignedVariables::VT_VALUES, values);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Witness::VT_VALUES, values);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> AssignedVariablesBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> WitnessBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    AssignedVariablesBuilder {
+    WitnessBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<AssignedVariables<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<Witness<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -968,9 +968,9 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_assigned_variables(&self) -> Option<AssignedVariables<'a>> {
-    if self.message_type() == Message::AssignedVariables {
-      self.message().map(|u| AssignedVariables::init_from_table(u))
+  pub fn message_as_witness(&self) -> Option<Witness<'a>> {
+    if self.message_type() == Message::Witness {
+      self.message().map(|u| Witness::init_from_table(u))
     } else {
       None
     }

@@ -1,6 +1,3 @@
-pub mod demo;
-pub mod exec_zokrates;
-
 use bellman::{
     ConstraintSystem,
     Index,
@@ -9,13 +6,16 @@ use bellman::{
     Variable,
 };
 use blake2_rfc::blake2s::Blake2s;
+use byteorder::{BigEndian, ByteOrder};
 use ff::{Field, PrimeField, PrimeFieldRepr};
 use pairing::Engine;
-use byteorder::{BigEndian, ByteOrder};
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt::Write;
+
+pub mod demo;
+pub mod exec_zokrates;
 
 #[derive(Debug)]
 enum NamedObject {

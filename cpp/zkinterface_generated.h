@@ -20,7 +20,7 @@ struct R1CSConstraints;
 
 struct BilinearConstraint;
 
-struct AssignedVariables;
+struct Witness;
 
 struct VariableValues;
 
@@ -32,7 +32,7 @@ enum Message {
   Message_Circuit = 1,
   Message_GadgetReturn = 2,
   Message_R1CSConstraints = 3,
-  Message_AssignedVariables = 4,
+  Message_Witness = 4,
   Message_Connections = 5,
   Message_MIN = Message_NONE,
   Message_MAX = Message_Connections
@@ -44,7 +44,7 @@ inline const Message (&EnumValuesMessage())[6] {
     Message_Circuit,
     Message_GadgetReturn,
     Message_R1CSConstraints,
-    Message_AssignedVariables,
+    Message_Witness,
     Message_Connections
   };
   return values;
@@ -56,7 +56,7 @@ inline const char * const *EnumNamesMessage() {
     "Circuit",
     "GadgetReturn",
     "R1CSConstraints",
-    "AssignedVariables",
+    "Witness",
     "Connections",
     nullptr
   };
@@ -85,8 +85,8 @@ template<> struct MessageTraits<R1CSConstraints> {
   static const Message enum_value = Message_R1CSConstraints;
 };
 
-template<> struct MessageTraits<AssignedVariables> {
-  static const Message enum_value = Message_AssignedVariables;
+template<> struct MessageTraits<Witness> {
+  static const Message enum_value = Message_Witness;
 };
 
 template<> struct MessageTraits<Connections> {
@@ -217,7 +217,7 @@ inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
 }
 
 /// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or AssignedVariables have been sent.
+/// after all R1CSConstraints or Witness have been sent.
 struct GadgetReturn FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OUTPUTS = 4,
@@ -571,7 +571,7 @@ inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
 /// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
 /// Does not include input and output variables.
-struct AssignedVariables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VALUES = 4
   };
@@ -586,28 +586,28 @@ struct AssignedVariables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct AssignedVariablesBuilder {
+struct WitnessBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_values(flatbuffers::Offset<VariableValues> values) {
-    fbb_.AddOffset(AssignedVariables::VT_VALUES, values);
+    fbb_.AddOffset(Witness::VT_VALUES, values);
   }
-  explicit AssignedVariablesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit WitnessBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  AssignedVariablesBuilder &operator=(const AssignedVariablesBuilder &);
-  flatbuffers::Offset<AssignedVariables> Finish() {
+  WitnessBuilder &operator=(const WitnessBuilder &);
+  flatbuffers::Offset<Witness> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<AssignedVariables>(end);
+    auto o = flatbuffers::Offset<Witness>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<AssignedVariables> CreateAssignedVariables(
+inline flatbuffers::Offset<Witness> CreateWitness(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<VariableValues> values = 0) {
-  AssignedVariablesBuilder builder_(_fbb);
+  WitnessBuilder builder_(_fbb);
   builder_.add_values(values);
   return builder_.Finish();
 }
@@ -710,8 +710,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const R1CSConstraints *message_as_R1CSConstraints() const {
     return message_type() == Message_R1CSConstraints ? static_cast<const R1CSConstraints *>(message()) : nullptr;
   }
-  const AssignedVariables *message_as_AssignedVariables() const {
-    return message_type() == Message_AssignedVariables ? static_cast<const AssignedVariables *>(message()) : nullptr;
+  const Witness *message_as_Witness() const {
+    return message_type() == Message_Witness ? static_cast<const Witness *>(message()) : nullptr;
   }
   const Connections *message_as_Connections() const {
     return message_type() == Message_Connections ? static_cast<const Connections *>(message()) : nullptr;
@@ -737,8 +737,8 @@ template<> inline const R1CSConstraints *Root::message_as<R1CSConstraints>() con
   return message_as_R1CSConstraints();
 }
 
-template<> inline const AssignedVariables *Root::message_as<AssignedVariables>() const {
-  return message_as_AssignedVariables();
+template<> inline const Witness *Root::message_as<Witness>() const {
+  return message_as_Witness();
 }
 
 template<> inline const Connections *Root::message_as<Connections>() const {
@@ -793,8 +793,8 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       auto ptr = reinterpret_cast<const R1CSConstraints *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_AssignedVariables: {
-      auto ptr = reinterpret_cast<const AssignedVariables *>(obj);
+    case Message_Witness: {
+      auto ptr = reinterpret_cast<const Witness *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_Connections: {

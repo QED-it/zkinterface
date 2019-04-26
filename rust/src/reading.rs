@@ -13,7 +13,7 @@ use zkinterface_generated::zkinterface::{
 use zkinterface_generated::zkinterface::Connections;
 use zkinterface_generated::zkinterface::Root;
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<AssignedVariable>)> {
+pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Witness>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
     let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
@@ -22,7 +22,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<AssignedVariable>)> {
         let stride = bytes.len() / input_var_ids.len();
 
         (0..input_var_ids.len()).map(|i|
-            AssignedVariable {
+            Witness {
                 id: input_var_ids[i],
                 value: &bytes[stride * i..stride * (i + 1)],
             }
@@ -108,17 +108,17 @@ impl Messages {
         returns
     }
 
-    pub fn connection_variables(&self) -> Option<Vec<AssignedVariable>> {
+    pub fn connection_variables(&self) -> Option<Vec<Witness>> {
         let connections = self.last_circuit()?.connections()?;
         collect_connection_variables(&connections, self.first_id)
     }
 
-    pub fn unassigned_private_variables(&self) -> Option<Vec<AssignedVariable>> {
+    pub fn unassigned_private_variables(&self) -> Option<Vec<Witness>> {
         let connections = self.last_circuit()?.connections()?;
         collect_unassigned_private_variables(&connections, self.first_id)
     }
 
-    pub fn assigned_private_variables(&self) -> Vec<AssignedVariable> {
+    pub fn assigned_private_variables(&self) -> Vec<Witness> {
         self.iter_assignment()
             .filter(|var|
                 var.id >= self.first_id
@@ -126,7 +126,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -140,7 +140,7 @@ pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -
         .filter(|&i| // Ignore variables below first_id, if any.
             var_ids[i] >= first_id
         ).map(|i|          // Extract value of each variable.
-        AssignedVariable {
+        Witness {
             id: var_ids[i],
             value: &values[stride * i..stride * (i + 1)],
         }
@@ -149,14 +149,14 @@ pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+pub fn collect_unassigned_private_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let vars = (first_id..conn.free_variable_id())
         .filter(|id| // Ignore variables already in the connections.
             !var_ids.contains(id)
         ).map(|id|          // Variable without value.
-        AssignedVariable {
+        Witness {
             id,
             value: &[],
         }
@@ -231,7 +231,7 @@ impl Messages {
     }
 }
 
-pub type Term<'a> = AssignedVariable<'a>;
+pub type Term<'a> = Witness<'a>;
 
 #[derive(Debug)]
 pub struct Constraint<'a> {
@@ -302,8 +302,8 @@ impl<'a> Iterator for R1CSIterator<'a> {
 
 // Assignment messages
 impl Messages {
-    pub fn iter_assignment(&self) -> AssignedVariablesIterator {
-        AssignedVariablesIterator {
+    pub fn iter_assignment(&self) -> WitnessIterator {
+        WitnessIterator {
             messages_iter: self.into_iter(),
             var_ids: &[],
             values: &[],
@@ -313,18 +313,18 @@ impl Messages {
 }
 
 #[derive(Debug)]
-pub struct AssignedVariable<'a> {
+pub struct Witness<'a> {
     pub id: u64,
     pub value: &'a [u8],
 }
 
-impl<'a> AssignedVariable<'a> {
+impl<'a> Witness<'a> {
     pub fn has_value(&self) -> bool {
         self.value.len() > 0
     }
 }
 
-pub struct AssignedVariablesIterator<'a> {
+pub struct WitnessIterator<'a> {
     // Iterate over messages.
     messages_iter: MessageIterator<'a>,
 
@@ -334,8 +334,8 @@ pub struct AssignedVariablesIterator<'a> {
     next_element: usize,
 }
 
-impl<'a> Iterator for AssignedVariablesIterator<'a> {
-    type Item = AssignedVariable<'a>;
+impl<'a> Iterator for WitnessIterator<'a> {
+    type Item = Witness<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.next_element >= self.var_ids.len() {
@@ -343,14 +343,14 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
             let message = self.messages_iter.next()?;
 
             // Parse the message, skip irrelevant message types, or fail if invalid.
-            let assigned_variables = match message.message_as_assigned_variables() {
+            let witness = match message.message_as_witness() {
                 Some(message) => message.values().unwrap(),
                 None => continue,
             };
 
             // Start iterating the values of the current message.
-            self.var_ids = assigned_variables.variable_ids().unwrap().safe_slice();
-            self.values = assigned_variables.values().unwrap();
+            self.var_ids = witness.variable_ids().unwrap().safe_slice();
+            self.values = witness.values().unwrap();
             self.next_element = 0;
         }
 
@@ -360,7 +360,7 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
         let i = self.next_element;
         self.next_element += 1;
 
-        Some(AssignedVariable {
+        Some(Witness {
             id: self.var_ids[i],
             value: &self.values[stride * i..stride * (i + 1)],
         })
