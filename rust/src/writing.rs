@@ -6,8 +6,6 @@ use zkinterface_generated::zkinterface::{
     CircuitArgs,
     Connections,
     ConnectionsArgs,
-    GadgetReturn,
-    GadgetReturnArgs,
     Message,
     Root,
     RootArgs,
@@ -122,58 +120,3 @@ impl ConnectionsOwned {
         })
     }
 }
-
-
-// ==== Gadget Return ====
-
-#[derive(Clone, Debug)]
-pub struct GadgetReturnSimple {
-    pub outputs: ConnectionsOwned,
-    // pub error: Option<String>,
-}
-
-impl GadgetReturnSimple {
-    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        &'args self,
-        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>> {
-        let outputs = Some(self.outputs.build(builder));
-
-        let gadget_return = GadgetReturn::create(builder, &GadgetReturnArgs {
-            outputs,
-            error: None,
-        });
-        Root::create(builder, &RootArgs {
-            message_type: Message::GadgetReturn,
-            message: Some(gadget_return.as_union_value()),
-        })
-    }
-}
-
-
-// ==== Helpers ====
-
-/*
-pub fn concatenate_values(builder, values) {
-    let total_size = if values.len() == 0 {
-        0
-    } else {
-        values.len() * values[0].len()
-    };
-    builder.start_vector::<u8>(total_size);
-    for value in values.iter().rev() {
-        for i in (0..value.len()).rev() {
-            builder.push(value[i]);
-        }
-    }
-    builder.end_vector(total_size)
-}
-
-pub fn split_values(values) {
-    let stride = bytes.len() / variable_ids.len();
-
-    (0..variable_ids.len()).map(|i|
-        Vec::from(&bytes[stride * i..stride * (i + 1)])
-    ).collect()
-}
-*/

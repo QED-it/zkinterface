@@ -10,8 +10,6 @@ namespace zkinterface {
 
 struct Circuit;
 
-struct GadgetReturn;
-
 struct Connections;
 
 struct KeyValue;
@@ -30,22 +28,18 @@ struct Root;
 enum Message {
   Message_NONE = 0,
   Message_Circuit = 1,
-  Message_GadgetReturn = 2,
-  Message_R1CSConstraints = 3,
-  Message_Witness = 4,
-  Message_Connections = 5,
+  Message_R1CSConstraints = 2,
+  Message_Witness = 3,
   Message_MIN = Message_NONE,
-  Message_MAX = Message_Connections
+  Message_MAX = Message_Witness
 };
 
-inline const Message (&EnumValuesMessage())[6] {
+inline const Message (&EnumValuesMessage())[4] {
   static const Message values[] = {
     Message_NONE,
     Message_Circuit,
-    Message_GadgetReturn,
     Message_R1CSConstraints,
-    Message_Witness,
-    Message_Connections
+    Message_Witness
   };
   return values;
 }
@@ -54,17 +48,15 @@ inline const char * const *EnumNamesMessage() {
   static const char * const names[] = {
     "NONE",
     "Circuit",
-    "GadgetReturn",
     "R1CSConstraints",
     "Witness",
-    "Connections",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessage(Message e) {
-  if (e < Message_NONE || e > Message_Connections) return "";
+  if (e < Message_NONE || e > Message_Witness) return "";
   const size_t index = static_cast<int>(e);
   return EnumNamesMessage()[index];
 }
@@ -77,20 +69,12 @@ template<> struct MessageTraits<Circuit> {
   static const Message enum_value = Message_Circuit;
 };
 
-template<> struct MessageTraits<GadgetReturn> {
-  static const Message enum_value = Message_GadgetReturn;
-};
-
 template<> struct MessageTraits<R1CSConstraints> {
   static const Message enum_value = Message_R1CSConstraints;
 };
 
 template<> struct MessageTraits<Witness> {
   static const Message enum_value = Message_Witness;
-};
-
-template<> struct MessageTraits<Connections> {
-  static const Message enum_value = Message_Connections;
 };
 
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
@@ -107,11 +91,11 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FIELD_ORDER = 10,
     VT_CONFIGURATION = 12
   };
-  /// Incoming Variables to use as connection to the gadget.
-  /// Allocated by the caller.
-  /// Includes the first free Variable ID; the gadget can allocate new IDs
-  /// starting with `inputs.free_variable_id`.
-  /// The same structure must be provided for R1CS and assignment generation.
+  /// - Incoming Variables to use as connection to the gadget.
+  /// - Outgoing Variables to use as connection to the gadget.
+  /// - Variables are allocated by the sender of this message.
+  /// - The recipient can allocate new IDs greater than `connections.free_variable_id`.
+  /// - The same structure must be provided for R1CS and witness generation.
   const Connections *connections() const {
     return GetPointer<const Connections *>(VT_CONNECTIONS);
   }
@@ -119,7 +103,7 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool r1cs_generation() const {
     return GetField<uint8_t>(VT_R1CS_GENERATION, 0) != 0;
   }
-  /// Whether an assignment should be generated.
+  /// Whether an witness should be generated.
   /// Provide witness values to the gadget.
   bool witness_generation() const {
     return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
@@ -214,77 +198,6 @@ inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
       witness_generation,
       field_order__,
       configuration__);
-}
-
-/// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or Witness have been sent.
-struct GadgetReturn FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_OUTPUTS = 4,
-    VT_ERROR = 6
-  };
-  /// Outgoing Variables to use as connection to the gadget.
-  /// There may be no Outgoing Variables if the gadget is a pure assertion.
-  /// Allocated by the gadget.
-  /// Include the first variable ID free after the gadget call;
-  /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
-  const Connections *outputs() const {
-    return GetPointer<const Connections *>(VT_OUTPUTS);
-  }
-  /// Optional: An error message. Null if no error.
-  const flatbuffers::String *error() const {
-    return GetPointer<const flatbuffers::String *>(VT_ERROR);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_OUTPUTS) &&
-           verifier.VerifyTable(outputs()) &&
-           VerifyOffset(verifier, VT_ERROR) &&
-           verifier.VerifyString(error()) &&
-           verifier.EndTable();
-  }
-};
-
-struct GadgetReturnBuilder {
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_outputs(flatbuffers::Offset<Connections> outputs) {
-    fbb_.AddOffset(GadgetReturn::VT_OUTPUTS, outputs);
-  }
-  void add_error(flatbuffers::Offset<flatbuffers::String> error) {
-    fbb_.AddOffset(GadgetReturn::VT_ERROR, error);
-  }
-  explicit GadgetReturnBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  GadgetReturnBuilder &operator=(const GadgetReturnBuilder &);
-  flatbuffers::Offset<GadgetReturn> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GadgetReturn>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturn(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connections> outputs = 0,
-    flatbuffers::Offset<flatbuffers::String> error = 0) {
-  GadgetReturnBuilder builder_(_fbb);
-  builder_.add_error(error);
-  builder_.add_outputs(outputs);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<GadgetReturn> CreateGadgetReturnDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Connections> outputs = 0,
-    const char *error = nullptr) {
-  auto error__ = error ? _fbb.CreateString(error) : 0;
-  return zkinterface::CreateGadgetReturn(
-      _fbb,
-      outputs,
-      error__);
 }
 
 /// A connection into a sub-circuits.
@@ -704,17 +617,11 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Circuit *message_as_Circuit() const {
     return message_type() == Message_Circuit ? static_cast<const Circuit *>(message()) : nullptr;
   }
-  const GadgetReturn *message_as_GadgetReturn() const {
-    return message_type() == Message_GadgetReturn ? static_cast<const GadgetReturn *>(message()) : nullptr;
-  }
   const R1CSConstraints *message_as_R1CSConstraints() const {
     return message_type() == Message_R1CSConstraints ? static_cast<const R1CSConstraints *>(message()) : nullptr;
   }
   const Witness *message_as_Witness() const {
     return message_type() == Message_Witness ? static_cast<const Witness *>(message()) : nullptr;
-  }
-  const Connections *message_as_Connections() const {
-    return message_type() == Message_Connections ? static_cast<const Connections *>(message()) : nullptr;
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -729,20 +636,12 @@ template<> inline const Circuit *Root::message_as<Circuit>() const {
   return message_as_Circuit();
 }
 
-template<> inline const GadgetReturn *Root::message_as<GadgetReturn>() const {
-  return message_as_GadgetReturn();
-}
-
 template<> inline const R1CSConstraints *Root::message_as<R1CSConstraints>() const {
   return message_as_R1CSConstraints();
 }
 
 template<> inline const Witness *Root::message_as<Witness>() const {
   return message_as_Witness();
-}
-
-template<> inline const Connections *Root::message_as<Connections>() const {
-  return message_as_Connections();
 }
 
 struct RootBuilder {
@@ -785,20 +684,12 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       auto ptr = reinterpret_cast<const Circuit *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_GadgetReturn: {
-      auto ptr = reinterpret_cast<const GadgetReturn *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
     case Message_R1CSConstraints: {
       auto ptr = reinterpret_cast<const R1CSConstraints *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_Witness: {
       auto ptr = reinterpret_cast<const Witness *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case Message_Connections: {
-      auto ptr = reinterpret_cast<const Connections *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return false;

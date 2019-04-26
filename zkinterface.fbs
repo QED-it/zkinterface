@@ -6,29 +6,28 @@ namespace zkinterface;
 /// The messages that the caller and gadget can exchange.
 union Message {
     Circuit,
-    GadgetReturn,
-
     R1CSConstraints,
     Witness,
-
-    Connections,
 }
 
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 table Circuit {
-    /// Incoming Variables to use as connection to the gadget.
-    /// Allocated by the caller.
-    /// Includes the first free Variable ID; the gadget can allocate new IDs
-    /// starting with `inputs.free_variable_id`.
-    /// The same structure must be provided for R1CS and assignment generation.
+    /// - Incoming Variables to use as connection to the gadget.
+    /// - Outgoing Variables to use as connection to the gadget.
+    /// - Variables are allocated by the sender of this message.
+    /// - The recipient can allocate new IDs greater than `connections.free_variable_id`.
+    /// - The same structure must be provided for R1CS and witness generation.
     connections         :Connections;
+
+    // Fields below are required to call a backend or a gadget,
+    // but optional in the response from a gadget.
 
     /// Whether constraints should be generated.
     r1cs_generation       :bool;
 
-    /// Whether an assignment should be generated.
+    /// Whether an witness should be generated.
     /// Provide witness values to the gadget.
     witness_generation :bool;
 
@@ -42,20 +41,6 @@ table Circuit {
     /// Example: the depth of a Merkle tree.
     /// Counter-example: a Merkle path is not configuration (rather witness).
     configuration           :[KeyValue];
-}
-
-/// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or Witness have been sent.
-table GadgetReturn {
-    /// Outgoing Variables to use as connection to the gadget.
-    /// There may be no Outgoing Variables if the gadget is a pure assertion.
-    /// Allocated by the gadget.
-    /// Include the first variable ID free after the gadget call;
-    /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
-    outputs :Connections;
-
-    /// Optional: An error message. Null if no error.
-    error   :string;
 }
 
     /// A connection into a sub-circuits.

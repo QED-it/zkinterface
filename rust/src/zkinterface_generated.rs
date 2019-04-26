@@ -18,15 +18,13 @@ pub mod zkinterface {
 pub enum Message {
   NONE = 0,
   Circuit = 1,
-  GadgetReturn = 2,
-  R1CSConstraints = 3,
-  Witness = 4,
-  Connections = 5,
+  R1CSConstraints = 2,
+  Witness = 3,
 
 }
 
 const ENUM_MIN_MESSAGE: u8 = 0;
-const ENUM_MAX_MESSAGE: u8 = 5;
+const ENUM_MAX_MESSAGE: u8 = 3;
 
 impl<'a> flatbuffers::Follow<'a> for Message {
   type Inner = Self;
@@ -60,23 +58,19 @@ impl flatbuffers::Push for Message {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_MESSAGE:[Message; 6] = [
+const ENUM_VALUES_MESSAGE:[Message; 4] = [
   Message::NONE,
   Message::Circuit,
-  Message::GadgetReturn,
   Message::R1CSConstraints,
-  Message::Witness,
-  Message::Connections
+  Message::Witness
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
+const ENUM_NAMES_MESSAGE:[&'static str; 4] = [
     "NONE",
     "Circuit",
-    "GadgetReturn",
     "R1CSConstraints",
-    "Witness",
-    "Connections"
+    "Witness"
 ];
 
 pub fn enum_name_message(e: Message) -> &'static str {
@@ -131,11 +125,11 @@ impl<'a> Circuit<'a> {
     pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
 
-  /// Incoming Variables to use as connection to the gadget.
-  /// Allocated by the caller.
-  /// Includes the first free Variable ID; the gadget can allocate new IDs
-  /// starting with `inputs.free_variable_id`.
-  /// The same structure must be provided for R1CS and assignment generation.
+  /// - Incoming Variables to use as connection to the gadget.
+  /// - Outgoing Variables to use as connection to the gadget.
+  /// - Variables are allocated by the sender of this message.
+  /// - The recipient can allocate new IDs greater than `connections.free_variable_id`.
+  /// - The same structure must be provided for R1CS and witness generation.
   #[inline]
   pub fn connections(&self) -> Option<Connections<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<Connections<'a>>>(Circuit::VT_CONNECTIONS, None)
@@ -145,7 +139,7 @@ impl<'a> Circuit<'a> {
   pub fn r1cs_generation(&self) -> bool {
     self._tab.get::<bool>(Circuit::VT_R1CS_GENERATION, Some(false)).unwrap()
   }
-  /// Whether an assignment should be generated.
+  /// Whether an witness should be generated.
   /// Provide witness values to the gadget.
   #[inline]
   pub fn witness_generation(&self) -> bool {
@@ -222,102 +216,6 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<Circuit<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// The gadget returns to the caller. This is the final message
-/// after all R1CSConstraints or Witness have been sent.
-pub enum GadgetReturnOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct GadgetReturn<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for GadgetReturn<'a> {
-    type Inner = GadgetReturn<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> GadgetReturn<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        GadgetReturn {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args GadgetReturnArgs<'args>) -> flatbuffers::WIPOffset<GadgetReturn<'bldr>> {
-      let mut builder = GadgetReturnBuilder::new(_fbb);
-      if let Some(x) = args.error { builder.add_error(x); }
-      if let Some(x) = args.outputs { builder.add_outputs(x); }
-      builder.finish()
-    }
-
-    pub const VT_OUTPUTS: flatbuffers::VOffsetT = 4;
-    pub const VT_ERROR: flatbuffers::VOffsetT = 6;
-
-  /// Outgoing Variables to use as connection to the gadget.
-  /// There may be no Outgoing Variables if the gadget is a pure assertion.
-  /// Allocated by the gadget.
-  /// Include the first variable ID free after the gadget call;
-  /// `outputs.free_variable_id` is greater than all IDs allocated by the gadget.
-  #[inline]
-  pub fn outputs(&self) -> Option<Connections<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connections<'a>>>(GadgetReturn::VT_OUTPUTS, None)
-  }
-  /// Optional: An error message. Null if no error.
-  #[inline]
-  pub fn error(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(GadgetReturn::VT_ERROR, None)
-  }
-}
-
-pub struct GadgetReturnArgs<'a> {
-    pub outputs: Option<flatbuffers::WIPOffset<Connections<'a >>>,
-    pub error: Option<flatbuffers::WIPOffset<&'a  str>>,
-}
-impl<'a> Default for GadgetReturnArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        GadgetReturnArgs {
-            outputs: None,
-            error: None,
-        }
-    }
-}
-pub struct GadgetReturnBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> GadgetReturnBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_outputs(&mut self, outputs: flatbuffers::WIPOffset<Connections<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connections>>(GadgetReturn::VT_OUTPUTS, outputs);
-  }
-  #[inline]
-  pub fn add_error(&mut self, error: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GadgetReturn::VT_ERROR, error);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GadgetReturnBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    GadgetReturnBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GadgetReturn<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -948,16 +846,6 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gadget_return(&self) -> Option<GadgetReturn<'a>> {
-    if self.message_type() == Message::GadgetReturn {
-      self.message().map(|u| GadgetReturn::init_from_table(u))
-    } else {
-      None
-    }
-  }
-
-  #[inline]
-  #[allow(non_snake_case)]
   pub fn message_as_r1csconstraints(&self) -> Option<R1CSConstraints<'a>> {
     if self.message_type() == Message::R1CSConstraints {
       self.message().map(|u| R1CSConstraints::init_from_table(u))
@@ -971,16 +859,6 @@ impl<'a> Root<'a> {
   pub fn message_as_witness(&self) -> Option<Witness<'a>> {
     if self.message_type() == Message::Witness {
       self.message().map(|u| Witness::init_from_table(u))
-    } else {
-      None
-    }
-  }
-
-  #[inline]
-  #[allow(non_snake_case)]
-  pub fn message_as_connections(&self) -> Option<Connections<'a>> {
-    if self.message_type() == Message::Connections {
-      self.message().map(|u| Connections::init_from_table(u))
     } else {
       None
     }

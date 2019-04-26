@@ -26,7 +26,7 @@ typedef bool (*gadget_callback_t)(
     It calls `witness_callback` zero or more times with
     `witness_context` and a `Witness` message.
     Finally, it calls `return_callback` once with `return_context` and a
-    `GadgetReturn` message.
+    return `Circuit` message.
     The callbacks and the contexts pointers may be identical and may be NULL.
 
     The following memory management convention is used both for `call_gadget`
