@@ -5,34 +5,18 @@ use bellman::{
         create_random_proof,
         generate_random_parameters,
         Parameters,
-        prepare_verifying_key,
-        PreparedVerifyingKey,
-        Proof,
-        verify_proof,
     },
-    LinearCombination,
     SynthesisError,
     Variable,
 };
-use ff::{Field, PrimeField, PrimeFieldRepr};
 use pairing::{bls12_381::Bls12, Engine};
 use rand::OsRng;
 use sapling_crypto::circuit::num::AllocatedNum;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Read;
 use std::path::Path;
-use super::import::{enforce, le_to_fr, terms_to_lc};
-use zkinterface::{
-    flatbuffers::FlatBufferBuilder,
-    reading::{collect_connection_variables, collect_unassigned_private_variables, Constraint, Messages, Term},
-    writing::{CircuitSimple, ConnectionsSimple},
-    zkinterface_generated::zkinterface::{
-        Message,
-        Root,
-        RootArgs,
-    },
-};
+use super::import::{enforce, le_to_fr};
+use zkinterface::reading::Messages;
 
 
 /// A circuit instance built from zkif messages.
@@ -44,47 +28,47 @@ pub struct ZKIF<'a> {
 impl<'a, E: Engine> Circuit<E> for ZKIF<'a> {
     fn synthesize<CS: ConstraintSystem<E>>(self, cs: &mut CS) -> Result<(), SynthesisError>
     {
-        let circuit_msg = self.messages.last_circuit().unwrap();
-        let connections = circuit_msg.connections().unwrap();
-        let witness_generation = circuit_msg.witness_generation();
+        let witness_generation = self.messages.last_circuit().unwrap().witness_generation();
 
         // Track variables by id. Used to convert constraints.
-        let mut vars = HashMap::<u64, Variable>::new();
-        vars.insert(0, CS::one());
+        let mut id_to_var = HashMap::<u64, Variable>::new();
+
+        id_to_var.insert(0, CS::one());
 
         // Allocate public inputs, with optional values.
-        if let Some(assignments) = collect_connection_variables(&connections, 1) {
-            for assignment in assignments {
-                let num = AllocatedNum::alloc(
-                    cs.namespace(|| format!("input_{}", assignment.id)), || {
-                        Ok(le_to_fr::<E>(assignment.element))
-                    })?;
+        let public_vars = self.messages.connection_variables().unwrap();
 
-                // Track input variable.
-                vars.insert(assignment.id, num.get_variable());
-            }
-        };
+        for var in public_vars {
+            let num = AllocatedNum::alloc(
+                cs.namespace(|| format!("public_{}", var.id)), || {
+                    Ok(le_to_fr::<E>(var.value))
+                })?;
+
+            // Track input variable.
+            id_to_var.insert(var.id, num.get_variable());
+        }
 
         // Allocate private variables, with optional values.
         let private_vars = if witness_generation {
-            self.messages.iter_assignment().collect()
+            self.messages.assigned_private_variables()
         } else {
-            collect_unassigned_private_variables(&connections, 1).unwrap()
+            self.messages.unassigned_private_variables().unwrap()
         };
 
-        for assignment in private_vars {
+        for var in private_vars {
             let num = AllocatedNum::alloc(
-                cs.namespace(|| format!("private_{}", assignment.id)), || {
-                    Ok(le_to_fr::<E>(assignment.element))
+                cs.namespace(|| format!("private_{}", var.id)), || {
+                    Ok(le_to_fr::<E>(var.value))
                 })?;
 
             // Track private variable.
-            vars.insert(assignment.id, num.get_variable());
+            id_to_var.insert(var.id, num.get_variable());
         };
 
         for (i, constraint) in self.messages.iter_constraints().enumerate() {
-            enforce(&mut cs.namespace(|| format!("constraint_{}", i)), &vars, &constraint);
+            enforce(&mut cs.namespace(|| format!("constraint_{}", i)), &id_to_var, &constraint);
         }
+
         Ok(())
     }
 }
@@ -142,18 +126,18 @@ fn test_zkif_backend() {
 
     // Setup.
     {
-        let mut messages = Messages::new();
-        messages.read_file(test_dir.join("r1cs.zkif"));
-        messages.read_file(test_dir.join("circuit_r1cs.zkif"));
+        let mut messages = Messages::new(1);
+        messages.read_file(test_dir.join("r1cs.zkif")).unwrap();
+        messages.read_file(test_dir.join("circuit_r1cs.zkif")).unwrap();
 
         zkif_backend(&messages).unwrap();
     }
 
     // Prove.
     {
-        let mut messages = Messages::new();
-        messages.read_file(test_dir.join("witness.zkif"));
-        messages.read_file(test_dir.join("circuit_witness.zkif"));
+        let mut messages = Messages::new(1);
+        messages.read_file(test_dir.join("witness.zkif")).unwrap();
+        messages.read_file(test_dir.join("circuit_witness.zkif")).unwrap();
 
         zkif_backend(&messages).unwrap();
     }

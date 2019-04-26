@@ -138,7 +138,7 @@ fn test_gadget_request() {
         assert!(free_variable_id_after2 == 102 + 1 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 
-        let out_vars = assign_ctx.outgoing_assigned_variables();
+        let out_vars = assign_ctx.connection_variables().unwrap();
         println!("{:?}", out_vars);
     }
     println!();

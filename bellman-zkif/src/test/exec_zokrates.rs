@@ -14,7 +14,7 @@ flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- witn
 use num_bigint::BigUint;
 use std::env;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{Write};
 use std::path::Path;
 use std::process::{Command, Output};
 use zkinterface::{
@@ -30,10 +30,10 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let (call, inputs) = parse_call(call_msg).unwrap();
 
     // Non-contiguous IDs are not supported by ZoKrates yet.
-    let connections = call.connections().unwrap();
-    let input_ids = connections.variable_ids().unwrap().safe_slice();
+    let in_connections = call.connections().unwrap();
+    let input_ids = in_connections.variable_ids().unwrap().safe_slice();
     assert!(is_contiguous(1, input_ids));
-    assert_eq!(1 + input_ids.len() as u64, connections.free_variable_id());
+    assert_eq!(1 + input_ids.len() as u64, in_connections.free_variable_id());
 
     let program = "src/test/demo.code";
     let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();
@@ -41,18 +41,9 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let zokrates_home = Path::new(&zokrates_home);
     let make_zokrates_command = || { Command::new("src/test/exec_zokrates") };
 
-    let mut context = Messages::new();
+    let mut messages = Messages::new(in_connections.free_variable_id());
 
     {
-        let mut load_message = |name: &str| {
-            let path = zokrates_home.join(name);
-            let mut file = File::open(&path).unwrap();
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf).unwrap();
-            println!("loaded {} ({} bytes)", name, buf.len());
-            context.push_message(buf)
-        };
-
         // Write Call message -> call.zkif
         {
             let call_path = zokrates_home.join("call.zkif");
@@ -74,8 +65,8 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
             cmd.args(&["setup", "--backend", "zkinterface", "-p", "r1cs.zkif"]);
             let _out = exec(&mut cmd);
 
-            load_message("r1cs.zkif")?;
-            load_message("circuit_r1cs.zkif")?;
+            messages.read_file(zokrates_home.join("r1cs.zkif"))?;
+            messages.read_file(zokrates_home.join("circuit_r1cs.zkif"))?;
         }
 
         if call.witness_generation() {
@@ -86,7 +77,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
 
                 // Convert input elements to decimal on the command line.
                 for input in inputs {
-                    cmd.arg(le_to_decimal(input.element));
+                    cmd.arg(le_to_decimal(input.value));
                 }
 
                 let _out = exec(&mut cmd);
@@ -98,13 +89,13 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
                 cmd.args(&["generate-proof", "--backend", "zkinterface", "-j", "witness.zkif"]);
                 let _out = exec(&mut cmd);
 
-                load_message("witness.zkif")?;
-                load_message("circuit_witness.zkif")?;
+                messages.read_file(zokrates_home.join("witness.zkif"))?;
+                messages.read_file(zokrates_home.join("circuit_witness.zkif"))?;
             }
         }
     }
 
-    Ok(context)
+    Ok(messages)
 }
 
 /// Convert zkInterface little-endian bytes to zokrates decimal.

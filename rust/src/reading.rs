@@ -24,7 +24,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<AssignedVariable>)> {
         (0..input_var_ids.len()).map(|i|
             AssignedVariable {
                 id: input_var_ids[i],
-                element: &bytes[stride * i..stride * (i + 1)],
+                value: &bytes[stride * i..stride * (i + 1)],
             }
         ).collect()
     } else {
@@ -63,12 +63,16 @@ pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
 #[derive(Clone, Debug)]
 pub struct Messages {
     pub messages: Vec<Vec<u8>>,
+    pub first_id: u64,
 }
 
 impl Messages {
-    pub fn new() -> Messages {
+    /// first_id: The first variable ID to consider in received messages.
+    /// Variables with lower IDs are ignored.
+    pub fn new(first_id: u64) -> Messages {
         Messages {
             messages: vec![],
+            first_id,
         }
     }
 
@@ -77,12 +81,13 @@ impl Messages {
         Ok(())
     }
 
-    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) {
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), String> {
         let mut file = File::open(&path).unwrap();
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).unwrap();
         println!("loaded {:?} ({} bytes)", path.as_ref(), buf.len());
         self.push_message(buf).unwrap();
+        Ok(())
     }
 
     pub fn last_circuit(&self) -> Option<Circuit> {
@@ -102,8 +107,65 @@ impl Messages {
         }
         returns
     }
+
+    pub fn connection_variables(&self) -> Option<Vec<AssignedVariable>> {
+        let connections = self.last_circuit()?.connections()?;
+        collect_connection_variables(&connections, self.first_id)
+    }
+
+    pub fn unassigned_private_variables(&self) -> Option<Vec<AssignedVariable>> {
+        let connections = self.last_circuit()?.connections()?;
+        collect_unassigned_private_variables(&connections, self.first_id)
+    }
+
+    pub fn assigned_private_variables(&self) -> Vec<AssignedVariable> {
+        self.iter_assignment()
+            .filter(|var|
+                var.id >= self.first_id
+            ).collect()
+    }
 }
 
+pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+    let var_ids = conn.variable_ids()?.safe_slice();
+
+    let values = match conn.values() {
+        Some(values) => values,
+        None => &[], // No values, only variable ids and empty values.
+    };
+
+    let stride = values.len() / var_ids.len();
+
+    let vars = (0..var_ids.len())
+        .filter(|&i| // Ignore variables below first_id, if any.
+            var_ids[i] >= first_id
+        ).map(|i|          // Extract value of each variable.
+        AssignedVariable {
+            id: var_ids[i],
+            value: &values[stride * i..stride * (i + 1)],
+        }
+    ).collect();
+
+    Some(vars)
+}
+
+pub fn collect_unassigned_private_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
+    let var_ids = conn.variable_ids()?.safe_slice();
+
+    let vars = (first_id..conn.free_variable_id())
+        .filter(|id| // Ignore variables already in the connections.
+            !var_ids.contains(id)
+        ).map(|id|          // Variable without value.
+        AssignedVariable {
+            id,
+            value: &[],
+        }
+    ).collect();
+
+    Some(vars)
+}
+
+// Implement `for message in messages`
 impl<'a> IntoIterator for &'a Messages {
     type Item = Root<'a>;
     type IntoIter = MessageIterator<'a>;
@@ -221,7 +283,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
             for i in 0..var_ids.len() {
                 terms.push(Term {
                     id: var_ids[i],
-                    element: &values[stride * i..stride * (i + 1)],
+                    value: &values[stride * i..stride * (i + 1)],
                 });
             }
 
@@ -248,76 +310,17 @@ impl Messages {
             next_element: 0,
         }
     }
-
-    pub fn outgoing_assigned_variables(&self, first_id: u64) -> Option<Vec<AssignedVariable>> {
-        let outputs = self.last_circuit()?.connections()?;
-        let output_var_ids = outputs.variable_ids()?.safe_slice();
-        let values = outputs.values()?;
-
-        let stride = values.len() / output_var_ids.len();
-
-        let mut assigned = vec![];
-        for i in 0..output_var_ids.len() {
-            if output_var_ids[i] >= first_id {
-                assigned.push(AssignedVariable {
-                    id: output_var_ids[i],
-                    element: &values[stride * i..stride * (i + 1)],
-                });
-            }
-        }
-
-        Some(assigned)
-    }
-}
-
-pub fn collect_connection_variables<'a>(conn: &'a Connections, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
-    let var_ids = conn.variable_ids()?.safe_slice();
-
-    let values = match conn.values() {
-        Some(values) => values,
-        None => &[], // No values, only variable ids and empty values.
-    };
-
-    let stride = values.len() / var_ids.len();
-
-    let vars = (0..var_ids.len())
-        .filter(|i| // Ignore variables below first_id, if any.
-            var_ids[*i] >= first_id
-        ).map(|i|          // Extract value of each variable.
-        AssignedVariable {
-            id: var_ids[i],
-            element: &values[stride * i..stride * (i + 1)],
-        }
-    ).collect();
-
-    Some(vars)
-}
-
-pub fn collect_unassigned_private_variables<'a>(conn: &'a Connections, first_id: u64) -> Option<Vec<AssignedVariable<'a>>> {
-    let var_ids = conn.variable_ids()?.safe_slice();
-
-    let vars = (first_id..conn.free_variable_id())
-        .filter(|id| // Ignore variables already in the connections.
-            !var_ids.contains(id)
-        ).map(|id|          // Variable without value.
-        AssignedVariable {
-            id,
-            element: &[],
-        }
-    ).collect();
-
-    Some(vars)
 }
 
 #[derive(Debug)]
 pub struct AssignedVariable<'a> {
     pub id: u64,
-    pub element: &'a [u8],
+    pub value: &'a [u8],
 }
 
 impl<'a> AssignedVariable<'a> {
     pub fn has_value(&self) -> bool {
-        self.element.len() > 0
+        self.value.len() > 0
     }
 }
 
@@ -359,7 +362,7 @@ impl<'a> Iterator for AssignedVariablesIterator<'a> {
 
         Some(AssignedVariable {
             id: self.var_ids[i],
-            element: &self.values[stride * i..stride * (i + 1)],
+            value: &self.values[stride * i..stride * (i + 1)],
         })
     }
     // TODO: Replace unwrap and panic with Result.
