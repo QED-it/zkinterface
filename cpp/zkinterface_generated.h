@@ -18,7 +18,7 @@ struct BilinearConstraint;
 
 struct Witness;
 
-struct VariableValues;
+struct Variables;
 
 struct Root;
 
@@ -95,8 +95,8 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   /// - Or variables to use as output connections from the gadget.
   /// - Variables are allocated by the sender of this message.
   /// - The same structure must be provided for R1CS and witness generation.
-  const VariableValues *connections() const {
-    return GetPointer<const VariableValues *>(VT_CONNECTIONS);
+  const Variables *connections() const {
+    return GetPointer<const Variables *>(VT_CONNECTIONS);
   }
   /// First variable ID free after this connection.
   /// A variable ID greater than all IDs allocated by the sender of this message.
@@ -145,7 +145,7 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct CircuitBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_connections(flatbuffers::Offset<VariableValues> connections) {
+  void add_connections(flatbuffers::Offset<Variables> connections) {
     fbb_.AddOffset(Circuit::VT_CONNECTIONS, connections);
   }
   void add_free_variable_id(uint64_t free_variable_id) {
@@ -177,7 +177,7 @@ struct CircuitBuilder {
 
 inline flatbuffers::Offset<Circuit> CreateCircuit(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<VariableValues> connections = 0,
+    flatbuffers::Offset<Variables> connections = 0,
     uint64_t free_variable_id = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
@@ -195,7 +195,7 @@ inline flatbuffers::Offset<Circuit> CreateCircuit(
 
 inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<VariableValues> connections = 0,
+    flatbuffers::Offset<Variables> connections = 0,
     uint64_t free_variable_id = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
@@ -338,14 +338,14 @@ struct BilinearConstraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_LINEAR_COMBINATION_B = 6,
     VT_LINEAR_COMBINATION_C = 8
   };
-  const VariableValues *linear_combination_a() const {
-    return GetPointer<const VariableValues *>(VT_LINEAR_COMBINATION_A);
+  const Variables *linear_combination_a() const {
+    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_A);
   }
-  const VariableValues *linear_combination_b() const {
-    return GetPointer<const VariableValues *>(VT_LINEAR_COMBINATION_B);
+  const Variables *linear_combination_b() const {
+    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_B);
   }
-  const VariableValues *linear_combination_c() const {
-    return GetPointer<const VariableValues *>(VT_LINEAR_COMBINATION_C);
+  const Variables *linear_combination_c() const {
+    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_C);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -362,13 +362,13 @@ struct BilinearConstraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct BilinearConstraintBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_linear_combination_a(flatbuffers::Offset<VariableValues> linear_combination_a) {
+  void add_linear_combination_a(flatbuffers::Offset<Variables> linear_combination_a) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
   }
-  void add_linear_combination_b(flatbuffers::Offset<VariableValues> linear_combination_b) {
+  void add_linear_combination_b(flatbuffers::Offset<Variables> linear_combination_b) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
   }
-  void add_linear_combination_c(flatbuffers::Offset<VariableValues> linear_combination_c) {
+  void add_linear_combination_c(flatbuffers::Offset<Variables> linear_combination_c) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
   }
   explicit BilinearConstraintBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -385,9 +385,9 @@ struct BilinearConstraintBuilder {
 
 inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<VariableValues> linear_combination_a = 0,
-    flatbuffers::Offset<VariableValues> linear_combination_b = 0,
-    flatbuffers::Offset<VariableValues> linear_combination_c = 0) {
+    flatbuffers::Offset<Variables> linear_combination_a = 0,
+    flatbuffers::Offset<Variables> linear_combination_b = 0,
+    flatbuffers::Offset<Variables> linear_combination_c = 0) {
   BilinearConstraintBuilder builder_(_fbb);
   builder_.add_linear_combination_c(linear_combination_c);
   builder_.add_linear_combination_b(linear_combination_b);
@@ -402,8 +402,8 @@ struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VALUES = 4
   };
-  const VariableValues *values() const {
-    return GetPointer<const VariableValues *>(VT_VALUES);
+  const Variables *values() const {
+    return GetPointer<const Variables *>(VT_VALUES);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -416,7 +416,7 @@ struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct WitnessBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_values(flatbuffers::Offset<VariableValues> values) {
+  void add_values(flatbuffers::Offset<Variables> values) {
     fbb_.AddOffset(Witness::VT_VALUES, values);
   }
   explicit WitnessBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -433,7 +433,7 @@ struct WitnessBuilder {
 
 inline flatbuffers::Offset<Witness> CreateWitness(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<VariableValues> values = 0) {
+    flatbuffers::Offset<Variables> values = 0) {
   WitnessBuilder builder_(_fbb);
   builder_.add_values(values);
   return builder_.Finish();
@@ -441,7 +441,7 @@ inline flatbuffers::Offset<Witness> CreateWitness(
 
 /// Concrete variable values.
 /// Used for linear combinations and assignments.
-struct VariableValues FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VARIABLE_IDS = 4,
     VT_VALUES = 6,
@@ -482,43 +482,43 @@ struct VariableValues FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct VariableValuesBuilder {
+struct VariablesBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids) {
-    fbb_.AddOffset(VariableValues::VT_VARIABLE_IDS, variable_ids);
+    fbb_.AddOffset(Variables::VT_VARIABLE_IDS, variable_ids);
   }
   void add_values(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values) {
-    fbb_.AddOffset(VariableValues::VT_VALUES, values);
+    fbb_.AddOffset(Variables::VT_VALUES, values);
   }
   void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info) {
-    fbb_.AddOffset(VariableValues::VT_INFO, info);
+    fbb_.AddOffset(Variables::VT_INFO, info);
   }
-  explicit VariableValuesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit VariablesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  VariableValuesBuilder &operator=(const VariableValuesBuilder &);
-  flatbuffers::Offset<VariableValues> Finish() {
+  VariablesBuilder &operator=(const VariablesBuilder &);
+  flatbuffers::Offset<Variables> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<VariableValues>(end);
+    auto o = flatbuffers::Offset<Variables>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<VariableValues> CreateVariableValues(
+inline flatbuffers::Offset<Variables> CreateVariables(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info = 0) {
-  VariableValuesBuilder builder_(_fbb);
+  VariablesBuilder builder_(_fbb);
   builder_.add_info(info);
   builder_.add_values(values);
   builder_.add_variable_ids(variable_ids);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<VariableValues> CreateVariableValuesDirect(
+inline flatbuffers::Offset<Variables> CreateVariablesDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint64_t> *variable_ids = nullptr,
     const std::vector<uint8_t> *values = nullptr,
@@ -526,7 +526,7 @@ inline flatbuffers::Offset<VariableValues> CreateVariableValuesDirect(
   auto variable_ids__ = variable_ids ? _fbb.CreateVector<uint64_t>(*variable_ids) : 0;
   auto values__ = values ? _fbb.CreateVector<uint8_t>(*values) : 0;
   auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*info) : 0;
-  return zkinterface::CreateVariableValues(
+  return zkinterface::CreateVariables(
       _fbb,
       variable_ids__,
       values__,

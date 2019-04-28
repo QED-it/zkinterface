@@ -4,8 +4,8 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
-    VariableValues,
-    VariableValuesArgs,
+    Variables,
+    VariablesArgs,
     Message,
     Root,
     RootArgs,
@@ -16,7 +16,7 @@ use zkinterface_generated::zkinterface::{
 
 #[derive(Clone, Debug)]
 pub struct CircuitOwned {
-    pub connections: VariableValuesOwned,
+    pub connections: VariablesOwned,
 
     pub free_variable_id: u64,
 
@@ -29,7 +29,7 @@ pub struct CircuitOwned {
 }
 
 #[derive(Clone, Debug)]
-pub struct VariableValuesOwned {
+pub struct VariablesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,
     // pub info: Option<Vec<(String, &'a [u8])>>,
@@ -41,7 +41,7 @@ impl CircuitOwned {
         let first_local_id = first_input_id + num_inputs;
 
         CircuitOwned {
-            connections: VariableValuesOwned {
+            connections: VariablesOwned {
                 variable_ids: (first_input_id..first_local_id).collect(),
                 values: None,
             },
@@ -57,7 +57,7 @@ impl CircuitOwned {
         let first_local_id = first_output_id + num_outputs;
 
         CircuitOwned {
-            connections: VariableValuesOwned {
+            connections: VariablesOwned {
                 variable_ids: (first_output_id..first_local_id).collect(),
                 values: None,
             },
@@ -100,31 +100,31 @@ impl CircuitOwned {
     }
 }
 
-impl VariableValuesOwned {
+impl VariablesOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<VariableValues<'bldr>>
+    ) -> WIPOffset<Variables<'bldr>>
     {
         let variable_ids = Some(builder.create_vector(&self.variable_ids));
 
         let values = self.values.as_ref().map(|values|
             builder.create_vector(values));
 
-        VariableValues::create(builder, &VariableValuesArgs {
+        Variables::create(builder, &VariablesArgs {
             variable_ids,
             values,
             info: None,
         })
     }
 
-    pub fn parse(conn: &VariableValues) -> Option<VariableValuesOwned> {
+    pub fn parse(conn: &Variables) -> Option<VariablesOwned> {
         let variable_ids = Vec::from(conn.variable_ids()?.safe_slice());
 
         let values = conn.values().map(|bytes|
             Vec::from(bytes));
 
-        Some(VariableValuesOwned {
+        Some(VariablesOwned {
             variable_ids,
             values,
         })

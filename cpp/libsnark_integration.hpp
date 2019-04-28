@@ -161,7 +161,7 @@ namespace zkinterface_libsnark {
                         fieldt_size);
             }
 
-            return CreateVariableValues(
+            return CreateVariables(
                     builder,
                     builder.CreateVector(variable_ids),
                     builder.CreateVector(coeffs));
@@ -212,7 +212,7 @@ namespace zkinterface_libsnark {
                     fieldt_size);
         }
 
-        auto values = CreateVariableValues(
+        auto values = CreateVariables(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));

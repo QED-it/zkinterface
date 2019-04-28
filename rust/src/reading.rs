@@ -9,7 +9,7 @@ use zkinterface_generated::zkinterface::{
     Circuit,
     get_size_prefixed_root_as_root,
     Root,
-    VariableValues,
+    Variables,
 };
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Witness>)> {
@@ -125,7 +125,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &VariableValues<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -148,7 +148,7 @@ pub fn collect_connection_variables<'a>(conn: &VariableValues<'a>, first_id: u64
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &VariableValues<'a>, first_id: u64, free_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
@@ -272,7 +272,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
         let constraint = self.constraints.as_ref().unwrap().get(self.next_constraint);
         self.next_constraint += 1;
 
-        fn to_vec<'a>(lc: VariableValues<'a>) -> Vec<Term<'a>> {
+        fn to_vec<'a>(lc: Variables<'a>) -> Vec<Term<'a>> {
             let mut terms = vec![];
             let var_ids: &[u64] = lc.variable_ids().unwrap().safe_slice();
             let values: &[u8] = lc.values().unwrap();

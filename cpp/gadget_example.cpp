@@ -46,7 +46,7 @@ bool r1cs_request(
                 8, 7, 6, // Second coefficient.
         };
 
-        auto lc = CreateVariableValues(
+        auto lc = CreateVariables(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));
@@ -123,7 +123,7 @@ bool assignments_request(
                 8, 7, 6, // Second element.
         };
 
-        auto values = CreateVariableValues(
+        auto values = CreateVariables(
                 builder,
                 builder.CreateVector(variable_ids),
                 builder.CreateVector(elements));

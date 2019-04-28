@@ -19,7 +19,7 @@ table Circuit {
     /// - Or variables to use as output connections from the gadget.
     /// - Variables are allocated by the sender of this message.
     /// - The same structure must be provided for R1CS and witness generation.
-    connections         :VariableValues;
+    connections         :Variables;
 
     /// First variable ID free after this connection.
     /// A variable ID greater than all IDs allocated by the sender of this message.
@@ -63,21 +63,21 @@ table R1CSConstraints {
     /// An R1CS constraint between variables.
     table BilinearConstraint {
         // (A) * (B) = (C)
-        linear_combination_a :VariableValues;
-        linear_combination_b :VariableValues;
-        linear_combination_c :VariableValues;
+        linear_combination_a :Variables;
+        linear_combination_b :Variables;
+        linear_combination_c :Variables;
     }
 
 /// Report local assignments computed by the gadget.
 /// To send to the stream of assigned variables.
 /// Does not include input and output variables.
 table Witness {
-    values :VariableValues;
+    values :Variables;
 }
 
     /// Concrete variable values.
     /// Used for linear combinations and assignments.
-    table VariableValues {
+    table Variables {
         /// The IDs of the variables being assigned to.
         variable_ids   :[uint64];
 

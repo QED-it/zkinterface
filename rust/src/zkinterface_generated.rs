@@ -133,8 +133,8 @@ impl<'a> Circuit<'a> {
   /// - Variables are allocated by the sender of this message.
   /// - The same structure must be provided for R1CS and witness generation.
   #[inline]
-  pub fn connections(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Circuit::VT_CONNECTIONS, None)
+  pub fn connections(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Circuit::VT_CONNECTIONS, None)
   }
   /// First variable ID free after this connection.
   /// A variable ID greater than all IDs allocated by the sender of this message.
@@ -172,7 +172,7 @@ impl<'a> Circuit<'a> {
 }
 
 pub struct CircuitArgs<'a> {
-    pub connections: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
+    pub connections: Option<flatbuffers::WIPOffset<Variables<'a >>>,
     pub free_variable_id: u64,
     pub r1cs_generation: bool,
     pub witness_generation: bool,
@@ -198,8 +198,8 @@ pub struct CircuitBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
-  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Circuit::VT_CONNECTIONS, connections);
+  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(Circuit::VT_CONNECTIONS, connections);
   }
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
@@ -444,23 +444,23 @@ impl<'a> BilinearConstraint<'a> {
     pub const VT_LINEAR_COMBINATION_C: flatbuffers::VOffsetT = 8;
 
   #[inline]
-  pub fn linear_combination_a(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, None)
+  pub fn linear_combination_a(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, None)
   }
   #[inline]
-  pub fn linear_combination_b(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, None)
+  pub fn linear_combination_b(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, None)
   }
   #[inline]
-  pub fn linear_combination_c(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, None)
+  pub fn linear_combination_c(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, None)
   }
 }
 
 pub struct BilinearConstraintArgs<'a> {
-    pub linear_combination_a: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
-    pub linear_combination_b: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
-    pub linear_combination_c: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
+    pub linear_combination_a: Option<flatbuffers::WIPOffset<Variables<'a >>>,
+    pub linear_combination_b: Option<flatbuffers::WIPOffset<Variables<'a >>>,
+    pub linear_combination_c: Option<flatbuffers::WIPOffset<Variables<'a >>>,
 }
 impl<'a> Default for BilinearConstraintArgs<'a> {
     #[inline]
@@ -478,16 +478,16 @@ pub struct BilinearConstraintBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> BilinearConstraintBuilder<'a, 'b> {
   #[inline]
-  pub fn add_linear_combination_a(&mut self, linear_combination_a: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
+  pub fn add_linear_combination_a(&mut self, linear_combination_a: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
   }
   #[inline]
-  pub fn add_linear_combination_b(&mut self, linear_combination_b: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
+  pub fn add_linear_combination_b(&mut self, linear_combination_b: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
   }
   #[inline]
-  pub fn add_linear_combination_c(&mut self, linear_combination_c: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
+  pub fn add_linear_combination_c(&mut self, linear_combination_c: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> BilinearConstraintBuilder<'a, 'b> {
@@ -543,13 +543,13 @@ impl<'a> Witness<'a> {
     pub const VT_VALUES: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn values(&self) -> Option<VariableValues<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Witness::VT_VALUES, None)
+  pub fn values(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Witness::VT_VALUES, None)
   }
 }
 
 pub struct WitnessArgs<'a> {
-    pub values: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
+    pub values: Option<flatbuffers::WIPOffset<Variables<'a >>>,
 }
 impl<'a> Default for WitnessArgs<'a> {
     #[inline]
@@ -565,8 +565,8 @@ pub struct WitnessBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
   #[inline]
-  pub fn add_values(&mut self, values: flatbuffers::WIPOffset<VariableValues<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Witness::VT_VALUES, values);
+  pub fn add_values(&mut self, values: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(Witness::VT_VALUES, values);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> WitnessBuilder<'a, 'b> {
@@ -585,15 +585,15 @@ impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
 
 /// Concrete variable values.
 /// Used for linear combinations and assignments.
-pub enum VariableValuesOffset {}
+pub enum VariablesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct VariableValues<'a> {
+pub struct Variables<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for VariableValues<'a> {
-    type Inner = VariableValues<'a>;
+impl<'a> flatbuffers::Follow<'a> for Variables<'a> {
+    type Inner = Variables<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -602,18 +602,18 @@ impl<'a> flatbuffers::Follow<'a> for VariableValues<'a> {
     }
 }
 
-impl<'a> VariableValues<'a> {
+impl<'a> Variables<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        VariableValues {
+        Variables {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args VariableValuesArgs<'args>) -> flatbuffers::WIPOffset<VariableValues<'bldr>> {
-      let mut builder = VariableValuesBuilder::new(_fbb);
+        args: &'args VariablesArgs<'args>) -> flatbuffers::WIPOffset<Variables<'bldr>> {
+      let mut builder = VariablesBuilder::new(_fbb);
       if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.values { builder.add_values(x); }
       if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
@@ -627,7 +627,7 @@ impl<'a> VariableValues<'a> {
   /// The IDs of the variables being assigned to.
   #[inline]
   pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(VariableValues::VT_VARIABLE_IDS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(Variables::VT_VARIABLE_IDS, None)
   }
   /// Optional: Field elements assigned to variables.
   /// Contiguous BigInts in the same order as variable_ids.
@@ -641,58 +641,58 @@ impl<'a> VariableValues<'a> {
   /// than the canonical representation. Truncated bytes are treated as zeros.
   #[inline]
   pub fn values(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(VariableValues::VT_VALUES, None).map(|v| v.safe_slice())
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Variables::VT_VALUES, None).map(|v| v.safe_slice())
   }
   /// Optional: Any complementary info that may be useful to the recipient.
   /// Example: a Merkle authentication path.
   #[inline]
   pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(VariableValues::VT_INFO, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Variables::VT_INFO, None)
   }
 }
 
-pub struct VariableValuesArgs<'a> {
+pub struct VariablesArgs<'a> {
     pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub values: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
-impl<'a> Default for VariableValuesArgs<'a> {
+impl<'a> Default for VariablesArgs<'a> {
     #[inline]
     fn default() -> Self {
-        VariableValuesArgs {
+        VariablesArgs {
             variable_ids: None,
             values: None,
             info: None,
         }
     }
 }
-pub struct VariableValuesBuilder<'a: 'b, 'b> {
+pub struct VariablesBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> VariableValuesBuilder<'a, 'b> {
+impl<'a: 'b, 'b> VariablesBuilder<'a, 'b> {
   #[inline]
   pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(VariableValues::VT_VARIABLE_IDS, variable_ids);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Variables::VT_VARIABLE_IDS, variable_ids);
   }
   #[inline]
   pub fn add_values(&mut self, values: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(VariableValues::VT_VALUES, values);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Variables::VT_VALUES, values);
   }
   #[inline]
   pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(VariableValues::VT_INFO, info);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Variables::VT_INFO, info);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> VariableValuesBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> VariablesBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    VariableValuesBuilder {
+    VariablesBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<VariableValues<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<Variables<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
