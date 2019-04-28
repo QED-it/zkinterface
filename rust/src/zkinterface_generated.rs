@@ -11,7 +11,6 @@ pub mod zkinterface {
   extern crate flatbuffers;
   use self::flatbuffers::EndianScalar;
 
-/// The messages that the caller and gadget can exchange.
 #[allow(non_camel_case_types)]
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -79,7 +78,7 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
-/// A description of the connection of a circuit or sub-circuit.
+/// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 pub enum CircuitOffset {}
@@ -127,44 +126,46 @@ impl<'a> Circuit<'a> {
     pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 12;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
 
-  /// Variables to use as connection to the sub-circuit.
+  /// Variables to use as connections to the sub-circuit.
+  ///
   /// - Variables to use as input connections to the gadget.
   /// - Or variables to use as output connections from the gadget.
   /// - Variables are allocated by the sender of this message.
-  /// - The same structure must be provided for R1CS and witness generation.
+  /// - The same structure must be provided for R1CS and witness generations.
+  /// - If `witness_generation=true`, variables must be assigned values.
   #[inline]
   pub fn connections(&self) -> Option<Variables<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Circuit::VT_CONNECTIONS, None)
   }
-  /// First variable ID free after this connection.
   /// A variable ID greater than all IDs allocated by the sender of this message.
-  /// The recipient of this message can allocate new IDs greater than `free_variable_id`.
+  /// The recipient of this message can allocate new IDs >= free_variable_id.
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
     self._tab.get::<u64>(Circuit::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
-  /// Whether constraints should be generated.
+  /// Whether a constraint system is being generated.
+  /// Provide constraints in R1CSConstraints messages.
   #[inline]
   pub fn r1cs_generation(&self) -> bool {
     self._tab.get::<bool>(Circuit::VT_R1CS_GENERATION, Some(false)).unwrap()
   }
-  /// Whether an witness should be generated.
-  /// Provide witness values to the gadget.
+  /// Whether a witness is being generated.
+  /// Provide the witness in `connections.values` and Witness messages.
   #[inline]
   pub fn witness_generation(&self) -> bool {
     self._tab.get::<bool>(Circuit::VT_WITNESS_GENERATION, Some(false)).unwrap()
   }
-  /// The order of the field used by the current system.
-  /// A BigInt.
+  /// The order of the finite field used by the current system.
+  /// A number in canonical little-endian representation, like `Variables.values` below.
   #[inline]
   pub fn field_order(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_ORDER, None).map(|v| v.safe_slice())
   }
-  /// Optional: Any static parameter that may influence the instance
-  /// construction. Parameters can be standard, conventional, or custom.
+  /// Optional: Any custom parameter that may influence the circuit construction.
+  ///
   /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
-  /// Counter-example: a Merkle path is not configuration (rather witness).
+  /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
   #[inline]
   pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Circuit::VT_CONFIGURATION, None)
@@ -236,97 +237,9 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   }
 }
 
-/// Generic key-value for custom attributes.
-pub enum KeyValueOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct KeyValue<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for KeyValue<'a> {
-    type Inner = KeyValue<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> KeyValue<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        KeyValue {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args KeyValueArgs<'args>) -> flatbuffers::WIPOffset<KeyValue<'bldr>> {
-      let mut builder = KeyValueBuilder::new(_fbb);
-      if let Some(x) = args.value { builder.add_value(x); }
-      if let Some(x) = args.key { builder.add_key(x); }
-      builder.finish()
-    }
-
-    pub const VT_KEY: flatbuffers::VOffsetT = 4;
-    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub fn key(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(KeyValue::VT_KEY, None)
-  }
-  #[inline]
-  pub fn value(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(KeyValue::VT_VALUE, None).map(|v| v.safe_slice())
-  }
-}
-
-pub struct KeyValueArgs<'a> {
-    pub key: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub value: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-}
-impl<'a> Default for KeyValueArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        KeyValueArgs {
-            key: None,
-            value: None,
-        }
-    }
-}
-pub struct KeyValueBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> KeyValueBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_KEY, key);
-  }
-  #[inline]
-  pub fn add_value(&mut self, value: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_VALUE, value);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> KeyValueBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    KeyValueBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<KeyValue<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// Report constraints to be added to the constraints system.
-/// To send to the stream of constraints.
+/// R1CSConstraints represents constraints to be added to the constraint system.
+///
+/// - Multiple such messages are equivalent to the concatenation of `constraints` arrays.
 pub enum R1CSConstraintsOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -356,26 +269,38 @@ impl<'a> R1CSConstraints<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args R1CSConstraintsArgs<'args>) -> flatbuffers::WIPOffset<R1CSConstraints<'bldr>> {
       let mut builder = R1CSConstraintsBuilder::new(_fbb);
+      if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.constraints { builder.add_constraints(x); }
       builder.finish()
     }
 
     pub const VT_CONSTRAINTS: flatbuffers::VOffsetT = 4;
+    pub const VT_INFO: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
   }
+  /// Optional: Any complementary info that may be useful.
+  ///
+  /// Example: human-readable descriptions.
+  /// Example: custom hints to an optimizer or analyzer.
+  #[inline]
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(R1CSConstraints::VT_INFO, None)
+  }
 }
 
 pub struct R1CSConstraintsArgs<'a> {
     pub constraints: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<BilinearConstraint<'a >>>>>,
+    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for R1CSConstraintsArgs<'a> {
     #[inline]
     fn default() -> Self {
         R1CSConstraintsArgs {
             constraints: None,
+            info: None,
         }
     }
 }
@@ -387,6 +312,10 @@ impl<'a: 'b, 'b> R1CSConstraintsBuilder<'a, 'b> {
   #[inline]
   pub fn add_constraints(&mut self, constraints: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<BilinearConstraint<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(R1CSConstraints::VT_CONSTRAINTS, constraints);
+  }
+  #[inline]
+  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(R1CSConstraints::VT_INFO, info);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> R1CSConstraintsBuilder<'a, 'b> {
@@ -403,7 +332,92 @@ impl<'a: 'b, 'b> R1CSConstraintsBuilder<'a, 'b> {
   }
 }
 
-/// An R1CS constraint between variables.
+/// Witness represents an assignment of values to variables.
+///
+/// - Does not include variables already given in `Circuit.connections`.
+/// - Does not include the constant one variable.
+/// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
+pub enum WitnessOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct Witness<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for Witness<'a> {
+    type Inner = Witness<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> Witness<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        Witness {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args WitnessArgs<'args>) -> flatbuffers::WIPOffset<Witness<'bldr>> {
+      let mut builder = WitnessBuilder::new(_fbb);
+      if let Some(x) = args.assigned_variables { builder.add_assigned_variables(x); }
+      builder.finish()
+    }
+
+    pub const VT_ASSIGNED_VARIABLES: flatbuffers::VOffsetT = 4;
+
+  #[inline]
+  pub fn assigned_variables(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Witness::VT_ASSIGNED_VARIABLES, None)
+  }
+}
+
+pub struct WitnessArgs<'a> {
+    pub assigned_variables: Option<flatbuffers::WIPOffset<Variables<'a >>>,
+}
+impl<'a> Default for WitnessArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        WitnessArgs {
+            assigned_variables: None,
+        }
+    }
+}
+pub struct WitnessBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_assigned_variables(&mut self, assigned_variables: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(Witness::VT_ASSIGNED_VARIABLES, assigned_variables);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> WitnessBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    WitnessBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<Witness<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// A single R1CS constraint between variables.
+///
+/// - Represents the linear combinations of variables A, B, C such that:
+///       (A) * (B) = (C)
+/// - A linear combination is given as a sequence of (variable ID, coefficient).
 pub enum BilinearConstraintOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -504,87 +518,14 @@ impl<'a: 'b, 'b> BilinearConstraintBuilder<'a, 'b> {
   }
 }
 
-/// Report local assignments computed by the gadget.
-/// To send to the stream of assigned variables.
-/// Does not include input and output variables.
-pub enum WitnessOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Witness<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Witness<'a> {
-    type Inner = Witness<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Witness<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Witness {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args WitnessArgs<'args>) -> flatbuffers::WIPOffset<Witness<'bldr>> {
-      let mut builder = WitnessBuilder::new(_fbb);
-      if let Some(x) = args.values { builder.add_values(x); }
-      builder.finish()
-    }
-
-    pub const VT_VALUES: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn values(&self) -> Option<Variables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Witness::VT_VALUES, None)
-  }
-}
-
-pub struct WitnessArgs<'a> {
-    pub values: Option<flatbuffers::WIPOffset<Variables<'a >>>,
-}
-impl<'a> Default for WitnessArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        WitnessArgs {
-            values: None,
-        }
-    }
-}
-pub struct WitnessBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_values(&mut self, values: flatbuffers::WIPOffset<Variables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(Witness::VT_VALUES, values);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> WitnessBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    WitnessBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Witness<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// Concrete variable values.
-/// Used for linear combinations and assignments.
+/// A description of multiple variables.
+///
+/// - Each variable is identified by a numerical ID.
+/// - Each variable can be assigned a concrete value.
+/// - When used for circuit connections, the IDs indicate which variables are
+///   meant to be shared as inputs or outputs of a sub-circuit.
+/// - When used during witness generation, the values form the assignment to the variables.
+/// - When used as a linear combination, the values are the coefficients applied to variables.
 pub enum VariablesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -624,27 +565,34 @@ impl<'a> Variables<'a> {
     pub const VT_VALUES: flatbuffers::VOffsetT = 6;
     pub const VT_INFO: flatbuffers::VOffsetT = 8;
 
-  /// The IDs of the variables being assigned to.
+  /// The IDs of the variables.
+  ///
+  /// - IDs must be unique within a constraint system.
+  /// - The ID 0 always represents the constant variable one.
   #[inline]
   pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(Variables::VT_VARIABLE_IDS, None)
   }
-  /// Optional: Field elements assigned to variables.
-  /// Contiguous BigInts in the same order as variable_ids.
+  /// Optional: values assigned to variables.
   ///
-  /// The field in use is defined in `instance.field_order`.
+  /// - Values are finite field elements as defined by `circuit.field_order`.
+  /// - Elements are represented in canonical little-endian form.
+  /// - Elements appear in the same order as variable_ids.
+  /// - Multiple elements are concatenated in a single byte array.
+  /// - The element representation may be truncated and its size shorter
+  ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
+  /// - The size of an element representation is determined by:
   ///
-  /// The size of an element representation is determined by:
-  ///     element size = elements.length / variable_ids.length
-  ///
-  /// The element representation may be truncated and therefore shorter
-  /// than the canonical representation. Truncated bytes are treated as zeros.
+  ///       element size = values.length / variable_ids.length
   #[inline]
   pub fn values(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Variables::VT_VALUES, None).map(|v| v.safe_slice())
   }
   /// Optional: Any complementary info that may be useful to the recipient.
-  /// Example: a Merkle authentication path.
+  ///
+  /// Example: human-readable names.
+  /// Example: custom variable typing information (`is_bit`, ...).
+  /// Example: a Merkle authentication path in some custom format.
   #[inline]
   pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Variables::VT_INFO, None)
@@ -693,6 +641,95 @@ impl<'a: 'b, 'b> VariablesBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<Variables<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+/// Generic key-value for custom attributes.
+pub enum KeyValueOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct KeyValue<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for KeyValue<'a> {
+    type Inner = KeyValue<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> KeyValue<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        KeyValue {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args KeyValueArgs<'args>) -> flatbuffers::WIPOffset<KeyValue<'bldr>> {
+      let mut builder = KeyValueBuilder::new(_fbb);
+      if let Some(x) = args.value { builder.add_value(x); }
+      if let Some(x) = args.key { builder.add_key(x); }
+      builder.finish()
+    }
+
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+  #[inline]
+  pub fn key(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(KeyValue::VT_KEY, None)
+  }
+  #[inline]
+  pub fn value(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(KeyValue::VT_VALUE, None).map(|v| v.safe_slice())
+  }
+}
+
+pub struct KeyValueArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub value: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+}
+impl<'a> Default for KeyValueArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        KeyValueArgs {
+            key: None,
+            value: None,
+        }
+    }
+}
+pub struct KeyValueBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> KeyValueBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_KEY, key);
+  }
+  #[inline]
+  pub fn add_value(&mut self, value: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_VALUE, value);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> KeyValueBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    KeyValueBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<KeyValue<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }

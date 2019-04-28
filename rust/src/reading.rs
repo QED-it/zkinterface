@@ -343,7 +343,7 @@ impl<'a> Iterator for WitnessIterator<'a> {
 
             // Parse the message, skip irrelevant message types, or fail if invalid.
             let witness = match message.message_as_witness() {
-                Some(message) => message.values().unwrap(),
+                Some(message) => message.assigned_variables().unwrap(),
                 None => continue,
             };
 
