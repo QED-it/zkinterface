@@ -14,7 +14,7 @@ flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- witn
 use num_bigint::BigUint;
 use std::env;
 use std::fs::File;
-use std::io::{Write};
+use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Output};
 use zkinterface::{
@@ -33,7 +33,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let in_connections = call.connections().unwrap();
     let input_ids = in_connections.variable_ids().unwrap().safe_slice();
     assert!(is_contiguous(1, input_ids));
-    assert_eq!(1 + input_ids.len() as u64, in_connections.free_variable_id());
+    assert_eq!(1 + input_ids.len() as u64, call.free_variable_id());
 
     let program = "src/test/demo.code";
     let program = env::current_dir().unwrap().join(program).into_os_string().into_string().unwrap();
@@ -41,7 +41,7 @@ pub fn exec_zokrates(call_msg: &[u8]) -> Result<Messages, String> {
     let zokrates_home = Path::new(&zokrates_home);
     let make_zokrates_command = || { Command::new("src/test/exec_zokrates") };
 
-    let mut messages = Messages::new(in_connections.free_variable_id());
+    let mut messages = Messages::new(call.free_variable_id());
 
     {
         // Write Call message -> call.zkif

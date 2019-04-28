@@ -79,7 +79,7 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
-/// A description of a circuit or sub-circuit.
+/// A description of the connection of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 pub enum CircuitOffset {}
@@ -111,6 +111,7 @@ impl<'a> Circuit<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args CircuitArgs<'args>) -> flatbuffers::WIPOffset<Circuit<'bldr>> {
       let mut builder = CircuitBuilder::new(_fbb);
+      builder.add_free_variable_id(args.free_variable_id);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_order { builder.add_field_order(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
@@ -120,19 +121,27 @@ impl<'a> Circuit<'a> {
     }
 
     pub const VT_CONNECTIONS: flatbuffers::VOffsetT = 4;
-    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 6;
-    pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 8;
-    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 10;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 12;
+    pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 6;
+    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 8;
+    pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 10;
+    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 12;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
 
-  /// - Incoming Variables to use as connection to the gadget.
-  /// - Outgoing Variables to use as connection to the gadget.
+  /// Variables to use as connection to the sub-circuit.
+  /// - Variables to use as input connections to the gadget.
+  /// - Or variables to use as output connections from the gadget.
   /// - Variables are allocated by the sender of this message.
-  /// - The recipient can allocate new IDs greater than `connections.free_variable_id`.
   /// - The same structure must be provided for R1CS and witness generation.
   #[inline]
-  pub fn connections(&self) -> Option<Connections<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Connections<'a>>>(Circuit::VT_CONNECTIONS, None)
+  pub fn connections(&self) -> Option<VariableValues<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<VariableValues<'a>>>(Circuit::VT_CONNECTIONS, None)
+  }
+  /// First variable ID free after this connection.
+  /// A variable ID greater than all IDs allocated by the sender of this message.
+  /// The recipient of this message can allocate new IDs greater than `free_variable_id`.
+  #[inline]
+  pub fn free_variable_id(&self) -> u64 {
+    self._tab.get::<u64>(Circuit::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
   /// Whether constraints should be generated.
   #[inline]
@@ -163,7 +172,8 @@ impl<'a> Circuit<'a> {
 }
 
 pub struct CircuitArgs<'a> {
-    pub connections: Option<flatbuffers::WIPOffset<Connections<'a >>>,
+    pub connections: Option<flatbuffers::WIPOffset<VariableValues<'a >>>,
+    pub free_variable_id: u64,
     pub r1cs_generation: bool,
     pub witness_generation: bool,
     pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
@@ -174,6 +184,7 @@ impl<'a> Default for CircuitArgs<'a> {
     fn default() -> Self {
         CircuitArgs {
             connections: None,
+            free_variable_id: 0,
             r1cs_generation: false,
             witness_generation: false,
             field_order: None,
@@ -187,8 +198,12 @@ pub struct CircuitBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
-  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Connections<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Connections>>(Circuit::VT_CONNECTIONS, connections);
+  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<VariableValues<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<VariableValues>>(Circuit::VT_CONNECTIONS, connections);
+  }
+  #[inline]
+  pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
+    self.fbb_.push_slot::<u64>(Circuit::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
   #[inline]
   pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
@@ -216,126 +231,6 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<Circuit<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-/// A connection into a sub-circuits.
-pub enum ConnectionsOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Connections<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Connections<'a> {
-    type Inner = Connections<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Connections<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Connections {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args ConnectionsArgs<'args>) -> flatbuffers::WIPOffset<Connections<'bldr>> {
-      let mut builder = ConnectionsBuilder::new(_fbb);
-      builder.add_free_variable_id(args.free_variable_id);
-      if let Some(x) = args.info { builder.add_info(x); }
-      if let Some(x) = args.values { builder.add_values(x); }
-      if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
-      builder.finish()
-    }
-
-    pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_VARIABLE_IDS: flatbuffers::VOffsetT = 6;
-    pub const VT_VALUES: flatbuffers::VOffsetT = 8;
-    pub const VT_INFO: flatbuffers::VOffsetT = 10;
-
-  /// First variable ID free after this connection.
-  /// A variable ID greater than all IDs allocated at the time.
-  #[inline]
-  pub fn free_variable_id(&self) -> u64 {
-    self._tab.get::<u64>(Connections::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
-  }
-  /// Variables to use as connection to the sub-circuit.
-  #[inline]
-  pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(Connections::VT_VARIABLE_IDS, None)
-  }
-  /// Optional: The values assigned to variables, if any.
-  /// Contiguous BigInts in the same order as `variable_ids`.
-  #[inline]
-  pub fn values(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Connections::VT_VALUES, None).map(|v| v.safe_slice())
-  }
-  /// Optional: Any info that may be useful to the recipient.
-  /// Example: a Merkle authentication path.
-  #[inline]
-  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Connections::VT_INFO, None)
-  }
-}
-
-pub struct ConnectionsArgs<'a> {
-    pub free_variable_id: u64,
-    pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
-    pub values: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
-}
-impl<'a> Default for ConnectionsArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        ConnectionsArgs {
-            free_variable_id: 0,
-            variable_ids: None,
-            values: None,
-            info: None,
-        }
-    }
-}
-pub struct ConnectionsBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> ConnectionsBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
-    self.fbb_.push_slot::<u64>(Connections::VT_FREE_VARIABLE_ID, free_variable_id, 0);
-  }
-  #[inline]
-  pub fn add_variable_ids(&mut self, variable_ids: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u64>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_VARIABLE_IDS, variable_ids);
-  }
-  #[inline]
-  pub fn add_values(&mut self, values: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_VALUES, values);
-  }
-  #[inline]
-  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Connections::VT_INFO, info);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ConnectionsBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    ConnectionsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Connections<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -719,6 +614,7 @@ impl<'a> VariableValues<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args VariableValuesArgs<'args>) -> flatbuffers::WIPOffset<VariableValues<'bldr>> {
       let mut builder = VariableValuesBuilder::new(_fbb);
+      if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.values { builder.add_values(x); }
       if let Some(x) = args.variable_ids { builder.add_variable_ids(x); }
       builder.finish()
@@ -726,13 +622,14 @@ impl<'a> VariableValues<'a> {
 
     pub const VT_VARIABLE_IDS: flatbuffers::VOffsetT = 4;
     pub const VT_VALUES: flatbuffers::VOffsetT = 6;
+    pub const VT_INFO: flatbuffers::VOffsetT = 8;
 
   /// The IDs of the variables being assigned to.
   #[inline]
   pub fn variable_ids(&self) -> Option<flatbuffers::Vector<'a, u64>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u64>>>(VariableValues::VT_VARIABLE_IDS, None)
   }
-  /// Field Elements assigned to variables.
+  /// Optional: Field elements assigned to variables.
   /// Contiguous BigInts in the same order as variable_ids.
   ///
   /// The field in use is defined in `instance.field_order`.
@@ -746,11 +643,18 @@ impl<'a> VariableValues<'a> {
   pub fn values(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(VariableValues::VT_VALUES, None).map(|v| v.safe_slice())
   }
+  /// Optional: Any complementary info that may be useful to the recipient.
+  /// Example: a Merkle authentication path.
+  #[inline]
+  pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(VariableValues::VT_INFO, None)
+  }
 }
 
 pub struct VariableValuesArgs<'a> {
     pub variable_ids: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u64>>>,
     pub values: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for VariableValuesArgs<'a> {
     #[inline]
@@ -758,6 +662,7 @@ impl<'a> Default for VariableValuesArgs<'a> {
         VariableValuesArgs {
             variable_ids: None,
             values: None,
+            info: None,
         }
     }
 }
@@ -773,6 +678,10 @@ impl<'a: 'b, 'b> VariableValuesBuilder<'a, 'b> {
   #[inline]
   pub fn add_values(&mut self, values: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(VariableValues::VT_VALUES, values);
+  }
+  #[inline]
+  pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(VariableValues::VT_INFO, info);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> VariableValuesBuilder<'a, 'b> {

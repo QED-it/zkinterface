@@ -8,10 +8,9 @@ use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
     get_size_prefixed_root_as_root,
+    Root,
     VariableValues,
 };
-use zkinterface_generated::zkinterface::Connections;
-use zkinterface_generated::zkinterface::Root;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Witness>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
@@ -114,8 +113,8 @@ impl Messages {
     }
 
     pub fn unassigned_private_variables(&self) -> Option<Vec<Witness>> {
-        let connections = self.last_circuit()?.connections()?;
-        collect_unassigned_private_variables(&connections, self.first_id)
+        let circuit = self.last_circuit()?;
+        collect_unassigned_private_variables(&circuit.connections()?, self.first_id, circuit.free_variable_id())
     }
 
     pub fn assigned_private_variables(&self) -> Vec<Witness> {
@@ -126,7 +125,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_connection_variables<'a>(conn: &VariableValues<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -149,10 +148,10 @@ pub fn collect_connection_variables<'a>(conn: &Connections<'a>, first_id: u64) -
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Connections<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_unassigned_private_variables<'a>(conn: &VariableValues<'a>, first_id: u64, free_id: u64) -> Option<Vec<Witness<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
-    let vars = (first_id..conn.free_variable_id())
+    let vars = (first_id..free_id)
         .filter(|id| // Ignore variables already in the connections.
             !var_ids.contains(id)
         ).map(|id|          // Variable without value.

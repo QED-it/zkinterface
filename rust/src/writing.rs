@@ -4,8 +4,8 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
-    Connections,
-    ConnectionsArgs,
+    VariableValues,
+    VariableValuesArgs,
     Message,
     Root,
     RootArgs,
@@ -16,23 +16,57 @@ use zkinterface_generated::zkinterface::{
 
 #[derive(Clone, Debug)]
 pub struct CircuitOwned {
-    pub connections: ConnectionsOwned,
+    pub connections: VariableValuesOwned,
+
+    pub free_variable_id: u64,
+
     pub r1cs_generation: bool,
     // witness_generation deduced from the presence of connections.values
 
     pub field_order: Option<Vec<u8>>,
+
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
 #[derive(Clone, Debug)]
-pub struct ConnectionsOwned {
-    pub free_variable_id: u64,
+pub struct VariableValuesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,
     // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
 impl CircuitOwned {
+    pub fn simple_inputs(num_inputs: u64) -> CircuitOwned {
+        let first_input_id = 1;
+        let first_local_id = first_input_id + num_inputs;
+
+        CircuitOwned {
+            connections: VariableValuesOwned {
+                variable_ids: (first_input_id..first_local_id).collect(),
+                values: None,
+            },
+            free_variable_id: first_local_id,
+            r1cs_generation: false,
+            field_order: None,
+        }
+    }
+
+    pub fn simple_outputs(num_inputs: u64, num_outputs: u64, num_locals: u64) -> CircuitOwned {
+        let first_input_id = 1;
+        let first_output_id = first_input_id + num_inputs;
+        let first_local_id = first_output_id + num_outputs;
+
+        CircuitOwned {
+            connections: VariableValuesOwned {
+                variable_ids: (first_output_id..first_local_id).collect(),
+                values: None,
+            },
+            free_variable_id: first_local_id + num_locals,
+            r1cs_generation: false,
+            field_order: None,
+        }
+    }
+
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
@@ -45,6 +79,7 @@ impl CircuitOwned {
 
         let call = Circuit::create(builder, &CircuitArgs {
             connections,
+            free_variable_id: self.free_variable_id,
             r1cs_generation: self.r1cs_generation,
             witness_generation: self.connections.values.is_some(),
             field_order,
@@ -65,56 +100,31 @@ impl CircuitOwned {
     }
 }
 
-impl ConnectionsOwned {
-    pub fn simple_inputs(num_inputs: u64) -> ConnectionsOwned {
-        let first_input_id = 1;
-        let first_local_id = first_input_id + num_inputs;
-
-        ConnectionsOwned {
-            free_variable_id: first_local_id,
-            variable_ids: (first_input_id..first_local_id).collect(),
-            values: None,
-        }
-    }
-
-    pub fn simple_outputs(num_inputs: u64, num_outputs: u64, num_locals: u64) -> ConnectionsOwned {
-        let first_input_id = 1;
-        let first_output_id = first_input_id + num_inputs;
-        let first_local_id = first_output_id + num_outputs;
-
-        ConnectionsOwned {
-            free_variable_id: first_local_id + num_locals,
-            variable_ids: (first_output_id..first_local_id).collect(),
-            values: None,
-        }
-    }
-
+impl VariableValuesOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Connections<'bldr>>
+    ) -> WIPOffset<VariableValues<'bldr>>
     {
         let variable_ids = Some(builder.create_vector(&self.variable_ids));
 
         let values = self.values.as_ref().map(|values|
             builder.create_vector(values));
 
-        Connections::create(builder, &ConnectionsArgs {
-            free_variable_id: self.free_variable_id,
+        VariableValues::create(builder, &VariableValuesArgs {
             variable_ids,
             values,
             info: None,
         })
     }
 
-    pub fn parse(conn: &Connections) -> Option<ConnectionsOwned> {
+    pub fn parse(conn: &VariableValues) -> Option<VariableValuesOwned> {
         let variable_ids = Vec::from(conn.variable_ids()?.safe_slice());
 
         let values = conn.values().map(|bytes|
             Vec::from(bytes));
 
-        Some(ConnectionsOwned {
-            free_variable_id: conn.free_variable_id(),
+        Some(VariableValuesOwned {
             variable_ids,
             values,
         })

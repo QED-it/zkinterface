@@ -10,16 +10,21 @@ union Message {
     Witness,
 }
 
-/// A description of a circuit or sub-circuit.
+/// A description of the connection of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 table Circuit {
-    /// - Incoming Variables to use as connection to the gadget.
-    /// - Outgoing Variables to use as connection to the gadget.
+    /// Variables to use as connection to the sub-circuit.
+    /// - Variables to use as input connections to the gadget.
+    /// - Or variables to use as output connections from the gadget.
     /// - Variables are allocated by the sender of this message.
-    /// - The recipient can allocate new IDs greater than `connections.free_variable_id`.
     /// - The same structure must be provided for R1CS and witness generation.
-    connections         :Connections;
+    connections         :VariableValues;
+
+    /// First variable ID free after this connection.
+    /// A variable ID greater than all IDs allocated by the sender of this message.
+    /// The recipient of this message can allocate new IDs greater than `free_variable_id`.
+    free_variable_id :uint64;
 
     // Fields below are required to call a backend or a gadget,
     // but optional in the response from a gadget.
@@ -42,24 +47,6 @@ table Circuit {
     /// Counter-example: a Merkle path is not configuration (rather witness).
     configuration           :[KeyValue];
 }
-
-    /// A connection into a sub-circuits.
-    table Connections {
-        /// First variable ID free after this connection.
-        /// A variable ID greater than all IDs allocated at the time.
-        free_variable_id :uint64;
-
-        /// Variables to use as connection to the sub-circuit.
-        variable_ids  :[uint64];
-
-        /// Optional: The values assigned to variables, if any.
-        /// Contiguous BigInts in the same order as `variable_ids`.
-        values      :[ubyte];
-
-        /// Optional: Any info that may be useful to the recipient.
-        /// Example: a Merkle authentication path.
-        info                   :[KeyValue];
-    }
 
     /// Generic key-value for custom attributes.
     table KeyValue {
@@ -94,7 +81,7 @@ table Witness {
         /// The IDs of the variables being assigned to.
         variable_ids   :[uint64];
 
-        /// Field Elements assigned to variables.
+        /// Optional: Field elements assigned to variables.
         /// Contiguous BigInts in the same order as variable_ids.
         ///
         /// The field in use is defined in `instance.field_order`.
@@ -105,6 +92,10 @@ table Witness {
         /// The element representation may be truncated and therefore shorter
         /// than the canonical representation. Truncated bytes are treated as zeros.
         values         :[ubyte];
+
+        /// Optional: Any complementary info that may be useful to the recipient.
+        /// Example: a Merkle authentication path.
+        info                   :[KeyValue];
     }
 
     // type Variable ID = uint64
