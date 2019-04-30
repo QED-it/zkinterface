@@ -58,6 +58,7 @@ fn main() {
         }
     }
 
+    /*
     let dst = cmake::Config::new("../cpp").build();
     println!("cargo:rustc-link-search=native={}", dst.display());
     println!("cargo:rustc-link-lib=gadget_example");
@@ -73,4 +74,5 @@ fn main() {
     //
     // For instance, if you use the cc crate, add:
     //   .include(std::env::var("DEP_ZKINTERFACE_INCLUDE").unwrap())
+    */
 }

@@ -1,8 +1,16 @@
 [package]
-name = "bellman-zkif"
+name = "bellman_zkif"
 version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
 edition = "2018"
+
+[lib]
+name = "bellman_zkif"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bellman_prover"
+path = "src/bin.rs"
 
 [dependencies]
 num-bigint = "0.2.2"

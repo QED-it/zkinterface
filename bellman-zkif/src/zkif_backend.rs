@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
 use super::import::{enforce, le_to_fr};
-use zkinterface::reading::Messages;
+pub use zkinterface::reading::Messages;
 
 
 /// A circuit instance built from zkif messages.
@@ -77,15 +77,15 @@ impl<'a, E: Engine> Circuit<E> for ZKIF<'a> {
 /// Process a circuit.
 pub fn zkif_backend(
     messages: &Messages,
+    out_dir: &Path,
 ) -> Result<(), SynthesisError>
 {
-    let local_dir = Path::new("local");
-    let key_path = local_dir.join("key");
-    let proof_path = local_dir.join("proof");
+    let key_path = out_dir.join("key");
+    let proof_path = out_dir.join("proof");
 
     let circuit = ZKIF { messages };
 
-    let circuit_msg = messages.last_circuit().unwrap();
+    let circuit_msg = messages.last_circuit().ok_or(SynthesisError::AssignmentMissing)?;
 
     let mut rng = OsRng::new()?;
 
@@ -123,6 +123,7 @@ fn test_zkif_backend() {
 
     // Load test messages.
     let test_dir = Path::new("src/test");
+    let out_dir = Path::new("local");
 
     // Setup.
     {
@@ -130,7 +131,7 @@ fn test_zkif_backend() {
         messages.read_file(test_dir.join("r1cs.zkif")).unwrap();
         messages.read_file(test_dir.join("circuit_r1cs.zkif")).unwrap();
 
-        zkif_backend(&messages).unwrap();
+        zkif_backend(&messages, out_dir).unwrap();
     }
 
     // Prove.
@@ -139,6 +140,6 @@ fn test_zkif_backend() {
         messages.read_file(test_dir.join("witness.zkif")).unwrap();
         messages.read_file(test_dir.join("circuit_witness.zkif")).unwrap();
 
-        zkif_backend(&messages).unwrap();
+        zkif_backend(&messages, out_dir).unwrap();
     }
 }
