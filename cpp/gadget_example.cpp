@@ -7,8 +7,6 @@ using std::endl;
 using std::vector;
 using namespace zkinterface;
 
-typedef uint64_t VariableId;
-
 
 bool r1cs_request(
         const Circuit *request,
@@ -20,18 +18,14 @@ bool r1cs_request(
         void *response_context
 ) {
     // Read the request.
-    uint64_t free_variable_id_before;
-    {
-        auto instance = request->instance();
-        free_variable_id_before = instance->free_variable_id_before();
-        cout << "C++ got R1CS request"
-             << ", free_variable_id_before="
-             << free_variable_id_before << endl;
-    }
+    uint64_t first_output_id = request->free_variable_id();
+    cout << "C++ got R1CS request"
+         << ", first_output_id="
+         << first_output_id << endl;
 
     // Send constraints.
     uint64_t num_outputs = 1;
-    uint64_t first_local_id = free_variable_id_before + num_outputs;
+    uint64_t first_local_id = first_output_id + num_outputs;
     uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
@@ -39,6 +33,7 @@ bool r1cs_request(
         vector<uint64_t> variable_ids;
         variable_ids.push_back(first_local_id); // First variable.
         variable_ids.push_back(first_local_id + 1); // Second variable.
+
         free_variable_id_after = first_local_id + 2;
 
         vector<uint8_t> elements = {
@@ -57,13 +52,17 @@ bool r1cs_request(
         constraints.push_back(constraint);
         constraints.push_back(constraint);
 
-        auto r1csConstraints = CreateR1CSConstraints(builder, builder.CreateVector(constraints));
+        auto r1csConstraints = CreateR1CSConstraints(builder,
+                                                     builder.CreateVector(
+                                                             constraints));
 
-        auto root = CreateRoot(builder, Message_R1CSConstraints, r1csConstraints.Union());
+        auto root = CreateRoot(builder, Message_R1CSConstraints,
+                               r1csConstraints.Union());
         builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != nullptr) {
-            result_stream_callback(result_stream_context, builder.GetBufferPointer());
+            result_stream_callback(result_stream_context,
+                                   builder.GetBufferPointer());
         }
     }
 
@@ -71,15 +70,21 @@ bool r1cs_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateGadgetReturn(
+        auto connections = CreateVariables(
                 builder,
+                builder.CreateVector(vector<uint64_t>({first_output_id})));
+
+        auto response = CreateCircuit(
+                builder,
+                connections,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_GadgetReturn, response.Union());
+        auto root = CreateRoot(builder, Message_Circuit, response.Union());
         builder.FinishSizePrefixed(root);
 
         if (response_callback != nullptr) {
-            return response_callback(response_context, builder.GetBufferPointer());
+            return response_callback(response_context,
+                                     builder.GetBufferPointer());
         }
     }
 
@@ -97,18 +102,14 @@ bool assignments_request(
         void *response_context
 ) {
     // Read the call.
-    uint64_t free_variable_id_before;
-    {
-        auto instance = call->instance();
-        free_variable_id_before = instance->free_variable_id_before();
-        cout << "C++ got assignment request"
-             << ", free_variable_id_before="
-             << free_variable_id_before << endl;
-    }
+    uint64_t first_output_id = call->free_variable_id();
+    cout << "C++ got assignment request"
+         << ", first_output_id="
+         << first_output_id << endl;
 
     // Send an assignment.
     uint64_t num_outputs = 1;
-    uint64_t first_local_id = free_variable_id_before + num_outputs;
+    uint64_t first_local_id = first_output_id + num_outputs;
     uint64_t free_variable_id_after;
     {
         flatbuffers::FlatBufferBuilder builder;
@@ -116,6 +117,7 @@ bool assignments_request(
         vector<uint64_t> variable_ids;
         variable_ids.push_back(first_local_id); // First variable.
         variable_ids.push_back(first_local_id + 1); // Second variable.
+
         free_variable_id_after = first_local_id + 2;
 
         vector<uint8_t> elements = {
@@ -134,7 +136,8 @@ bool assignments_request(
         builder.FinishSizePrefixed(root);
 
         if (result_stream_callback != nullptr) {
-            result_stream_callback(result_stream_context, builder.GetBufferPointer());
+            result_stream_callback(result_stream_context,
+                                   builder.GetBufferPointer());
         }
     }
 
@@ -142,15 +145,22 @@ bool assignments_request(
     {
         flatbuffers::FlatBufferBuilder builder;
 
-        auto response = CreateGadgetReturn(
+        auto connections = CreateVariables(
                 builder,
+                builder.CreateVector(vector<uint64_t>({first_output_id})),
+                builder.CreateVector(vector<uint8_t>({3, 2, 1}))); // A value.
+
+        auto response = CreateCircuit(
+                builder,
+                connections,
                 free_variable_id_after);
 
-        auto root = CreateRoot(builder, Message_GadgetReturn, response.Union());
+        auto root = CreateRoot(builder, Message_Circuit, response.Union());
         builder.FinishSizePrefixed(root);
 
         if (response_callback != nullptr) {
-            return response_callback(response_context, builder.GetBufferPointer());
+            return response_callback(response_context,
+                                     builder.GetBufferPointer());
         }
     }
 

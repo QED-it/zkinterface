@@ -12,7 +12,7 @@ use zkinterface_generated::zkinterface::{
     Variables,
 };
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Witness>)> {
+pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
     let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
@@ -21,7 +21,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Witness>)> {
         let stride = bytes.len() / input_var_ids.len();
 
         (0..input_var_ids.len()).map(|i|
-            Witness {
+            Variable {
                 id: input_var_ids[i],
                 value: &bytes[stride * i..stride * (i + 1)],
             }
@@ -41,7 +41,8 @@ pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
     true
 }
 
-pub fn read_size(buf: &[u8]) -> usize {
+// Read a flatbuffers size prefix (4 bytes, little-endian). Size including the prefix.
+pub fn read_size_prefix(buf: &[u8]) -> usize {
     if buf.len() < SIZE_UOFFSET { return 0; }
     let size = read_scalar_at::<UOffsetT>(buf, 0) as usize;
     SIZE_UOFFSET + size
@@ -50,7 +51,7 @@ pub fn read_size(buf: &[u8]) -> usize {
 pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
     let mut bufs = vec![];
     loop {
-        let size = read_size(buf);
+        let size = read_size_prefix(buf);
         if size == 0 { break; }
         bufs.push(&buf[..size]);
         buf = &buf[size..];
@@ -107,17 +108,17 @@ impl Messages {
         returns
     }
 
-    pub fn connection_variables(&self) -> Option<Vec<Witness>> {
+    pub fn connection_variables(&self) -> Option<Vec<Variable>> {
         let connections = self.last_circuit()?.connections()?;
         collect_connection_variables(&connections, self.first_id)
     }
 
-    pub fn unassigned_private_variables(&self) -> Option<Vec<Witness>> {
+    pub fn unassigned_private_variables(&self) -> Option<Vec<Variable>> {
         let circuit = self.last_circuit()?;
         collect_unassigned_private_variables(&circuit.connections()?, self.first_id, circuit.free_variable_id())
     }
 
-    pub fn assigned_private_variables(&self) -> Vec<Witness> {
+    pub fn assigned_private_variables(&self) -> Vec<Variable> {
         self.iter_assignment()
             .filter(|var|
                 var.id >= self.first_id
@@ -125,7 +126,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -139,7 +140,7 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
         .filter(|&i| // Ignore variables below first_id, if any.
             var_ids[i] >= first_id
         ).map(|i|          // Extract value of each variable.
-        Witness {
+        Variable {
             id: var_ids[i],
             value: &values[stride * i..stride * (i + 1)],
         }
@@ -148,14 +149,14 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Witness<'a>>> {
+pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
         .filter(|id| // Ignore variables already in the connections.
             !var_ids.contains(id)
         ).map(|id|          // Variable without value.
-        Witness {
+        Variable {
             id,
             value: &[],
         }
@@ -192,7 +193,7 @@ impl<'a> Iterator for MessageIterator<'a> {
             let buf = &self.bufs[0][self.offset..];
 
             let size = {
-                let size = read_size(buf);
+                let size = read_size_prefix(buf);
                 if size <= buf.len() {
                     size
                 } else {
@@ -230,7 +231,7 @@ impl Messages {
     }
 }
 
-pub type Term<'a> = Witness<'a>;
+pub type Term<'a> = Variable<'a>;
 
 #[derive(Debug)]
 pub struct Constraint<'a> {
@@ -312,12 +313,12 @@ impl Messages {
 }
 
 #[derive(Debug)]
-pub struct Witness<'a> {
+pub struct Variable<'a> {
     pub id: u64,
     pub value: &'a [u8],
 }
 
-impl<'a> Witness<'a> {
+impl<'a> Variable<'a> {
     pub fn has_value(&self) -> bool {
         self.value.len() > 0
     }
@@ -334,7 +335,7 @@ pub struct WitnessIterator<'a> {
 }
 
 impl<'a> Iterator for WitnessIterator<'a> {
-    type Item = Witness<'a>;
+    type Item = Variable<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.next_element >= self.var_ids.len() {
@@ -359,7 +360,7 @@ impl<'a> Iterator for WitnessIterator<'a> {
         let i = self.next_element;
         self.next_element += 1;
 
-        Some(Witness {
+        Some(Variable {
             id: self.var_ids[i],
             value: &self.values[stride * i..stride * (i + 1)],
         })

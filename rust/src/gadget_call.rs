@@ -5,6 +5,7 @@
 
 use reading::Messages;
 use std::slice;
+use writing::CircuitOwned;
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -49,10 +50,11 @@ fn callback_c(
     context.push_message(Vec::from(buf)).is_ok()
 }
 
-pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<Messages, String> {
+pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, String> {
+    let message_buf = circuit.serialize();
     let message_ptr = message_buf.as_ptr();
 
-    let mut context = Messages::new();
+    let mut context = Messages::new(circuit.free_variable_id);
     let ok = unsafe {
         call_gadget(
             message_ptr,
@@ -73,72 +75,75 @@ pub fn call_gadget_wrapper(message_buf: &[u8]) -> Result<Messages, String> {
 
 
 #[test]
-fn test_gadget_request() {
-    use writing::GadgetInstanceSimple;
-    use r1cs_request::make_r1cs_request;
-    use assignment_request::make_assignment_request;
-    println!();
+fn test_cpp_gadget() {
+    use writing::VariablesOwned;
 
-    let instance = GadgetInstanceSimple {
-        incoming_variable_ids: vec![100, 101], // Some input variables.
-        free_variable_id_before: 102,
+    let mut call = CircuitOwned {
+        connections: VariablesOwned {
+            variable_ids: vec![100, 101], // Some input variables.
+            values: None,
+        },
+        free_variable_id: 102,
+        r1cs_generation: true,
         field_order: None,
     };
 
-    let r1cs_ctx = make_r1cs_request(instance.clone());
+    println!("==== R1CS generation ====");
+
+    let r1cs_response = call_gadget_wrapper(&call).unwrap();
 
     println!("R1CS: Rust received {} messages including {} gadget return.",
-             r1cs_ctx.messages.len(),
-             r1cs_ctx.gadget_returns().len());
+             r1cs_response.messages.len(),
+             r1cs_response.circuits().len());
 
-    assert!(r1cs_ctx.messages.len() == 2);
-    assert!(r1cs_ctx.gadget_returns().len() == 1);
+    assert!(r1cs_response.messages.len() == 2);
+    assert!(r1cs_response.circuits().len() == 1);
 
     println!("R1CS: Got constraints:");
-    for c in r1cs_ctx.iter_constraints() {
+    for c in r1cs_response.iter_constraints() {
         println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
     }
 
-    let free_variable_id_after = r1cs_ctx.last_gadget_return().unwrap().free_variable_id_after();
-    println!("R1CS: Free variable id after the call: {}", free_variable_id_after);
+    let free_variable_id_after = r1cs_response.last_circuit().unwrap().free_variable_id();
+    println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
     assert!(free_variable_id_after == 102 + 1 + 2);
 
-    println!();
 
-    let in_elements = vec![
-        &[4, 5, 6 as u8] as &[u8],
-        &[4, 5, 6],
-    ];
-    let assign_ctx = make_assignment_request(&instance, in_elements);
+    println!("==== Witness generation ====");
+
+    call.r1cs_generation = false;
+    call.connections.values = Some(vec![4, 5, 6, 14, 15, 16 as u8]);
+
+    let witness_response = call_gadget_wrapper(&call).unwrap();
 
     println!("Assignment: Rust received {} messages including {} gadget return.",
-             assign_ctx.messages.len(),
-             assign_ctx.gadget_returns().len());
+             witness_response.messages.len(),
+             witness_response.circuits().len());
 
-    assert!(assign_ctx.messages.len() == 2);
-    assert!(assign_ctx.gadget_returns().len() == 1);
+    assert!(witness_response.messages.len() == 2);
+    assert!(witness_response.circuits().len() == 1);
 
     {
-        let assignment: Vec<_> = assign_ctx.iter_assignment().collect();
+        let assignment: Vec<_> = witness_response.iter_assignment().collect();
 
         println!("Assignment: Got witness:");
         for var in assignment.iter() {
-            println!("{} = {:?}", var.id, var.element);
+            println!("{} = {:?}", var.id, var.value);
         }
 
         assert_eq!(assignment.len(), 2);
-        assert_eq!(assignment[0].element.len(), 3);
+        assert_eq!(assignment[0].value.len(), 3);
         assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
         assert_eq!(assignment[1].id, 103 + 1); // Second "
-        assert_eq!(assignment[0].element, &[10, 11, 12]); // First element.
-        assert_eq!(assignment[1].element, &[8, 7, 6]); // Second element
+        assert_eq!(assignment[0].value, &[10, 11, 12]); // First element.
+        assert_eq!(assignment[1].value, &[8, 7, 6]);    // Second element
 
-        let free_variable_id_after2 = assign_ctx.last_gadget_return().unwrap().free_variable_id_after();
+        let free_variable_id_after2 = witness_response.last_circuit().unwrap().free_variable_id();
         println!("Assignment: Free variable id after the call: {}", free_variable_id_after2);
         assert!(free_variable_id_after2 == 102 + 1 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 
-        let out_vars = assign_ctx.connection_variables().unwrap();
+        let out_vars = witness_response.connection_variables().unwrap();
         println!("{:?}", out_vars);
     }
     println!();

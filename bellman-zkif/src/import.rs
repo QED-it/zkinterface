@@ -106,17 +106,17 @@ pub fn call_gadget<E, CS>(
     let mut outputs = Vec::new();
 
     // Allocate outputs, with optional values.
-    let output_vars = messages.connection_variables().unwrap();
+    if let Some(output_vars) = messages.connection_variables() {
+        for var in output_vars {
+            let num = AllocatedNum::alloc(
+                cs.namespace(|| format!("output_{}", var.id)), || {
+                    Ok(le_to_fr::<E>(var.value))
+                })?;
 
-    for var in output_vars {
-        let num = AllocatedNum::alloc(
-            cs.namespace(|| format!("output_{}", var.id)), || {
-                Ok(le_to_fr::<E>(var.value))
-            })?;
-
-        // Track output variable.
-        id_to_var.insert(var.id, num.get_variable());
-        outputs.push(num);
+            // Track output variable.
+            id_to_var.insert(var.id, num.get_variable());
+            outputs.push(num);
+        }
     }
 
     // Allocate private variables, with optional values.
