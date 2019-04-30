@@ -1,5 +1,4 @@
 //
-// @file gadgets.rs
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
@@ -75,6 +74,7 @@ pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, String> {
 
 
 #[test]
+#[cfg(feature = "cpp")]
 fn test_cpp_gadget() {
     use writing::VariablesOwned;
 
