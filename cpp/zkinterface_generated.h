@@ -115,7 +115,8 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
   }
   /// The order of the finite field used by the current system.
-  /// A number in canonical little-endian representation, like `Variables.values` below.
+  /// A number in canonical little-endian representation.
+  /// See `Variables.values` below.
   const flatbuffers::Vector<uint8_t> *field_order() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_FIELD_ORDER);
   }
@@ -216,7 +217,7 @@ inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
 
 /// R1CSConstraints represents constraints to be added to the constraint system.
 ///
-/// - Multiple such messages are equivalent to the concatenation of `constraints` arrays.
+/// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
 struct R1CSConstraints FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONSTRAINTS = 4,
@@ -405,10 +406,11 @@ inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - When used for circuit connections, the IDs indicate which variables are
+/// - In `Circuit.connections`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
-/// - When used during witness generation, the values form the assignment to the variables.
-/// - When used as a linear combination, the values are the coefficients applied to variables.
+/// - During witness generation, the values form the assignment to the variables.
+/// - In `BilinearConstraint` linear combinations, the values are the coefficients
+///   applied to variables in a linear combination.
 struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VARIABLE_IDS = 4,

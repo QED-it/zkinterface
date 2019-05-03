@@ -96,12 +96,16 @@
 \parhead{Messages Flow}
 	The flow of messages is illustrated in Figure \ref{fig:flow}.
 
-	The caller calls the gadget code with a single \textid{GadgetCall} message.
-	The gadget exits with a single \textid{GadgetReturn} message.
-	This is a control flow analoguous to a function call in common programming languages.
+	The caller calls the gadget code with a single \textid{Circuit} message.
+	This contains enough information for the gadget to generate its part of the constraint system or witness.
+
+	The gadget returns another \textid{Circuit} message and exits.
+	This contains information for the caller to continue building the rest of the constraint system or witness.
+
+	This is a control flow analogous to a function call in common programming languages.
 
 	The caller can request an instance reduction, or a witness reduction, or both at once.
-	This is controlled by the fields \textid{generate\_r1cs} and \textid{generate\_assignment} of \textid{GadgetCall} messages.
+	This is controlled by the fields \textid{r1cs\_generation} and \textid{witness\_generation} of the caller's \textid{Circuit} message.
 
 	During instance reduction,
 	a gadget may add any number of constraints to the constraint system
@@ -110,7 +114,7 @@
 
 	During witness reduction,
 	a gadget may assign values to variables
-	by sending one or more \textid{AssignedVariables} messages.
+	by sending one or more \textid{Witness} messages.
 
 \parhead{Messages Channels}
 	The caller provides the gadget with the means to send messages,
@@ -121,7 +125,7 @@
 
 	\noteparagraph{Note}
 	This design allows a gadget to call other gadgets itself.
-	All \textid{R1CSConstraints} or \textid{AssignedVariables} messages
+	All \textid{R1CSConstraints} or \textid{Witness} messages
 	from all (sub-)gadgets may be sent to a shared channel
 	without the need to aggregate them into a single message,
 	and independently of the call/return flow.
@@ -140,16 +144,15 @@
 \parhead{Local Variables Allocation}
 	A gadget may allocate a number of local variables to use
 	in the internal implementation of the function that it computes.
-	They are analoguous to stack variables in common programming languages.
+	They are analogous to stack variables in common programming languages.
 
 	The following protocol is used to allocate variable IDs that are
 	unique within a whole constraint system.
 	\begin{itemize}
-		\item The caller must provide a numerical ID greater than all IDs that have already been allocated, called the Free-Before ID.
-		\item The gadget may use the Free-Before ID and consecutive IDs as its local variables IDs.
-		\item The gadget must return the next consecutive ID that it did not use, called the Free-After ID.
-		\item The caller must treat IDs lesser than the Free-After ID as allocated by the gadget,
-			and must not use them.
+		\item The caller must provide a numerical ID greater than all IDs that have already been allocated: the caller's \freevariableid.
+		\item The gadget may use the \freevariableid~and consecutive IDs as its local variables IDs.
+		\item The gadget must return the next consecutive ID that it did not use: the returned \freevariableid.
+		\item The caller must treat IDs lesser than the returned \freevariableid~as allocated by the gadget, and must not use them.
 	\end{itemize}
 
 	During instance reduction, the gadget can refer to
@@ -158,26 +161,32 @@
 	The caller and other parts of the program must not refer to these local variables.
 
 	During witness reduction, the gadget must assign values to its local variables
-	by sending \textid{AssignedVariables} messages.
+	by sending \textid{Witness} messages.
 
-\parhead{Incoming/Outgoing Variables}
+\parhead{Input/Output Connection Variables}
 
-	The concept of incoming, outgoing variables arises when a program is decomposed into gadgets.
+	The concept of input, output and local variables arises when a program is decomposed into gadgets.
 	These variables serve as the functional interface between a gadget and its caller.
-	They are analoguous to arguments and return values of functions in common programming languages.
-	A variable is not inherently incoming, outgoing, nor local;
-	rather, this is a convention in the context of a gadget call.
+	They are analogous to arguments and return values of functions in common programming languages.
+	A variable is not inherently input, output, nor local; rather, this is a convention in the context of a gadget call.
+	There may be no output variables if the gadget implements a pure assertion over its inputs.
+	When a \textid{Circuit} message represents a complete circuit, the inputs are the public inputs to the proofs
+	-- also called the instance in the literature.
 
-	The caller provides the IDs of variables to be used as incoming and outgoing variables by the gadget.
-	There may be no outgoing variables if the gadget implements a pure assertion.
+	The following protocol is used to share input and output variables:
+	\begin{itemize}
+		\item Input and output variables are described in the \textid{connections} structure of \textid{Circuit} messages.
+		      This includes a required \textid{variable\_ids} array and an optional \textid{values} array.
+		\item The caller provides the \textid{variable\_ids} to be used as inputs by the gadget in its call message.
+		\item The gadget returns the \textid{variable\_ids} to be used as outputs by the caller in its returned message.
+		\item During witness reduction, the caller and gadget must also include the \textid{values} to assign to input and output variables respectively.
+	\end{itemize}
 
 	During instance reduction, both the caller and the gadget can refer to
 	these variables in the \textid{R1CSConstraints} messages that they generate.
 	Other parts of the program may also refer to these same variables in their own contexts.
 
-	During witness reduction, the caller must pass incoming values to the gadget in the \textid{GadgetCall} message.
-	The gadget must return outgoing values to the caller in the \textid{GadgetReturn} message.
-
-	The caller is responsible for the assignment of values to both incoming and outgoing variables.
-	How this is achieved depends on the caller and proving system,
-	and on whether some variables are treated as public inputs of the instance.
+	The caller is responsible for communicating the values of both input and output variables to the backend.
+	This is natural because the caller will typically use the output variables in its own logic.
+	How this is achieved depends on the caller and proving system, and on whether some variables are treated as public inputs.
+	The gadget should not include output values in \textid{Witness} messages, as these would be redundant with its \textid{Circuit.connections.values}.

@@ -156,7 +156,8 @@ impl<'a> Circuit<'a> {
     self._tab.get::<bool>(Circuit::VT_WITNESS_GENERATION, Some(false)).unwrap()
   }
   /// The order of the finite field used by the current system.
-  /// A number in canonical little-endian representation, like `Variables.values` below.
+  /// A number in canonical little-endian representation.
+  /// See `Variables.values` below.
   #[inline]
   pub fn field_order(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_ORDER, None).map(|v| v.safe_slice())
@@ -239,7 +240,7 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
 
 /// R1CSConstraints represents constraints to be added to the constraint system.
 ///
-/// - Multiple such messages are equivalent to the concatenation of `constraints` arrays.
+/// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
 pub enum R1CSConstraintsOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -522,10 +523,11 @@ impl<'a: 'b, 'b> BilinearConstraintBuilder<'a, 'b> {
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - When used for circuit connections, the IDs indicate which variables are
+/// - In `Circuit.connections`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
-/// - When used during witness generation, the values form the assignment to the variables.
-/// - When used as a linear combination, the values are the coefficients applied to variables.
+/// - During witness generation, the values form the assignment to the variables.
+/// - In `BilinearConstraint` linear combinations, the values are the coefficients
+///   applied to variables in a linear combination.
 pub enum VariablesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 

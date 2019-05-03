@@ -14,13 +14,13 @@ We recommend different approaches to implementation in this section.
 \label{inmemory}
 The application may execute the code of a gadget in its own process.
 
-The gadget exposes its functionnality as a function calleable using the C calling convention of the platform. The gadget code may be linked statically or be loaded from a shared library.
+The gadget exposes its functionality as a function callable using the C calling convention of the platform. The gadget code may be linked statically or be loaded from a shared library.
 
-The application must prepare a \textid{GadgetCall} message in memory, and implement one callback functions to receive the messages of the gadget,
+The application must prepare a \textid{Circuit} message in memory, and implement one callback functions to receive the messages of the gadget,
 and call the gadget function with pointers to the message and the callbacks.
 
 The gadget function reads the call message and performs its specific computation. It prepares the resulting messages of type
-\textid{R1CSConstraints}, \textid{AssignedVariables}, or \textid{GadgetReturn}
+\textid{R1CSConstraints}, \textid{Witness}, or \textid{Circuit}
 in memory, and calls the callbacks with pointers to these messages.
 
 A function definition that implements this flow is defined in Listing \ref{zkinterface.h} as a C header. Refer to the inline documentation for more details.
@@ -37,15 +37,15 @@ To process multiple messages from the same stream or file, a program
 reads the 4 bytes containing the size of the next message, allowing it to seek
 to the message after that.
 
-A program that constructs a constraint system or implements a gadget should read a GadgetCall message from the standard input stream (stdin).
+A program that constructs a constraint system or implements a gadget should read a \textid{Circuit} message from the standard input stream (stdin).
 It should write one or more messages of type
-\textid{R1CSConstraints} or \textid{AssignedVariables}
+\textid{R1CSConstraints} or \textid{Witness}
 to the standard output stream (stdout).
-It should write a single \textid{GadgetReturn} message to the standard error stream
+It should write a single \textid{Circuit} message to the standard error stream
 (stderr, used as a control channel).
 
 A program that implements a proving system should read messages of type
-\textid{R1CSConstraints}, \textid{AssignedVariables}, or \textid{GadgetReturn}
+\textid{R1CSConstraints}, \textid{Witness}, or \textid{Circuit}
 from stdin, which should contain all the information needed to perform a pre-processing or to generate proofs.
 
 
@@ -56,45 +56,45 @@ Different tools can be implemented or adapted to use zkInterface. The following 
 
 \parhead{Implementing a gadget}
 \begin{itemize}
-    \item A gadget expects a \textid{GadgetCall} message as input.
+    \item A gadget expects a \textid{Circuit} message as input.
 
-    \item If the field \textid{generate\_r1cs} is set, it outputs one or more \textid{R1CSConstraints} messages.
+    \item If the field \textid{r1cs\_generation} is set, it outputs one or more \textid{R1CSConstraints} messages.
 
-    \item If the field \textid{generate\_assignment} is set, it outputs one or more \textid{AssignedVariables} messages.
+    \item If the field \textid{witness\_generation} is set, it outputs one or more \textid{Witness} messages.
 
-    \item In both cases, it outputs a \textid{GadgetReturn} message.
+    \item In both cases, it outputs a \textid{Circuit} message.
 \end{itemize}
 
 
 \parhead{Using a gadget in a frontend}
 \begin{itemize}
-    \item To use a gadget, a frontend prepares a \textid{GadgetCall} message, and calls the gadget code. The frontend also decides how to handle replies from the gadget.
+    \item To use a gadget, a frontend prepares a \textid{Circuit} message for the gadget, and calls the gadget code. The frontend also decides how to handle replies from the gadget.
 
-    \item When building a constraint system, the field \textid{generate\_r1cs} is set. The frontend will receive constraints in \textid{R1CSConstraints} messages, and add them into the constraint system being built.
+    \item When building a constraint system, the field \textid{r1cs\_generation} is set. The frontend will receive constraints in \textid{R1CSConstraints} messages, and add them into the constraint system being built.
 
-    \item When generating an assignment, the field \textid{generate\_assignment} is set. The frontend will receive values to assign to the gadget variables in \textid{AssignedVariables} messages, and include them into the complete assignment.
+    \item When generating an assignment, the field \textid{witness\_generation} is set. The frontend will receive values to assign to the gadget variables in \textid{Witness} messages, and include them into the complete assignment.
 
-    \item In both cases, the frontend will receive a \textid{GadgetReturn} message, which it can use in the rest of the process.
+    \item In both cases, the frontend will receive a \textid{Circuit} message from the gadget, which it can use in the rest of the process.
 \end{itemize}
 
 
 \parhead{Implementing a \underline{frontend} for interoperability with standard backends}
 \begin{itemize}
-    \item A frontend describes a constraint system in a \textid{GadgetInstance} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
+    \item A frontend describes a constraint system in a \textid{Circuit} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
 
     \item When building a constraint system, the frontend outputs all constraints in one or more \textid{R1CSConstraints} messages.
 
-    \item When generating a proof, the frontend outputs a complete assignment in one or more \textid{AssignedVariables} messages.
+    \item When generating a proof, the frontend outputs a complete assignment in one or more \textid{Witness} messages.
 \end{itemize}
 
 
 \parhead{Implementing a \underline{backend} for interoperability with standard frontends}
 \begin{itemize}
-    \item A backend initializes a constraint system using a \textid{GadgetInstance} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
+    \item A backend initializes a constraint system using a \textid{Circuit} message. The incoming variables are interpreted as public inputs. There are no outgoing variables in this case.
 
     \item The backend loads all constraints from \textid{R1CSConstraints} messages. If the backend implements a pre-processing SNARK scheme, this is sufficient to perform a setup.
 
-    \item To generate a proof, the backend loads a complete assignment from \textid{AssignedVariables} messages.
+    \item To generate a proof, the backend loads a complete assignment from \textid{Witness} messages.
 \end{itemize}
 
 
