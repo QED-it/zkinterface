@@ -100,6 +100,17 @@ impl CircuitOwned {
     }
 }
 
+impl<'a> From<Circuit<'a>> for CircuitOwned {
+    fn from(circuit: Circuit) -> CircuitOwned {
+        CircuitOwned {
+            connections: VariablesOwned::from(circuit.connections().unwrap()),
+            free_variable_id: circuit.free_variable_id(),
+            r1cs_generation: circuit.r1cs_generation(),
+            field_order: None,
+        }
+    }
+}
+
 impl VariablesOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -117,16 +128,17 @@ impl VariablesOwned {
             info: None,
         })
     }
+}
 
-    pub fn parse(conn: &Variables) -> Option<VariablesOwned> {
-        let variable_ids = Vec::from(conn.variable_ids()?.safe_slice());
-
-        let values = conn.values().map(|bytes|
-            Vec::from(bytes));
-
-        Some(VariablesOwned {
-            variable_ids,
-            values,
-        })
+impl<'a> From<Variables<'a>> for VariablesOwned {
+    fn from(vars: Variables) -> VariablesOwned {
+        VariablesOwned {
+            variable_ids: match vars.variable_ids() {
+                Some(var_ids) => Vec::from(var_ids.safe_slice()),
+                None => vec![],
+            },
+            values: vars.values().map(|bytes|
+                Vec::from(bytes)),
+        }
     }
 }

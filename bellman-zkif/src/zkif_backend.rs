@@ -21,11 +21,11 @@ pub use zkinterface::reading::Messages;
 
 /// A circuit instance built from zkif messages.
 #[derive(Clone, Debug)]
-pub struct ZKIF<'a> {
+pub struct ZKIFCircuit<'a> {
     pub messages: &'a Messages,
 }
 
-impl<'a, E: Engine> Circuit<E> for ZKIF<'a> {
+impl<'a, E: Engine> Circuit<E> for ZKIFCircuit<'a> {
     fn synthesize<CS: ConstraintSystem<E>>(self, cs: &mut CS) -> Result<(), SynthesisError>
     {
         let witness_generation = self.messages.last_circuit().unwrap().witness_generation();
@@ -85,7 +85,7 @@ pub fn zkif_backend(
     let key_path = out_dir.join("key");
     let proof_path = out_dir.join("proof");
 
-    let circuit = ZKIF { messages };
+    let circuit = ZKIFCircuit { messages };
 
     let circuit_msg = messages.last_circuit().ok_or(SynthesisError::AssignmentMissing)?;
 
