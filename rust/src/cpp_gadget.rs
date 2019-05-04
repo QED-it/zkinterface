@@ -3,6 +3,7 @@
 // @date 2019
 
 use reading::Messages;
+use std::error::Error;
 use std::slice;
 use writing::CircuitOwned;
 
@@ -49,14 +50,14 @@ fn callback_c(
     context.push_message(Vec::from(buf)).is_ok()
 }
 
-pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, String> {
-    let message_buf = circuit.serialize();
-    let message_ptr = message_buf.as_ptr();
+pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<Error>> {
+    let mut message_buf = vec![];
+    circuit.write(&mut message_buf)?;
 
     let mut context = Messages::new(circuit.free_variable_id);
     let ok = unsafe {
         call_gadget(
-            message_ptr,
+            message_buf.as_ptr(),
             callback_c,
             &mut context as *mut Messages,
             callback_c,
@@ -67,8 +68,8 @@ pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, String> {
     };
 
     match ok {
-        false => Err("call_gadget failed".to_string()),
         true => Ok(context),
+        false => Err("call_gadget failed".into()),
     }
 }
 

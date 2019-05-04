@@ -11,6 +11,7 @@ use zkinterface_generated::zkinterface::{
     Root,
     Variables,
 };
+use std::fmt;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
@@ -312,7 +313,6 @@ impl Messages {
     }
 }
 
-#[derive(Debug)]
 pub struct Variable<'a> {
     pub id: u64,
     pub value: &'a [u8],
@@ -321,6 +321,12 @@ pub struct Variable<'a> {
 impl<'a> Variable<'a> {
     pub fn has_value(&self) -> bool {
         self.value.len() > 0
+    }
+}
+
+impl<'a> fmt::Debug for Variable<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "var{}={:?}", self.id, self.value)
     }
 }
 

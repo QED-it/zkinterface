@@ -1,14 +1,15 @@
 //! Helpers to write messages.
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
+use std::io;
 use zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
-    Variables,
-    VariablesArgs,
     Message,
     Root,
     RootArgs,
+    Variables,
+    VariablesArgs,
 };
 
 
@@ -92,11 +93,11 @@ impl CircuitOwned {
         })
     }
 
-    pub fn serialize(&self) -> Vec<u8> {
+    pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);
-        Vec::from(builder.finished_data())
+        writer.write_all(builder.finished_data())
     }
 }
 

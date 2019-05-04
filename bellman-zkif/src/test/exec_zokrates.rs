@@ -4,11 +4,7 @@
 ./zokrates compute-witness -a 3 4
 ./zokrates generate-proof --backend zkinterface
 
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- call.zkif          && cat call.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_r1cs.zkif   && cat circuit_r1cs.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- r1cs.zkif          && cat r1cs.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- circuit_witness.zkif && cat circuit_witness.json
-flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- witness.zkif        && cat witness.json
+flatc --json --raw-binary --size-prefixed ../zkinterface/zkinterface.fbs -- *.zkif && cat *.json
 */
 
 use num_bigint::BigUint;

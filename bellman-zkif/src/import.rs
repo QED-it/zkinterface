@@ -88,7 +88,8 @@ pub fn call_gadget<E, CS>(
     };
 
     // Prepare the call.
-    let call_buf = call.serialize();
+    let mut call_buf = vec![];
+    call.write(&mut call_buf)?;
 
     // Call.
     let messages = exec_fn(&call_buf).or(Err(SynthesisError::Unsatisfiable))?;
