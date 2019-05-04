@@ -39,10 +39,12 @@ impl<'a, E: Engine> Circuit<E> for ZKIF<'a> {
         let public_vars = self.messages.connection_variables().unwrap();
 
         for var in public_vars {
-            let num = AllocatedNum::alloc(
-                cs.namespace(|| format!("public_{}", var.id)), || {
-                    Ok(le_to_fr::<E>(var.value))
-                })?;
+            let mut cs = cs.namespace(|| format!("public_{}", var.id));
+            let num = AllocatedNum::alloc(&mut cs, || {
+                Ok(le_to_fr::<E>(var.value))
+            })?;
+
+            num.inputize(&mut cs)?;
 
             // Track input variable.
             id_to_var.insert(var.id, num.get_variable());
