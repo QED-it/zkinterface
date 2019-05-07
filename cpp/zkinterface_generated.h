@@ -434,7 +434,7 @@ struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
   /// - The size of an element representation is determined by:
   ///
-  ///       element size = values.length / variable_ids.length
+  ///     element size = values.length / variable_ids.length
   const flatbuffers::Vector<uint8_t> *values() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_VALUES);
   }

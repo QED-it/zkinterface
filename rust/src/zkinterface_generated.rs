@@ -585,7 +585,7 @@ impl<'a> Variables<'a> {
   ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
   /// - The size of an element representation is determined by:
   ///
-  ///       element size = values.length / variable_ids.length
+  ///     element size = values.length / variable_ids.length
   #[inline]
   pub fn values(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Variables::VT_VALUES, None).map(|v| v.safe_slice())

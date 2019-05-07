@@ -117,7 +117,7 @@ table Variables {
     ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
     /// - The size of an element representation is determined by:
     ///
-    ///       element size = values.length / variable_ids.length
+    ///     element size = values.length / variable_ids.length
     values                  :[ubyte];
 
     /// Optional: Any complementary info that may be useful to the recipient.

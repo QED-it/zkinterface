@@ -1,9 +1,15 @@
 [package]
 name = "zkinterface"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
+license = "MIT"
 build = "build.rs"
 links = "zkinterface"
+description = "An implementation of zkInterface"
+homepage = "https://github.com/QED-it/zkinterface"
+repository = "https://github.com/QED-it/zkinterface/rust"
+documentation = "https://github.com/QED-it/zkinterface/blob/master/zkInterface.pdf"
+keywords = ["zero-knowledge", "zkproof", "cryptography"]
 
 [features]
 # Whether to regenerate code from zkinterface.fbs. Requires the Flatbuffers compiler.
