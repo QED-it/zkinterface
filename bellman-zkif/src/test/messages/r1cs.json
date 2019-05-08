@@ -1,0 +1,87 @@
+{
+  message_type: "R1CSConstraints",
+  message: {
+    constraints: [
+      {
+        linear_combination_a: {
+          variable_ids: [
+            1
+          ],
+          values: [
+            1
+          ]
+        },
+        linear_combination_b: {
+          variable_ids: [
+            1
+          ],
+          values: [
+            1
+          ]
+        },
+        linear_combination_c: {
+          variable_ids: [
+            4
+          ],
+          values: [
+            1
+          ]
+        }
+      },
+      {
+        linear_combination_a: {
+          variable_ids: [
+            2
+          ],
+          values: [
+            1
+          ]
+        },
+        linear_combination_b: {
+          variable_ids: [
+            2
+          ],
+          values: [
+            1
+          ]
+        },
+        linear_combination_c: {
+          variable_ids: [
+            5
+          ],
+          values: [
+            1
+          ]
+        }
+      },
+      {
+        linear_combination_a: {
+          variable_ids: [
+            0
+          ],
+          values: [
+            1
+          ]
+        },
+        linear_combination_b: {
+          variable_ids: [
+            4,
+            5
+          ],
+          values: [
+            1,
+            1
+          ]
+        },
+        linear_combination_c: {
+          variable_ids: [
+            3
+          ],
+          values: [
+            1
+          ]
+        }
+      }
+    ]
+  }
+}

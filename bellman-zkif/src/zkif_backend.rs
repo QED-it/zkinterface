@@ -118,7 +118,7 @@ pub fn zkif_backend(
 fn test_zkif_backend() {
 
     // Load test messages.
-    let test_dir = Path::new("src/test");
+    let test_dir = Path::new("src/test/messages");
     let out_dir = Path::new("local");
 
     // Setup.
