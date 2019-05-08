@@ -28,8 +28,6 @@ pub struct ZKIFCircuit<'a> {
 impl<'a, E: Engine> Circuit<E> for ZKIFCircuit<'a> {
     fn synthesize<CS: ConstraintSystem<E>>(self, cs: &mut CS) -> Result<(), SynthesisError>
     {
-        let witness_generation = self.messages.last_circuit().unwrap().witness_generation();
-
         // Track variables by id. Used to convert constraints.
         let mut id_to_var = HashMap::<u64, Variable>::new();
 
@@ -51,11 +49,7 @@ impl<'a, E: Engine> Circuit<E> for ZKIFCircuit<'a> {
         }
 
         // Allocate private variables, with optional values.
-        let private_vars = if witness_generation {
-            self.messages.assigned_private_variables()
-        } else {
-            self.messages.unassigned_private_variables().unwrap()
-        };
+        let private_vars = self.messages.private_variables().unwrap();
 
         for var in private_vars {
             let num = AllocatedNum::alloc(

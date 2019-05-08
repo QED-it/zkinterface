@@ -121,11 +121,7 @@ pub fn call_gadget<E, CS>(
     }
 
     // Allocate private variables, with optional values.
-    let private_vars = if witness_generation {
-        messages.assigned_private_variables()
-    } else {
-        messages.unassigned_private_variables().unwrap()
-    };
+    let private_vars = messages.private_variables().unwrap();
 
     for var in private_vars {
         let num = AllocatedNum::alloc(
