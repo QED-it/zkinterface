@@ -1,6 +1,6 @@
 [package]
 name = "zkinterface"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
 license = "MIT"
 build = "build.rs"
