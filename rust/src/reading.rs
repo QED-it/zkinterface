@@ -126,7 +126,7 @@ impl Messages {
         // Collect assigned values, if any.
         let mut values = HashMap::with_capacity(vars.len());
 
-        for assigned_var in self.iter_assignment() {
+        for assigned_var in self.iter_witness() {
             values.insert(assigned_var.id, assigned_var.value);
         }
 
@@ -319,7 +319,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
 
 // Assignment messages
 impl Messages {
-    pub fn iter_assignment(&self) -> WitnessIterator {
+    pub fn iter_witness(&self) -> WitnessIterator {
         WitnessIterator {
             messages_iter: self.into_iter(),
             var_ids: &[],

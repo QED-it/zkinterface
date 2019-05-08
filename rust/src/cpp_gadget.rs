@@ -125,7 +125,7 @@ fn test_cpp_gadget() {
     assert!(witness_response.circuits().len() == 1);
 
     {
-        let assignment: Vec<_> = witness_response.iter_assignment().collect();
+        let assignment: Vec<_> = witness_response.iter_witness().collect();
 
         println!("Assignment: Got witness:");
         for var in assignment.iter() {

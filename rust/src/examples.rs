@@ -138,5 +138,5 @@ fn test_examples() {
     assert_eq!(msg.into_iter().count(), 3);
     assert_eq!(msg.circuits().len(), 1);
     assert_eq!(msg.iter_constraints().count(), 3);
-    assert_eq!(msg.iter_assignment().count(), 2);
+    assert_eq!(msg.iter_witness().count(), 2);
 }
