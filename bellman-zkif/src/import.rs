@@ -84,7 +84,7 @@ pub fn call_gadget<E, CS>(
         },
         free_variable_id,
         r1cs_generation: true,
-        field_order: None,
+        field_maximum: None,
     };
 
     // Prepare the call.

@@ -112,7 +112,7 @@ impl<'a> Circuit<'a> {
       let mut builder = CircuitBuilder::new(_fbb);
       builder.add_free_variable_id(args.free_variable_id);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
-      if let Some(x) = args.field_order { builder.add_field_order(x); }
+      if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
       builder.add_witness_generation(args.witness_generation);
       builder.add_r1cs_generation(args.r1cs_generation);
@@ -123,7 +123,7 @@ impl<'a> Circuit<'a> {
     pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 6;
     pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 8;
     pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 10;
-    pub const VT_FIELD_ORDER: flatbuffers::VOffsetT = 12;
+    pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 12;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
 
   /// Variables to use as connections to the sub-circuit.
@@ -155,12 +155,12 @@ impl<'a> Circuit<'a> {
   pub fn witness_generation(&self) -> bool {
     self._tab.get::<bool>(Circuit::VT_WITNESS_GENERATION, Some(false)).unwrap()
   }
-  /// The order of the finite field used by the current system.
-  /// A number in canonical little-endian representation.
+  /// The largest element of the finite field used by the current system.
+  /// A canonical little-endian representation of the field order minus one.
   /// See `Variables.values` below.
   #[inline]
-  pub fn field_order(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_ORDER, None).map(|v| v.safe_slice())
+  pub fn field_maximum(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
   }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
@@ -178,7 +178,7 @@ pub struct CircuitArgs<'a> {
     pub free_variable_id: u64,
     pub r1cs_generation: bool,
     pub witness_generation: bool,
-    pub field_order: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for CircuitArgs<'a> {
@@ -189,7 +189,7 @@ impl<'a> Default for CircuitArgs<'a> {
             free_variable_id: 0,
             r1cs_generation: false,
             witness_generation: false,
-            field_order: None,
+            field_maximum: None,
             configuration: None,
         }
     }
@@ -216,8 +216,8 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
     self.fbb_.push_slot::<bool>(Circuit::VT_WITNESS_GENERATION, witness_generation, false);
   }
   #[inline]
-  pub fn add_field_order(&mut self, field_order: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_ORDER, field_order);
+  pub fn add_field_maximum(&mut self, field_maximum: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_MAXIMUM, field_maximum);
   }
   #[inline]
   pub fn add_configuration(&mut self, configuration: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
@@ -577,12 +577,12 @@ impl<'a> Variables<'a> {
   }
   /// Optional: values assigned to variables.
   ///
-  /// - Values are finite field elements as defined by `circuit.field_order`.
+  /// - Values are finite field elements as defined by `circuit.field_maximum`.
   /// - Elements are represented in canonical little-endian form.
   /// - Elements appear in the same order as variable_ids.
   /// - Multiple elements are concatenated in a single byte array.
   /// - The element representation may be truncated and its size shorter
-  ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
+  ///   than `circuit.field_maximum`. Truncated bytes are treated as zeros.
   /// - The size of an element representation is determined by:
   ///
   ///     element size = values.length / variable_ids.length

@@ -13,7 +13,7 @@ keywords = ["zero-knowledge", "zkproof", "cryptography"]
 
 [features]
 # Whether to regenerate code from zkinterface.fbs. Requires the Flatbuffers compiler.
-flatc = []
+fbs = []
 # Whether to compile, include, and test C++ code. Requires cmake.
 cpp = []
 

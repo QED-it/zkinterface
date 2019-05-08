@@ -1,5 +1,5 @@
 fn main() {
-    #[cfg(feature = "flatc")] {
+    #[cfg(feature = "fbs")] {
         use std::fs::rename;
         use std::path::Path;
         use std::process::Command;

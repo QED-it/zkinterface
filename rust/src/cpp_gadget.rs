@@ -86,7 +86,7 @@ fn test_cpp_gadget() {
         },
         free_variable_id: 102,
         r1cs_generation: true,
-        field_order: None,
+        field_maximum: None,
     };
 
     println!("==== R1CS generation ====");

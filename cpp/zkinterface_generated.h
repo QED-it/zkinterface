@@ -86,7 +86,7 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FREE_VARIABLE_ID = 6,
     VT_R1CS_GENERATION = 8,
     VT_WITNESS_GENERATION = 10,
-    VT_FIELD_ORDER = 12,
+    VT_FIELD_MAXIMUM = 12,
     VT_CONFIGURATION = 14
   };
   /// Variables to use as connections to the sub-circuit.
@@ -114,11 +114,11 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool witness_generation() const {
     return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
   }
-  /// The order of the finite field used by the current system.
-  /// A number in canonical little-endian representation.
+  /// The largest element of the finite field used by the current system.
+  /// A canonical little-endian representation of the field order minus one.
   /// See `Variables.values` below.
-  const flatbuffers::Vector<uint8_t> *field_order() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_FIELD_ORDER);
+  const flatbuffers::Vector<uint8_t> *field_maximum() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_FIELD_MAXIMUM);
   }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
@@ -135,8 +135,8 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID) &&
            VerifyField<uint8_t>(verifier, VT_R1CS_GENERATION) &&
            VerifyField<uint8_t>(verifier, VT_WITNESS_GENERATION) &&
-           VerifyOffset(verifier, VT_FIELD_ORDER) &&
-           verifier.VerifyVector(field_order()) &&
+           VerifyOffset(verifier, VT_FIELD_MAXIMUM) &&
+           verifier.VerifyVector(field_maximum()) &&
            VerifyOffset(verifier, VT_CONFIGURATION) &&
            verifier.VerifyVector(configuration()) &&
            verifier.VerifyVectorOfTables(configuration()) &&
@@ -159,8 +159,8 @@ struct CircuitBuilder {
   void add_witness_generation(bool witness_generation) {
     fbb_.AddElement<uint8_t>(Circuit::VT_WITNESS_GENERATION, static_cast<uint8_t>(witness_generation), 0);
   }
-  void add_field_order(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order) {
-    fbb_.AddOffset(Circuit::VT_FIELD_ORDER, field_order);
+  void add_field_maximum(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_maximum) {
+    fbb_.AddOffset(Circuit::VT_FIELD_MAXIMUM, field_maximum);
   }
   void add_configuration(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration) {
     fbb_.AddOffset(Circuit::VT_CONFIGURATION, configuration);
@@ -183,12 +183,12 @@ inline flatbuffers::Offset<Circuit> CreateCircuit(
     uint64_t free_variable_id = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_order = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_maximum = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration = 0) {
   CircuitBuilder builder_(_fbb);
   builder_.add_free_variable_id(free_variable_id);
   builder_.add_configuration(configuration);
-  builder_.add_field_order(field_order);
+  builder_.add_field_maximum(field_maximum);
   builder_.add_connections(connections);
   builder_.add_witness_generation(witness_generation);
   builder_.add_r1cs_generation(r1cs_generation);
@@ -201,9 +201,9 @@ inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
     uint64_t free_variable_id = 0,
     bool r1cs_generation = false,
     bool witness_generation = false,
-    const std::vector<uint8_t> *field_order = nullptr,
+    const std::vector<uint8_t> *field_maximum = nullptr,
     const std::vector<flatbuffers::Offset<KeyValue>> *configuration = nullptr) {
-  auto field_order__ = field_order ? _fbb.CreateVector<uint8_t>(*field_order) : 0;
+  auto field_maximum__ = field_maximum ? _fbb.CreateVector<uint8_t>(*field_maximum) : 0;
   auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*configuration) : 0;
   return zkinterface::CreateCircuit(
       _fbb,
@@ -211,7 +211,7 @@ inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
       free_variable_id,
       r1cs_generation,
       witness_generation,
-      field_order__,
+      field_maximum__,
       configuration__);
 }
 
@@ -426,12 +426,12 @@ struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   /// Optional: values assigned to variables.
   ///
-  /// - Values are finite field elements as defined by `circuit.field_order`.
+  /// - Values are finite field elements as defined by `circuit.field_maximum`.
   /// - Elements are represented in canonical little-endian form.
   /// - Elements appear in the same order as variable_ids.
   /// - Multiple elements are concatenated in a single byte array.
   /// - The element representation may be truncated and its size shorter
-  ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
+  ///   than `circuit.field_maximum`. Truncated bytes are treated as zeros.
   /// - The size of an element representation is determined by:
   ///
   ///     element size = values.length / variable_ids.length

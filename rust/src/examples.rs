@@ -28,7 +28,7 @@ pub fn example_circuit_inputs(x: u8, y: u8, zz: u8) -> CircuitOwned {
         },
         free_variable_id: 6,
         r1cs_generation: true,
-        field_order: None,
+        field_maximum: None,
     }
 }
 

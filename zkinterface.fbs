@@ -41,10 +41,10 @@ table Circuit {
     /// Provide the witness in `connections.values` and Witness messages.
     witness_generation      :bool;
 
-    /// The order of the finite field used by the current system.
-    /// A number in canonical little-endian representation.
+    /// The largest element of the finite field used by the current system.
+    /// A canonical little-endian representation of the field order minus one.
     /// See `Variables.values` below.
-    field_order             :[ubyte];
+    field_maximum           :[ubyte];
 
     /// Optional: Any custom parameter that may influence the circuit construction.
     ///
@@ -109,12 +109,12 @@ table Variables {
 
     /// Optional: values assigned to variables.
     ///
-    /// - Values are finite field elements as defined by `circuit.field_order`.
+    /// - Values are finite field elements as defined by `circuit.field_maximum`.
     /// - Elements are represented in canonical little-endian form.
     /// - Elements appear in the same order as variable_ids.
     /// - Multiple elements are concatenated in a single byte array.
     /// - The element representation may be truncated and its size shorter
-    ///   than `circuit.field_order`. Truncated bytes are treated as zeros.
+    ///   than `circuit.field_maximum`. Truncated bytes are treated as zeros.
     /// - The size of an element representation is determined by:
     ///
     ///     element size = values.length / variable_ids.length

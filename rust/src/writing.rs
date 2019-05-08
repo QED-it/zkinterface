@@ -24,7 +24,7 @@ pub struct CircuitOwned {
     pub r1cs_generation: bool,
     // witness_generation deduced from the presence of connections.values
 
-    pub field_order: Option<Vec<u8>>,
+    pub field_maximum: Option<Vec<u8>>,
 
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
@@ -48,7 +48,7 @@ impl CircuitOwned {
             },
             free_variable_id: first_local_id,
             r1cs_generation: false,
-            field_order: None,
+            field_maximum: None,
         }
     }
 
@@ -64,7 +64,7 @@ impl CircuitOwned {
             },
             free_variable_id: first_local_id + num_locals,
             r1cs_generation: false,
-            field_order: None,
+            field_maximum: None,
         }
     }
 
@@ -75,7 +75,7 @@ impl CircuitOwned {
     {
         let connections = Some(self.connections.build(builder));
 
-        let field_order = self.field_order.as_ref().map(|s|
+        let field_maximum = self.field_maximum.as_ref().map(|s|
             builder.create_vector(s));
 
         let call = Circuit::create(builder, &CircuitArgs {
@@ -83,7 +83,7 @@ impl CircuitOwned {
             free_variable_id: self.free_variable_id,
             r1cs_generation: self.r1cs_generation,
             witness_generation: self.connections.values.is_some(),
-            field_order,
+            field_maximum,
             configuration: None,
         });
 
@@ -107,7 +107,7 @@ impl<'a> From<Circuit<'a>> for CircuitOwned {
             connections: VariablesOwned::from(circuit.connections().unwrap()),
             free_variable_id: circuit.free_variable_id(),
             r1cs_generation: circuit.r1cs_generation(),
-            field_order: None,
+            field_maximum: None,
         }
     }
 }
