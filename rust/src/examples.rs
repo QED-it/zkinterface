@@ -26,7 +26,7 @@ pub fn example_circuit_inputs(x: u8, y: u8, zz: u8) -> CircuitOwned {
             variable_ids: vec![1, 2, 3],  // x, y, zz
             values: Some(vec![x, y, zz]), // x^2 + y^2 = zz
         },
-        free_variable_id: 4,
+        free_variable_id: 6,
         r1cs_generation: true,
         field_order: None,
     }
@@ -82,7 +82,7 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
 
 
 pub fn write_example_witness<W: io::Write>(writer: W) -> io::Result<()> {
-    write_example_witness_inputs(writer, 9, 16)
+    write_example_witness_inputs(writer, 3, 4)
 }
 
 pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u8, y: u8) -> io::Result<()> {

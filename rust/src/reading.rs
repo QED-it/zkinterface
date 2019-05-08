@@ -1,6 +1,8 @@
 //! Helpers to read messages.
 
 use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
+use std::collections::HashMap;
+use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -11,7 +13,6 @@ use zkinterface_generated::zkinterface::{
     Root,
     Variables,
 };
-use std::fmt;
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
@@ -114,16 +115,31 @@ impl Messages {
         collect_connection_variables(&connections, self.first_id)
     }
 
-    pub fn unassigned_private_variables(&self) -> Option<Vec<Variable>> {
+    pub fn private_variables(&self) -> Option<Vec<Variable>> {
+        // Collect private variables.
         let circuit = self.last_circuit()?;
-        collect_unassigned_private_variables(&circuit.connections()?, self.first_id, circuit.free_variable_id())
-    }
+        let mut vars = collect_unassigned_private_variables(
+            &circuit.connections()?,
+            self.first_id,
+            circuit.free_variable_id())?;
 
-    pub fn assigned_private_variables(&self) -> Vec<Variable> {
-        self.iter_assignment()
-            .filter(|var|
-                var.id >= self.first_id
-            ).collect()
+        // Collect assigned values, if any.
+        let mut values = HashMap::with_capacity(vars.len());
+
+        for assigned_var in self.iter_assignment() {
+            values.insert(assigned_var.id, assigned_var.value);
+        }
+
+        // Assign the values, if any.
+        if values.len() > 0 {
+            for var in vars.iter_mut() {
+                if let Some(value) = values.get(&var.id) {
+                    var.value = value;
+                }
+            }
+        }
+
+        Some(vars)
     }
 }
 
