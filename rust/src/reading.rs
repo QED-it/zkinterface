@@ -62,10 +62,40 @@ pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
 }
 
 /// Collect buffers waiting to be read.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Messages {
     pub messages: Vec<Vec<u8>>,
     pub first_id: u64,
+}
+
+impl fmt::Debug for Messages {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "ZkInterface messages:")?;
+        for root in self {
+            write!(f, " {:?}", root.message_type())?;
+        }
+        write!(f, "\n")?;
+        if let Some(vars) = self.connection_variables() {
+            write!(f, "Connection variables:\n")?;
+            for var in vars {
+                write!(f, "- {:?}\n", var)?;
+            }
+        }
+        if let Some(vars) = self.private_variables() {
+            write!(f, "Private variables:\n")?;
+            for var in vars {
+                write!(f, "- {:?}\n", var)?;
+            }
+        }
+        for circuit in self.circuits() {
+            //write!(f, "{:?}\n", super::writing::CircuitOwned::from(circuit))?;
+            write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
+        }
+        for constraint in self.iter_constraints() {
+            write!(f, "{:?}\n", constraint)?;
+        }
+        Ok(())
+    }
 }
 
 impl Messages {
@@ -250,7 +280,7 @@ impl Messages {
 
 pub type Term<'a> = Variable<'a>;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Constraint<'a> {
     pub a: Vec<Term<'a>>,
     pub b: Vec<Term<'a>>,
@@ -329,6 +359,7 @@ impl Messages {
     }
 }
 
+#[derive(Eq, PartialEq)]
 pub struct Variable<'a> {
     pub id: u64,
     pub value: &'a [u8],
@@ -342,7 +373,11 @@ impl<'a> Variable<'a> {
 
 impl<'a> fmt::Debug for Variable<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "var{}={:?}", self.id, self.value)
+        if self.value.len() == 0 {
+            write!(f, "var_{}", self.id)
+        } else {
+            write!(f, "var_{}={:?}", self.id, self.value)
+        }
     }
 }
 

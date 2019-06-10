@@ -15,7 +15,7 @@ use zkinterface_generated::zkinterface::{
 
 // ==== Gadget Call ====
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CircuitOwned {
     pub connections: VariablesOwned,
 
@@ -29,7 +29,7 @@ pub struct CircuitOwned {
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VariablesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,
