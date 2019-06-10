@@ -100,17 +100,20 @@ Different tools can be implemented or adapted to use zkInterface. The following 
 
 \parhead{Demonstration}
 
-An example implementation is provided.
+Multiple example implementations are provided.
+This code is distributed under the MIT license at
+\href{https://github.com/QED-it/zkinterface}{https://github.com/QED-it/zkinterface}.
+More links will be found on this page.
 
 A number of C++ helper functions are used to interoperate
 with libsnark protoboard objects.
 A SHA256 gadget from libsnark/gadgetlib1
 is encapsulated with the message-based interface of section~\ref{sec:design}.
 
+A set of Rust helper functions are available to write and read messages.
 A test program written in Rust demonstrates
 in-memory execution using the method in section~\ref{inmemory},
 and includes helper functions to process messages.
 
-This code is distributed under the MIT license at
-\href{https://github.com/QED-it/gadget_standard}{https://github.com/QED-it/gadget\_standard}.
-
+A demonstration backend and frontend compiled independently to WebAssembly and running in web browsers is hosted at
+\href{https://github.com/QED-it/zkinterface-wasm}{https://github.com/QED-it/zkinterface-wasm}.
