@@ -70,30 +70,52 @@ pub struct Messages {
 
 impl fmt::Debug for Messages {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ZkInterface messages:")?;
+        use zkinterface_generated::zkinterface::Message::*;
+
+        let mut has_circuit = false;
+        let mut has_witness = false;
+        let mut has_constraints = false;
+
         for root in self {
-            write!(f, " {:?}", root.message_type())?;
-        }
-        write!(f, "\n")?;
-        if let Some(vars) = self.connection_variables() {
-            write!(f, "Connection variables:\n")?;
-            for var in vars {
-                write!(f, "- {:?}\n", var)?;
+            match root.message_type() {
+                Circuit => has_circuit = true,
+                Witness => has_witness = true,
+                R1CSConstraints => has_constraints = true,
+                NONE => {}
             }
         }
-        if let Some(vars) = self.private_variables() {
-            write!(f, "Private variables:\n")?;
-            for var in vars {
-                write!(f, "- {:?}\n", var)?;
+
+        if has_circuit {
+            write!(f, "\nZkInterface {:?}\n", Circuit)?;
+            if let Some(vars) = self.connection_variables() {
+                write!(f, "Public variables:\n")?;
+                for var in vars {
+                    write!(f, "- {:?}\n", var)?;
+                }
+            }
+            if let Some(circuit) = self.last_circuit() {
+                //write!(f, "{:?}\n", super::writing::CircuitOwned::from(circuit))?;
+                write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
             }
         }
-        for circuit in self.circuits() {
-            //write!(f, "{:?}\n", super::writing::CircuitOwned::from(circuit))?;
-            write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
+
+        if has_witness {
+            write!(f, "\nZkInterface {:?}\n", Witness)?;
+            if let Some(vars) = self.private_variables() {
+                write!(f, "Private variables:\n")?;
+                for var in vars {
+                    write!(f, "- {:?}\n", var)?;
+                }
+            }
         }
-        for constraint in self.iter_constraints() {
-            write!(f, "{:?}\n", constraint)?;
+
+        if has_constraints {
+            write!(f, "\nZkInterface {:?}\n", R1CSConstraints)?;
+            for constraint in self.iter_constraints() {
+                write!(f, "{:?}\n", constraint)?;
+            }
         }
+
         Ok(())
     }
 }
