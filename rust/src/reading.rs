@@ -395,10 +395,25 @@ impl<'a> Variable<'a> {
 
 impl<'a> fmt::Debug for Variable<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.value.len() == 0 {
+        let len = self.value.len();
+        if len == 0 {
             write!(f, "var_{}", self.id)
         } else {
-            write!(f, "var_{}={:?}", self.id, self.value)
+            write!(f, "var_{}=[{:?}", self.id, self.value[0])?;
+
+            // Find length before trailing zeros.
+            let mut trail = 1;
+            for i in (0..len).rev() {
+                if self.value[i] != 0 {
+                    trail = i + 1;
+                    break;
+                }
+            }
+
+            for b in self.value[1..trail].iter() {
+                write!(f, ",{}", b)?;
+            }
+            write!(f, "]")
         }
     }
 }
@@ -445,4 +460,36 @@ impl<'a> Iterator for WitnessIterator<'a> {
         })
     }
     // TODO: Replace unwrap and panic with Result.
+}
+
+#[test]
+fn test_pretty_print_var() {
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 1,
+        value: &[],
+    }), "var_1");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 2,
+        value: &[9],
+    }), "var_2=[9]");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 2,
+        value: &[9, 0],
+    }), "var_2=[9]");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 2,
+        value: &[9, 8],
+    }), "var_2=[9,8]");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 3,
+        value: &[9, 8, 7, 6],
+    }), "var_3=[9,8,7,6]");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 3,
+        value: &[9, 8, 0, 6],
+    }), "var_3=[9,8,0,6]");
+    assert_eq!(format!("{:?}", super::reading::Variable {
+        id: 4,
+        value: &[9, 8, 0, 6, 0, 0],
+    }), "var_4=[9,8,0,6]");
 }
