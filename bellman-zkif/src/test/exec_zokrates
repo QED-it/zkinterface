@@ -1,7 +1,0 @@
-#!/bin/sh
-
-export LIBSNARK_SOURCE_PATH=libsnark
-
-cd $ZOKRATES_HOME &&
-    #cargo build --release &&
-    target/release/zokrates $@
