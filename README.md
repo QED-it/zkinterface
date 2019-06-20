@@ -4,12 +4,28 @@ zkInterface is a standard tool for zero-knowledge interoperability.
 
 [The spec can be found here](zkInterface.pdf).
 
+## Implementations
+
+|                                                           | Proving System | Export Circuits | Import Circuits |
+| --------------------------------------------------------- | -------------- | --------------- | --------------- |
+| [Bellman](https://github.com/QED-it/zkinterface-bellman) (Groth16) | Yes            | Yes             | Yes             |
+| [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs) (Bulletproofs) | Yes | No | No |
+| [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
+| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | Yes |
+
+See also the [WebAssembly modules](https://qed-it.github.io/zkinterface-wasm/) and the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
+
+## Structure of this repo
+
 |                           |                             |
 | ------------------------- | --------------------------- |
 | `zkInterface.pdf`         | The interface specification |
 | `zkinterface.fbs`         | The gadget interface definition using FlatBuffers |
 | `rust/src/zkinterface_generated.rs` | Generated Rust code         |
-| `rust/src/gadget_call.rs`           | Example gadget call in Rust |
+| `rust/src/reading.rs`               | Rust helpers to read messages |
+| `rust/src/writing.rs`               | Rust helpers to write messages |
+| `rust/src/cpp_gadget.rs`            | Rust helpers to interact with C++ |
+| `rust/src/examples.rs`              | Example messages for a simple test circuit |
 | `cpp/zkinterface_generated.h`       | Generated C++ code          |
 | `cpp/gadget_example.cpp`            | Example gadget in C++       |
 | `build.rs`                | Generate Rust and C++ code from zkinterface.fbs, and compile the C++ example |
