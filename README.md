@@ -11,7 +11,7 @@ zkInterface is a standard tool for zero-knowledge interoperability.
 | [Bellman](https://github.com/QED-it/zkinterface-bellman) (Groth16) | Yes            | Yes             | Yes             |
 | [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs) (Bulletproofs) | Yes | No | No |
 | [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
-| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | Yes |
+| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | No |
 
 See also the [WebAssembly modules](https://qed-it.github.io/zkinterface-wasm/) and the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
