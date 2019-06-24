@@ -4,6 +4,10 @@ zkInterface is a standard tool for zero-knowledge interoperability.
 
 [The spec can be found here](zkInterface.pdf).
 
+## How to contribute 
+- Add zkInterface integration to addinital prove systems.
+- Support common proving system curves. 
+
 ## Implementations
 
 |                                                           | Proving System | Export Circuits | Import Circuits |
