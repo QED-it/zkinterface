@@ -1,5 +1,31 @@
-# ZK Gadget Standard Interface
+# ZkInterface - Gadget Standard:
 
+a short paragraph that includes:
+
+* One liner description of zk-interface
+* Explain the ZkProof relation
+* Link to wasm repo & the live demo
+
+## Introduction
+
+Eran's intro and we can add the overview diagram from the paper. (fig. 1)
+
+## Current Status
+
+What we have done, what we supports, and add the table that we have under Implementations
+
+## How to use it
+
+## How to contribute
+
+define broad goals and some more specific goals
+
+## Specification
+
+## Limitations
+
+
+<!-- 
 zkInterface is a standard tool for zero-knowledge interoperability.
 
 [The spec can be found here](zkInterface.pdf).
@@ -62,4 +88,4 @@ make
 ```
 
 Then run:
-`flatc --LANGUAGE zkinterface.fbs`
+`flatc --LANGUAGE zkinterface.fbs` -->
