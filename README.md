@@ -38,6 +38,7 @@ A simple special case is monolithic representation of a whole constraint system 
 | [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs) (Bulletproofs) | Yes | No | No |
 | [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
 | [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | No |
+| [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | - | Yes | No |
 
 See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) and the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
