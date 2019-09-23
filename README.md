@@ -1,6 +1,6 @@
-# zkInterface - Gadget Standard
+# zkInterface - Zero-knowledge Standard
 
-zkInterface is a standard tool for zero-knowledge interoperability between different ZK circuit generators and proving systems.
+zkInterface is a standard tool for zero-knowledge interoperability between different ZK DSLs, gadget libraries, and proving systems.
 The zkInterface project was born in the [ZKProof](https://zkproof.org/) community.
 
 See a [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
