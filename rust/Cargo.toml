@@ -7,7 +7,7 @@ build = "build.rs"
 links = "zkinterface"
 description = "An implementation of zkInterface"
 homepage = "https://github.com/QED-it/zkinterface"
-repository = "https://github.com/QED-it/zkinterface/rust"
+repository = "https://github.com/QED-it/zkinterface/tree/master/rust"
 documentation = "https://github.com/QED-it/zkinterface/blob/master/zkInterface.pdf"
 keywords = ["zero-knowledge", "zkproof", "cryptography"]
 
