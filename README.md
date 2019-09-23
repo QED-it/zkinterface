@@ -63,7 +63,7 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 
 In the `rust` directory:
 
-The following commands will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit:
+The following commands will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit in `rust/src/examples.rs`:
 
 ```
 cargo run --bin example > example.zkif
