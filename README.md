@@ -1,14 +1,9 @@
 # zkInterface - Gadget Standard
 
-<!-- a short paragraph that includes:
+zkInterface is a standard tool for zero-knowledge interoperability between different ZK circuit generators and proving systems.
+The zkInterface project was born in the [ZKProof](https://zkproof.org/) community.
 
-* One liner description of zk-interface
-* Explain the ZkProof relation
-* Link to wasm repo & the live demo -->
-
-zkInterface is a standard tool for zero-knowledge interoperability between diffrent prove system.
-The idea behind the zkInterface project was born by zkproof cumminity (attach link) to improve zkproof utilzation and usiblity.
-We got live demo(live demo) that demonstrate the integration(Link to wasm) and basic use of zkInterface.
+See a [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
 ## Introduction
 
@@ -40,7 +35,7 @@ A simple special case is monolithic representation of a whole constraint system 
 | [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | No |
 | [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | - | Yes | No |
 
-See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) and the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
+See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) used to build the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
 <!-- ## How to use it
 
