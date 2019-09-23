@@ -163,6 +163,13 @@ In the `rust` directory:
 This will generate and compile Rust and C++ code, and run a test of both sides communicating
 through the standard interface.
 
+```
+cargo run --bin example > example.zkif
+cargo run --bin print   < example.zkif
+```
+
+This will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit.
+
 ## Generated code
 
 Generated C++ and Rust code is included.
