@@ -52,6 +52,10 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 | `zkInterface.pdf`         | The interface specification |
 | `zkinterface.fbs`         | The gadget interface definition using FlatBuffers |
 | `rust/src/zkinterface_generated.rs` | Generated Rust code         |
+| `rust/src/reading.rs`               | Rust helpers to read messages |
+| `rust/src/writing.rs`               | Rust helpers to write messages |
+| `rust/src/cpp_gadget.rs`            | Rust helpers to interact with C++ |
+| `rust/src/examples.rs`              | Example messages for a simple test circuit |
 | `rust/src/gadget_call.rs`           | Example gadget call in Rust |
 | `cpp/zkinterface_generated.h`       | Generated C++ code          |
 | `cpp/gadget_example.cpp`            | Example gadget in C++       |
@@ -63,10 +67,16 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 
 In the `rust` directory:
 
-`cargo test`
+The following commands will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit:
 
-This will generate and compile Rust and C++ code, and run a test of both sides communicating
-through the standard interface.
+```
+cargo run --bin example > example.zkif
+cargo run --bin print   < example.zkif
+```
+
+This command will generate and compile Rust and C++ code, and run a test of both sides communicating through the standard interface:
+
+`cargo test`
 
 <!-- TODO: Clarify what this tests -->
 
