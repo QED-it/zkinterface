@@ -63,7 +63,9 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 
 ### Testing
 
-In the `rust` directory:
+In the `rust` directory, run unit tests: 
+
+`cargo test`
 
 The following commands will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit in `rust/src/examples.rs`:
 
@@ -74,7 +76,7 @@ cargo run --bin print   < example.zkif
 
 This command will generate and compile Rust and C++ code, and run a test of both sides communicating through the standard interface:
 
-`cargo test`
+`cargo test --features cpp`
 
 <!-- TODO: Clarify what this tests -->
 
