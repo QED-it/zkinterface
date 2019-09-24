@@ -28,14 +28,19 @@ A simple special case is monolithic representation of a whole constraint system 
 <!-- What we have done, what we supports, and add the table that we have under Implementations -->
 
 ### Implementations
+__Frontends:__
+|                                                           | Circuit Type | Export Circuits | Import Circuits |
+| --------------------------------------------------------- | -------------- | --------------- | --------------- |
+| [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
+| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | R1CS | Yes | No |
+| [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | R1CS | Yes | No |
 
+__Backends:__
 |                                                           | Proving System | Export Circuits | Import Circuits |
 | --------------------------------------------------------- | -------------- | --------------- | --------------- |
-| [Bellman](https://github.com/QED-it/zkinterface-bellman) (Groth16) | Yes            | No              | Yes             |
-| [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs) (Bulletproofs) | Yes | No | No |
-| [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
-| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | PGHR | Yes | No |
-| [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | - | Yes | No |
+| [Bellman](https://github.com/QED-it/zkinterface-bellman) | Groth16            | No              | Yes             |
+| [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs)| Bulletproofs | No | Yes |
+
 
 See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) used to build the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
