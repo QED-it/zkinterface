@@ -7,6 +7,7 @@ fn main() {
         match Command::new("flatc").args(&[
             "--rust",
             "--cpp",
+            "--js",
             "-o", "src/",
             "../zkinterface.fbs",
         ]).output() {
@@ -24,7 +25,13 @@ fn main() {
                     Path::new("..").join("cpp").join("zkinterface_generated.h"),
                 ).expect("Failed to rename");
 
-                // Fix an issue in generated code.
+                // Move JS file.
+                rename(
+                    Path::new("src").join("zkinterface_generated.js"),
+                    Path::new("..").join("js").join("zkinterface_generated.js"),
+                ).expect("Failed to rename");
+
+                // Fix an issue in generated Rust code.
                 // The lifetime 'a should be on the return value, not on &self.
                 // Published at https://github.com/google/flatbuffers/pull/5140
                 {

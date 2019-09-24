@@ -1,0 +1,24 @@
+{
+  "name": "zkinterface",
+  "version": "1.0.6",
+  "description": "An implementation of zkInterface interoperability",
+  "main": "zkinterface_generated.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QED-it/zkinterface.git"
+  },
+  "keywords": [
+    "zero-knowledge",
+    "zkproof",
+    "cryptography"
+  ],
+  "author": "Aurélien Nicolas <aurel@qed-it.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/QED-it/zkinterface/issues"
+  },
+  "homepage": "https://github.com/QED-it/zkinterface#readme"
+}

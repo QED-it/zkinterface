@@ -49,6 +49,7 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 | ------------------------- | --------------------------- |
 | `zkInterface.pdf`         | The interface specification |
 | `zkinterface.fbs`         | The gadget interface definition using FlatBuffers |
+| `rust/`                   | Cargo package `zkinterface`           |
 | `rust/src/zkinterface_generated.rs` | Generated Rust code         |
 | `rust/src/reading.rs`               | Rust helpers to read messages |
 | `rust/src/writing.rs`               | Rust helpers to write messages |
@@ -57,6 +58,8 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 | `rust/src/gadget_call.rs`           | Example gadget call in Rust |
 | `cpp/zkinterface_generated.h`       | Generated C++ code          |
 | `cpp/gadget_example.cpp`            | Example gadget in C++       |
+| `js/`                               | NPM package `zkinterface`   |
+| `js/zkinterface_generated.js`       | Generated JavaScript code   |
 | `build.rs`                | Generate Rust and C++ code from zkinterface.fbs, and compile the C++ example |
 | `cpp/libsnark_integration.hpp` | Libsnark support            |
 | `cpp/libsnark_example.cpp`     | Libsnark gadget example     |
