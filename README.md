@@ -5,7 +5,7 @@ The zkInterface project was born in the [ZKProof](https://zkproof.org/) communit
 
 See a [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
-See the [specification](zkInterface.pdf).
+See the [specification](zkInterface.pdf) and the [serialization format](zkinterface.fbs).
 
 ## Introduction
 
