@@ -29,13 +29,15 @@ A simple special case is monolithic representation of a whole constraint system 
 
 ### Implementations
 __Frontends:__
+
 |                                                           | Circuit Type | Export Circuits | Import Circuits |
 | --------------------------------------------------------- | -------------- | --------------- | --------------- |
-| [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | - | Yes | No |
+| [ZoKrates](https://github.com/QED-it/ZoKrates/blob/zkinterface/zokrates_core/src/proof_system/zkinterface.rs) | R1CS | Yes | No |
 | [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | R1CS | Yes | No |
 | [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | R1CS | Yes | No |
 
 __Backends:__
+
 |                                                           | Proving System | Export Circuits | Import Circuits |
 | --------------------------------------------------------- | -------------- | --------------- | --------------- |
 | [Bellman](https://github.com/QED-it/zkinterface-bellman) | Groth16            | No              | Yes             |
