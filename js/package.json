@@ -1,6 +1,6 @@
 {
   "name": "zkinterface",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "An implementation of zkInterface interoperability",
   "main": "zkinterface.js",
   "scripts": {
