@@ -1,0 +1,15 @@
+{
+  message_type: "Witness",
+  message: {
+    assigned_variables: {
+      variable_ids: [
+        4,
+        5
+      ],
+      values: [
+        25,
+        0
+      ]
+    }
+  }
+}

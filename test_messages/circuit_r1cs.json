@@ -1,0 +1,15 @@
+{
+  message_type: "Circuit",
+  message: {
+    connections: {
+      variable_ids: [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    free_variable_id: 6,
+    r1cs_generation: true
+  }
+}

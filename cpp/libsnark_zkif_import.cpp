@@ -14,7 +14,7 @@
 #include "zkinterface_generated.h"
 
 using namespace zkinterface;
-using flatbuffers::FlatBufferBuilder;
+using flatbuffers::uoffset_t;
 
 using namespace std;
 /*
@@ -26,88 +26,95 @@ using libff::bit_vector;
 
 namespace zkinterface_libsnark {
 
-class import_zkif {
-  vector<char> buffer;
+    class import_zkif {
+        vector<char> buffer;
 
-public:
-  import_zkif() {}
+    public:
+        import_zkif() {}
 
-  void load(vector<char> &buf) {
-    // TODO: read multiple messages from the buffer.
-    buffer = buf;
-  }
+        void load(vector<char> &buf) {
+            // TODO: read multiple messages from the buffer.
+            buffer = buf;
 
-  const Circuit* get_circuit() {
-    // TODO: read multiple messages from the buffer.
-    cerr << "Loading zkif circuit." << endl;
+            uoffset_t len = *reinterpret_cast<uoffset_t *>(buffer.data());
+            cout << "size " << len << endl;
+        }
 
-    auto root = GetSizePrefixedRoot(&buffer);
+        const Circuit *get_circuit() {
+            // TODO: read multiple messages from the buffer.
+            cerr << "Loading zkif circuit." << endl;
 
-    if (root->message_type() != Message_Circuit) {
-      throw "Error: unknown message type.";
-    }
+            auto root = GetSizePrefixedRoot(buffer.data());
 
-    return root->message_as_Circuit();
-  }
+            if (root->message_type() != Message_Circuit) {
+                throw "Error: unknown message type.";
+            }
 
-  const R1CSConstraints* get_constraints() {
-    cerr << "Loading zkif R1CS constraints." << endl;
+            return root->message_as_Circuit();
+        }
 
-    auto root = GetSizePrefixedRoot(&buffer);
+        const R1CSConstraints *get_constraints() {
+            cerr << "Loading zkif R1CS constraints." << endl;
 
-    if (root->message_type() != Message_R1CSConstraints) {
-      throw "Error: unknown message type.";
-    }
+            auto root = GetSizePrefixedRoot(buffer.data());
+            cout << root->message_type() << endl;
+            if (root->message_type() != Message_R1CSConstraints) {
+                throw "Error: unknown message type.";
+            }
 
-    return root->message_as_R1CSConstraints();
-  }
+            return root->message_as_R1CSConstraints();
+        }
 
-  const Witness* get_witness() {
-    cerr << "Loading zkif R1CS witness." << endl;
+        const Witness *get_witness() {
+            cerr << "Loading zkif R1CS witness." << endl;
 
-    auto root = GetSizePrefixedRoot(&buffer);
+            auto root = GetSizePrefixedRoot(buffer.data());
 
-    if (root->message_type() != Message_Witness) {
-      throw "Error: unknown message type.";
-    }
+            if (root->message_type() != Message_Witness) {
+                throw "Error: unknown message type.";
+            }
 
-    return root->message_as_Witness();
-  }
+            return root->message_as_Witness();
+        }
 
-  void generate_constraints() {
-    /*
-      responses = call zkinterface gadget(
-          Circuit
-              r1cs_generation = true
-              witness_generation = false
-      )
+        void generate_constraints() {
+            auto constraints = get_constraints();
 
-      for each message in responses
-          if message.type != constraints
-              continue
+            cout << constraints->constraints()->size() << endl;
 
-          for each var in message.constraints
-              pb.add_constraint(…)
-              */
-  }
+            /*
+              responses = call zkinterface gadget(
+                  Circuit
+                      r1cs_generation = true
+                      witness_generation = false
+              )
 
-  void generate_witness() {
-    /*
-      response = call zkinterface gadget(
-          Circuit
-              r1cs_generation = false
-              witness_generation = true
-      )
+              for each message in responses
+                  if message.type != constraints
+                      continue
 
-      for each message in response
-          if message type != witness
-              continue
+                  for each var in message.constraints
+                      pb.add_constraint(…)
+                      */
+        }
 
-          for each var in response.witness
-              pb.val(id, value)
-              */
-  }
-};
+        void generate_witness() {
+            /*
+              response = call zkinterface gadget(
+                  Circuit
+                      r1cs_generation = false
+                      witness_generation = true
+              )
+
+              for each message in response
+                  if message type != witness
+                      continue
+
+                  for each var in response.witness
+                      pb.val(id, value)
+                      */
+        }
+    };
 
 } // namespace zkinterface_libsnark
 

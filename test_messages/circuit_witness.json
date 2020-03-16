@@ -1,0 +1,21 @@
+{
+  message_type: "Circuit",
+  message: {
+    connections: {
+      variable_ids: [
+        0,
+        1,
+        2,
+        3
+      ],
+      values: [
+        1,
+        5,
+        0,
+        25
+      ]
+    },
+    free_variable_id: 6,
+    witness_generation: true
+  }
+}
