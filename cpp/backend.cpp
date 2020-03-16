@@ -23,8 +23,8 @@ void run() {
 
     iz.get_circuit();
 
-    //iz.generate_constraints();
-    //iz.generate_witness();
+    iz.generate_constraints();
+    iz.generate_witness();
 }
 
 int main(int, char **) {

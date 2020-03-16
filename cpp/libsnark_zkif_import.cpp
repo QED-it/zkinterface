@@ -17,12 +17,42 @@ using namespace zkinterface;
 using flatbuffers::uoffset_t;
 
 using namespace std;
+
 /*
 using namespace libsnark;
 using libff::alt_bn128_r_limbs;
 using libff::bigint;
 using libff::bit_vector;
 */
+
+uoffset_t read_size_prefix(void *buffer) {
+    uoffset_t message_length = *reinterpret_cast<uoffset_t *>(buffer);
+    return sizeof(uoffset_t) + message_length;
+}
+
+const Root *find_message(vector<char> &buffer, Message type) {
+    auto offset = 0;
+
+    while (offset + sizeof(uoffset_t) * 2 <= buffer.size()) {
+        auto current = buffer.data() + offset;
+
+        auto size = read_size_prefix(current);
+        if (offset + size > buffer.size()) {
+            throw "invalid offset";
+        }
+
+        auto root = GetSizePrefixedRoot(current);
+
+        if (root->message_type() == type) {
+            return root; // Found.
+        }
+
+        offset += size;
+    }
+
+    throw "message not found";
+}
+
 
 namespace zkinterface_libsnark {
 
@@ -33,54 +63,35 @@ namespace zkinterface_libsnark {
         import_zkif() {}
 
         void load(vector<char> &buf) {
-            // TODO: read multiple messages from the buffer.
             buffer = buf;
-
-            uoffset_t len = *reinterpret_cast<uoffset_t *>(buffer.data());
-            cout << "size " << len << endl;
         }
 
+
         const Circuit *get_circuit() {
-            // TODO: read multiple messages from the buffer.
-            cerr << "Loading zkif circuit." << endl;
-
-            auto root = GetSizePrefixedRoot(buffer.data());
-
-            if (root->message_type() != Message_Circuit) {
-                throw "Error: unknown message type.";
-            }
-
+            auto root = find_message(buffer, Message_Circuit);
             return root->message_as_Circuit();
         }
 
         const R1CSConstraints *get_constraints() {
-            cerr << "Loading zkif R1CS constraints." << endl;
-
-            auto root = GetSizePrefixedRoot(buffer.data());
-            cout << root->message_type() << endl;
-            if (root->message_type() != Message_R1CSConstraints) {
-                throw "Error: unknown message type.";
-            }
-
+            auto root = find_message(buffer, Message_R1CSConstraints);
             return root->message_as_R1CSConstraints();
         }
 
         const Witness *get_witness() {
-            cerr << "Loading zkif R1CS witness." << endl;
-
-            auto root = GetSizePrefixedRoot(buffer.data());
-
-            if (root->message_type() != Message_Witness) {
-                throw "Error: unknown message type.";
-            }
-
+            auto root = find_message(buffer, Message_Witness);
             return root->message_as_Witness();
         }
 
         void generate_constraints() {
-            auto constraints = get_constraints();
+            auto constraints = get_constraints()->constraints();
 
-            cout << constraints->constraints()->size() << endl;
+            cout << constraints->size() << " constraints:" << endl;
+
+            for (auto i = constraints->begin(); i < constraints->end(); ++i) {
+                auto a_ids = i->linear_combination_a()->variable_ids();
+                for (auto j = a_ids->begin(); j < a_ids->end(); ++j)
+                    cout << "Constraint " << *j << endl;
+            }
 
             /*
               responses = call zkinterface gadget(
@@ -99,6 +110,15 @@ namespace zkinterface_libsnark {
         }
 
         void generate_witness() {
+            auto witness = get_witness()->assigned_variables();
+
+            cout << witness->variable_ids()->size() << " variables:" << endl;
+
+            auto ids = witness->variable_ids();
+            for (auto it = ids->begin(); it != ids->end(); ++it) {
+                cout << "Variable " << *it << endl;
+            }
+
             /*
               response = call zkinterface gadget(
                   Circuit
