@@ -2,10 +2,11 @@
 #include "libsnark_zkif_import.cpp"
 #include <fstream>
 #include <iterator>
+#include <chrono>
 
 using namespace zkinterface_libsnark;
 
-void run() {
+vector<char> read_file() {
     string testPath = "../test_messages/all.zkif";
 
     ifstream testFile(testPath, ios::binary);
@@ -18,13 +19,26 @@ void run() {
         throw "Error: could not open file";
     }
 
+    return buf;
+}
+
+void run() {
+    auto buf = read_file();
+
+    protoboard<FieldT> pb;
+
     import_zkif iz;
     iz.load(buf);
 
-    iz.get_circuit();
+    auto begin = chrono::steady_clock::now();
 
+    iz.get_circuit();
     iz.generate_constraints();
     iz.generate_witness();
+
+    auto end = chrono::steady_clock::now();
+    cout << "It took " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "µs"
+         << endl;
 }
 
 int main(int, char **) {
