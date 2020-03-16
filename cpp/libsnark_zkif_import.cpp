@@ -4,57 +4,50 @@
 
 #include <iostream>
 
-/*
 #include "libff/common/default_types/ec_pp.hpp"
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
-*/
 
 #include "zkinterface.h"
 #include "zkinterface_generated.h"
+#include "libsnark_integration.hpp"
 
 using namespace zkinterface;
 using flatbuffers::uoffset_t;
 
 using namespace std;
 
-/*
-using namespace libsnark;
-using libff::alt_bn128_r_limbs;
-using libff::bigint;
-using libff::bit_vector;
-*/
+namespace zkinterface_libsnark {
 
-uoffset_t read_size_prefix(void *buffer) {
-    uoffset_t message_length = *reinterpret_cast<uoffset_t *>(buffer);
-    return sizeof(uoffset_t) + message_length;
-}
+    // ==== Reading helpers ====
 
-const Root *find_message(vector<char> &buffer, Message type) {
-    auto offset = 0;
-
-    while (offset + sizeof(uoffset_t) * 2 <= buffer.size()) {
-        auto current = buffer.data() + offset;
-
-        auto size = read_size_prefix(current);
-        if (offset + size > buffer.size()) {
-            throw "invalid offset";
-        }
-
-        auto root = GetSizePrefixedRoot(current);
-
-        if (root->message_type() == type) {
-            return root; // Found.
-        }
-
-        offset += size;
+    uoffset_t read_size_prefix(void *buffer) {
+        uoffset_t message_length = *reinterpret_cast<uoffset_t *>(buffer);
+        return sizeof(uoffset_t) + message_length;
     }
 
-    throw "message not found";
-}
+    const Root *find_message(vector<char> &buffer, Message type) {
+        auto offset = 0;
 
+        while (offset + sizeof(uoffset_t) * 2 <= buffer.size()) {
+            auto current = buffer.data() + offset;
 
-namespace zkinterface_libsnark {
+            auto size = read_size_prefix(current);
+            if (offset + size > buffer.size()) {
+                throw "invalid offset";
+            }
+
+            auto root = GetSizePrefixedRoot(current);
+
+            if (root->message_type() == type) {
+                return root; // Found.
+            }
+
+            offset += size;
+        }
+
+        throw "message not found";
+    }
 
     class import_zkif {
         vector<char> buffer;

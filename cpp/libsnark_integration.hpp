@@ -8,11 +8,10 @@
 
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"
-#include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_components.hpp"
-#include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
 using namespace zkinterface;
 using flatbuffers::FlatBufferBuilder;
+using flatbuffers::uoffset_t;
 
 using std::string;
 using std::vector;
@@ -108,10 +107,10 @@ vector<FieldT> deserialize_elements(const flatbuffers::Vector<uint8_t> *from_byt
 }
 
 // Extract the incoming elements from a Circuit.
-vector<FieldT> deserialize_incoming_elements(const Circuit *call)
+vector<FieldT> deserialize_incoming_elements(const Circuit *circuit)
 {
-    auto num_elements = call->instance()->incoming_variable_ids()->size();
-    auto in_elements_bytes = call->witness()->incoming_elements();
+    auto num_elements = circuit->connections()->variable_ids()->size();
+    auto in_elements_bytes = circuit->connections()->values();
     return deserialize_elements(in_elements_bytes, num_elements);
 }
 
@@ -124,7 +123,7 @@ serialize_elements(FlatBufferBuilder &builder, const vector<FieldT> &from_elemen
 
 // ==== Helpers to report the content of a protoboard ====
 
-/** Convert protoboard index to standard variable ID. */
+// Convert protoboard index to standard variable ID.
 uint64_t convert_variable_id(const Circuit *circuit, uint64_t index)
 {
     // Constant one?
@@ -133,7 +132,7 @@ uint64_t convert_variable_id(const Circuit *circuit, uint64_t index)
     index -= 1;
 
     // An input?
-    auto in_ids = circuit->incoming_variable_ids();
+    auto in_ids = circuit->connections()->variable_ids();
     if (index < in_ids->size())
     {
         return in_ids->Get(index);
@@ -141,20 +140,19 @@ uint64_t convert_variable_id(const Circuit *circuit, uint64_t index)
     index -= in_ids->size();
 
     // An output?
-    auto out_ids = circuit->outgoing_variable_ids();
-    if (index < out_ids->size())
-    {
-        return out_ids->Get(index);
-    }
-    index -= out_ids->size();
+    //auto out_ids = circuit->outgoing_variable_ids();
+    //if (index < out_ids->size()) {
+    //    return out_ids->Get(index);
+    //}
+    //index -= out_ids->size();
 
     // A local variable.
-    auto free_id = circuit->free_variable_id_before();
+    auto free_id = circuit->free_variable_id();
     return free_id + index;
 }
 
 FlatBufferBuilder serialize_protoboard_constraints(
-    const GadgetInstance *instance,
+    const Circuit *circuit,
     const protoboard<FieldT> &pb)
 {
     FlatBufferBuilder builder;
@@ -166,7 +164,7 @@ FlatBufferBuilder serialize_protoboard_constraints(
 
         for (size_t i = 0; i < terms.size(); i++)
         {
-            variable_ids[i] = convert_variable_id(instance, terms[i].index);
+            variable_ids[i] = convert_variable_id(circuit, terms[i].index);
             into_le(
                 terms[i].coeff.as_bigint(),
                 coeffs.data() + fieldt_size * i,
@@ -201,20 +199,20 @@ FlatBufferBuilder serialize_protoboard_constraints(
 }
 
 FlatBufferBuilder serialize_protoboard_local_assignment(
-    const GadgetInstance *instance,
+    const Circuit *circuit,
     size_t num_outputs,
     const protoboard<FieldT> &pb)
 {
     FlatBufferBuilder builder;
 
     size_t all_vars = pb.num_variables();
-    size_t shared_vars = instance->incoming_variable_ids()->size() + num_outputs;
+    size_t shared_vars = circuit->connections()->variable_ids()->size() + num_outputs;
     size_t local_vars = all_vars - shared_vars;
 
     vector<uint64_t> variable_ids(local_vars);
     vector<uint8_t> elements(fieldt_size * local_vars);
 
-    uint64_t free_id = instance->free_variable_id_before();
+    uint64_t free_id = circuit->free_variable_id();
 
     for (size_t index = 0; index < local_vars; ++index)
     {
@@ -237,6 +235,7 @@ FlatBufferBuilder serialize_protoboard_local_assignment(
     return builder;
 }
 
+/*
 FlatBufferBuilder serialize_error(string error)
 {
     FlatBufferBuilder builder;
@@ -256,5 +255,6 @@ bool return_error(gadget_callback_t return_callback, void *return_context, strin
     }
     return false;
 }
+*/
 
 } // namespace zkinterface_libsnark

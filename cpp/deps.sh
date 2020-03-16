@@ -1,18 +1,21 @@
 
+# Latest.
 git clone https://github.com/scipr-lab/libsnark.git
 cd libsnark
 git checkout 477c9dfd07b280e42369f82f89c08416319e24ae
 git submodule init && git submodule update
-mkdir build && cd build && cmake -DWITH_PROCPS=OFF ..
+mkdir build && cd build && cmake  ..
 make
+sudo make install
+
+# Deprecated.
+#sudo apt-get install build-essential git libgmp3-dev libprocps4-dev libgtest-dev python-markdown libboost-all-dev libssl-dev
+#git clone https://github.com/scipr-lab/libsnark.git
+#cd libsnark
+#git checkout deprecated-master
+#./prepare-depends.sh
+#make
 
 # MacOS
 #port install gmp openssl boost
-
-# Old way.
-#wget https://github.com/scipr-lab/libsnark/archive/477c9dfd07b280e42369f82f89c08416319e24ae.zip
-#mv 477c9dfd07b280e42369f82f89c08416319e24ae.zip libsnark.zip
-#unzip libsnark.zip
-#rm libsnark.zip
-#mv libsnark-477c9dfd07b280e42369f82f89c08416319e24ae libsnark
-#cd libsnark
+#cmake -DWITH_PROCPS=OFF ..
