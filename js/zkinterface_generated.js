@@ -27,6 +27,22 @@ zkinterface.MessageName = {
 };
 
 /**
+ * @enum {number}
+ */
+zkinterface.CircuitType = {
+  R1CS: 0,
+  FanIn2: 1
+};
+
+/**
+ * @enum {string}
+ */
+zkinterface.CircuitTypeName = {
+  '0': 'R1CS',
+  '1': 'FanIn2'
+};
+
+/**
  * A description of a circuit or sub-circuit.
  * This can be a complete circuit ready for proving,
  * or a part of a circuit being built.
@@ -155,6 +171,16 @@ zkinterface.Circuit.prototype.fieldMaximumArray = function() {
 };
 
 /**
+ * Whether this is R1CS or arithmetic circuit.
+ *
+ * @returns {zkinterface.CircuitType}
+ */
+zkinterface.Circuit.prototype.circuitType = function() {
+  var offset = this.bb.__offset(this.bb_pos, 14);
+  return offset ? /** @type {zkinterface.CircuitType} */ (this.bb.readInt8(this.bb_pos + offset)) : zkinterface.CircuitType.R1CS;
+};
+
+/**
  * Optional: Any custom parameter that may influence the circuit construction.
  *
  * Example: function_name, if a gadget supports multiple function variants.
@@ -166,7 +192,7 @@ zkinterface.Circuit.prototype.fieldMaximumArray = function() {
  * @returns {zkinterface.KeyValue}
  */
 zkinterface.Circuit.prototype.configuration = function(index, obj) {
-  var offset = this.bb.__offset(this.bb_pos, 14);
+  var offset = this.bb.__offset(this.bb_pos, 16);
   return offset ? (obj || new zkinterface.KeyValue).__init(this.bb.__indirect(this.bb.__vector(this.bb_pos + offset) + index * 4), this.bb) : null;
 };
 
@@ -174,7 +200,7 @@ zkinterface.Circuit.prototype.configuration = function(index, obj) {
  * @returns {number}
  */
 zkinterface.Circuit.prototype.configurationLength = function() {
-  var offset = this.bb.__offset(this.bb_pos, 14);
+  var offset = this.bb.__offset(this.bb_pos, 16);
   return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
 };
 
@@ -182,7 +208,7 @@ zkinterface.Circuit.prototype.configurationLength = function() {
  * @param {flatbuffers.Builder} builder
  */
 zkinterface.Circuit.startCircuit = function(builder) {
-  builder.startObject(6);
+  builder.startObject(7);
 };
 
 /**
@@ -248,10 +274,18 @@ zkinterface.Circuit.startFieldMaximumVector = function(builder, numElems) {
 
 /**
  * @param {flatbuffers.Builder} builder
+ * @param {zkinterface.CircuitType} circuitType
+ */
+zkinterface.Circuit.addCircuitType = function(builder, circuitType) {
+  builder.addFieldInt8(5, circuitType, zkinterface.CircuitType.R1CS);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
  * @param {flatbuffers.Offset} configurationOffset
  */
 zkinterface.Circuit.addConfiguration = function(builder, configurationOffset) {
-  builder.addFieldOffset(5, configurationOffset, 0);
+  builder.addFieldOffset(6, configurationOffset, 0);
 };
 
 /**
@@ -291,16 +325,18 @@ zkinterface.Circuit.endCircuit = function(builder) {
  * @param {boolean} r1csGeneration
  * @param {boolean} witnessGeneration
  * @param {flatbuffers.Offset} fieldMaximumOffset
+ * @param {zkinterface.CircuitType} circuitType
  * @param {flatbuffers.Offset} configurationOffset
  * @returns {flatbuffers.Offset}
  */
-zkinterface.Circuit.createCircuit = function(builder, connectionsOffset, freeVariableId, r1csGeneration, witnessGeneration, fieldMaximumOffset, configurationOffset) {
+zkinterface.Circuit.createCircuit = function(builder, connectionsOffset, freeVariableId, r1csGeneration, witnessGeneration, fieldMaximumOffset, circuitType, configurationOffset) {
   zkinterface.Circuit.startCircuit(builder);
   zkinterface.Circuit.addConnections(builder, connectionsOffset);
   zkinterface.Circuit.addFreeVariableId(builder, freeVariableId);
   zkinterface.Circuit.addR1csGeneration(builder, r1csGeneration);
   zkinterface.Circuit.addWitnessGeneration(builder, witnessGeneration);
   zkinterface.Circuit.addFieldMaximum(builder, fieldMaximumOffset);
+  zkinterface.Circuit.addCircuitType(builder, circuitType);
   zkinterface.Circuit.addConfiguration(builder, configurationOffset);
   return zkinterface.Circuit.endCircuit(builder);
 }

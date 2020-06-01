@@ -9,6 +9,7 @@ use std::path::Path;
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
+    CircuitType,
     get_size_prefixed_root_as_root,
     Root,
     Variables,
@@ -297,6 +298,15 @@ impl Messages {
             next_constraint: 0,
             constraints: None,
         }
+    }
+
+    pub fn validate_circuit_type(&self) -> Result<(), String> {
+        for circuit in self.circuits() {
+            if circuit.circuit_type() != CircuitType::R1CS {
+                return Err("fan-in 2 not supported".to_string());
+            }
+        }
+        Ok(())
     }
 }
 

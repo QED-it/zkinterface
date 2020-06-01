@@ -78,6 +78,66 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
+#[allow(non_camel_case_types)]
+#[repr(i8)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum CircuitType {
+  R1CS = 0,
+  FanIn2 = 1,
+
+}
+
+pub const ENUM_MIN_CIRCUIT_TYPE: i8 = 0;
+pub const ENUM_MAX_CIRCUIT_TYPE: i8 = 1;
+
+impl<'a> flatbuffers::Follow<'a> for CircuitType {
+  type Inner = Self;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::read_scalar_at::<Self>(buf, loc)
+  }
+}
+
+impl flatbuffers::EndianScalar for CircuitType {
+  #[inline]
+  fn to_little_endian(self) -> Self {
+    let n = i8::to_le(self as i8);
+    let p = &n as *const i8 as *const CircuitType;
+    unsafe { *p }
+  }
+  #[inline]
+  fn from_little_endian(self) -> Self {
+    let n = i8::from_le(self as i8);
+    let p = &n as *const i8 as *const CircuitType;
+    unsafe { *p }
+  }
+}
+
+impl flatbuffers::Push for CircuitType {
+    type Output = CircuitType;
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        flatbuffers::emplace_scalar::<CircuitType>(dst, *self);
+    }
+}
+
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_CIRCUIT_TYPE:[CircuitType; 2] = [
+  CircuitType::R1CS,
+  CircuitType::FanIn2
+];
+
+#[allow(non_camel_case_types)]
+pub const ENUM_NAMES_CIRCUIT_TYPE:[&'static str; 2] = [
+    "R1CS",
+    "FanIn2"
+];
+
+pub fn enum_name_circuit_type(e: CircuitType) -> &'static str {
+  let index = e as i8;
+  ENUM_NAMES_CIRCUIT_TYPE[index as usize]
+}
+
 pub enum CircuitOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -114,6 +174,7 @@ impl<'a> Circuit<'a> {
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
+      builder.add_circuit_type(args.circuit_type);
       builder.add_witness_generation(args.witness_generation);
       builder.add_r1cs_generation(args.r1cs_generation);
       builder.finish()
@@ -124,7 +185,8 @@ impl<'a> Circuit<'a> {
     pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 8;
     pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 10;
     pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 12;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
+    pub const VT_CIRCUIT_TYPE: flatbuffers::VOffsetT = 14;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 16;
 
   /// Variables to use as connections to the sub-circuit.
   ///
@@ -162,6 +224,11 @@ impl<'a> Circuit<'a> {
   pub fn field_maximum(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
   }
+  /// Whether this is R1CS or arithmetic circuit.
+  #[inline]
+  pub fn circuit_type(&self) -> CircuitType {
+    self._tab.get::<CircuitType>(Circuit::VT_CIRCUIT_TYPE, Some(CircuitType::R1CS)).unwrap()
+  }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
   /// Example: function_name, if a gadget supports multiple function variants.
@@ -179,6 +246,7 @@ pub struct CircuitArgs<'a> {
     pub r1cs_generation: bool,
     pub witness_generation: bool,
     pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub circuit_type: CircuitType,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for CircuitArgs<'a> {
@@ -190,6 +258,7 @@ impl<'a> Default for CircuitArgs<'a> {
             r1cs_generation: false,
             witness_generation: false,
             field_maximum: None,
+            circuit_type: CircuitType::R1CS,
             configuration: None,
         }
     }
@@ -218,6 +287,10 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
   pub fn add_field_maximum(&mut self, field_maximum: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_MAXIMUM, field_maximum);
+  }
+  #[inline]
+  pub fn add_circuit_type(&mut self, circuit_type: CircuitType) {
+    self.fbb_.push_slot::<CircuitType>(Circuit::VT_CIRCUIT_TYPE, circuit_type, CircuitType::R1CS);
   }
   #[inline]
   pub fn add_configuration(&mut self, configuration: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {

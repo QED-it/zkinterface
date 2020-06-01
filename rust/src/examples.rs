@@ -31,6 +31,7 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
         free_variable_id: 6,
         r1cs_generation: true,
         field_maximum: None,
+        circuit_type: "R1CS".to_string(),
     }
 }
 
