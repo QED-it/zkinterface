@@ -7,13 +7,23 @@
 var zkinterface = zkinterface || {};
 
 /**
- * @enum
+ * @enum {number}
  */
 zkinterface.Message = {
-  NONE: 0, 0: 'NONE',
-  Circuit: 1, 1: 'Circuit',
-  R1CSConstraints: 2, 2: 'R1CSConstraints',
-  Witness: 3, 3: 'Witness'
+  NONE: 0,
+  Circuit: 1,
+  R1CSConstraints: 2,
+  Witness: 3
+};
+
+/**
+ * @enum {string}
+ */
+zkinterface.MessageName = {
+  '0': 'NONE',
+  '1': 'Circuit',
+  '2': 'R1CSConstraints',
+  '3': 'Witness'
 };
 
 /**
@@ -52,6 +62,16 @@ zkinterface.Circuit.prototype.__init = function(i, bb) {
  * @returns {zkinterface.Circuit}
  */
 zkinterface.Circuit.getRootAsCircuit = function(bb, obj) {
+  return (obj || new zkinterface.Circuit).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.Circuit=} obj
+ * @returns {zkinterface.Circuit}
+ */
+zkinterface.Circuit.getSizePrefixedRootAsCircuit = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.Circuit).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -265,6 +285,27 @@ zkinterface.Circuit.endCircuit = function(builder) {
 };
 
 /**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} connectionsOffset
+ * @param {flatbuffers.Long} freeVariableId
+ * @param {boolean} r1csGeneration
+ * @param {boolean} witnessGeneration
+ * @param {flatbuffers.Offset} fieldMaximumOffset
+ * @param {flatbuffers.Offset} configurationOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.Circuit.createCircuit = function(builder, connectionsOffset, freeVariableId, r1csGeneration, witnessGeneration, fieldMaximumOffset, configurationOffset) {
+  zkinterface.Circuit.startCircuit(builder);
+  zkinterface.Circuit.addConnections(builder, connectionsOffset);
+  zkinterface.Circuit.addFreeVariableId(builder, freeVariableId);
+  zkinterface.Circuit.addR1csGeneration(builder, r1csGeneration);
+  zkinterface.Circuit.addWitnessGeneration(builder, witnessGeneration);
+  zkinterface.Circuit.addFieldMaximum(builder, fieldMaximumOffset);
+  zkinterface.Circuit.addConfiguration(builder, configurationOffset);
+  return zkinterface.Circuit.endCircuit(builder);
+}
+
+/**
  * R1CSConstraints represents constraints to be added to the constraint system.
  *
  * Multiple such messages are equivalent to the concatenation of `constraints` arrays.
@@ -300,6 +341,16 @@ zkinterface.R1CSConstraints.prototype.__init = function(i, bb) {
  * @returns {zkinterface.R1CSConstraints}
  */
 zkinterface.R1CSConstraints.getRootAsR1CSConstraints = function(bb, obj) {
+  return (obj || new zkinterface.R1CSConstraints).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.R1CSConstraints=} obj
+ * @returns {zkinterface.R1CSConstraints}
+ */
+zkinterface.R1CSConstraints.getSizePrefixedRootAsR1CSConstraints = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.R1CSConstraints).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -419,6 +470,19 @@ zkinterface.R1CSConstraints.endR1CSConstraints = function(builder) {
 };
 
 /**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} constraintsOffset
+ * @param {flatbuffers.Offset} infoOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.R1CSConstraints.createR1CSConstraints = function(builder, constraintsOffset, infoOffset) {
+  zkinterface.R1CSConstraints.startR1CSConstraints(builder);
+  zkinterface.R1CSConstraints.addConstraints(builder, constraintsOffset);
+  zkinterface.R1CSConstraints.addInfo(builder, infoOffset);
+  return zkinterface.R1CSConstraints.endR1CSConstraints(builder);
+}
+
+/**
  * Witness represents an assignment of values to variables.
  *
  * - Does not include variables already given in `Circuit.connections`.
@@ -460,6 +524,16 @@ zkinterface.Witness.getRootAsWitness = function(bb, obj) {
 };
 
 /**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.Witness=} obj
+ * @returns {zkinterface.Witness}
+ */
+zkinterface.Witness.getSizePrefixedRootAsWitness = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
+  return (obj || new zkinterface.Witness).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
  * @param {zkinterface.Variables=} obj
  * @returns {zkinterface.Variables|null}
  */
@@ -491,6 +565,17 @@ zkinterface.Witness.endWitness = function(builder) {
   var offset = builder.endObject();
   return offset;
 };
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} assignedVariablesOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.Witness.createWitness = function(builder, assignedVariablesOffset) {
+  zkinterface.Witness.startWitness(builder);
+  zkinterface.Witness.addAssignedVariables(builder, assignedVariablesOffset);
+  return zkinterface.Witness.endWitness(builder);
+}
 
 /**
  * A single R1CS constraint between variables.
@@ -530,6 +615,16 @@ zkinterface.BilinearConstraint.prototype.__init = function(i, bb) {
  * @returns {zkinterface.BilinearConstraint}
  */
 zkinterface.BilinearConstraint.getRootAsBilinearConstraint = function(bb, obj) {
+  return (obj || new zkinterface.BilinearConstraint).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.BilinearConstraint=} obj
+ * @returns {zkinterface.BilinearConstraint}
+ */
+zkinterface.BilinearConstraint.getSizePrefixedRootAsBilinearConstraint = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.BilinearConstraint).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -601,6 +696,21 @@ zkinterface.BilinearConstraint.endBilinearConstraint = function(builder) {
 };
 
 /**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} linearCombinationAOffset
+ * @param {flatbuffers.Offset} linearCombinationBOffset
+ * @param {flatbuffers.Offset} linearCombinationCOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.BilinearConstraint.createBilinearConstraint = function(builder, linearCombinationAOffset, linearCombinationBOffset, linearCombinationCOffset) {
+  zkinterface.BilinearConstraint.startBilinearConstraint(builder);
+  zkinterface.BilinearConstraint.addLinearCombinationA(builder, linearCombinationAOffset);
+  zkinterface.BilinearConstraint.addLinearCombinationB(builder, linearCombinationBOffset);
+  zkinterface.BilinearConstraint.addLinearCombinationC(builder, linearCombinationCOffset);
+  return zkinterface.BilinearConstraint.endBilinearConstraint(builder);
+}
+
+/**
  * A description of multiple variables.
  *
  * - Each variable is identified by a numerical ID.
@@ -642,6 +752,16 @@ zkinterface.Variables.prototype.__init = function(i, bb) {
  * @returns {zkinterface.Variables}
  */
 zkinterface.Variables.getRootAsVariables = function(bb, obj) {
+  return (obj || new zkinterface.Variables).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.Variables=} obj
+ * @returns {zkinterface.Variables}
+ */
+zkinterface.Variables.getSizePrefixedRootAsVariables = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.Variables).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -832,6 +952,21 @@ zkinterface.Variables.endVariables = function(builder) {
 };
 
 /**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} variableIdsOffset
+ * @param {flatbuffers.Offset} valuesOffset
+ * @param {flatbuffers.Offset} infoOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.Variables.createVariables = function(builder, variableIdsOffset, valuesOffset, infoOffset) {
+  zkinterface.Variables.startVariables(builder);
+  zkinterface.Variables.addVariableIds(builder, variableIdsOffset);
+  zkinterface.Variables.addValues(builder, valuesOffset);
+  zkinterface.Variables.addInfo(builder, infoOffset);
+  return zkinterface.Variables.endVariables(builder);
+}
+
+/**
  * Generic key-value for custom attributes.
  *
  * @constructor
@@ -865,6 +1000,16 @@ zkinterface.KeyValue.prototype.__init = function(i, bb) {
  * @returns {zkinterface.KeyValue}
  */
 zkinterface.KeyValue.getRootAsKeyValue = function(bb, obj) {
+  return (obj || new zkinterface.KeyValue).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.KeyValue=} obj
+ * @returns {zkinterface.KeyValue}
+ */
+zkinterface.KeyValue.getSizePrefixedRootAsKeyValue = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.KeyValue).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -956,6 +1101,19 @@ zkinterface.KeyValue.endKeyValue = function(builder) {
 };
 
 /**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} keyOffset
+ * @param {flatbuffers.Offset} valueOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.KeyValue.createKeyValue = function(builder, keyOffset, valueOffset) {
+  zkinterface.KeyValue.startKeyValue(builder);
+  zkinterface.KeyValue.addKey(builder, keyOffset);
+  zkinterface.KeyValue.addValue(builder, valueOffset);
+  return zkinterface.KeyValue.endKeyValue(builder);
+}
+
+/**
  * @constructor
  */
 zkinterface.Root = function() {
@@ -987,6 +1145,16 @@ zkinterface.Root.prototype.__init = function(i, bb) {
  * @returns {zkinterface.Root}
  */
 zkinterface.Root.getRootAsRoot = function(bb, obj) {
+  return (obj || new zkinterface.Root).__init(bb.readInt32(bb.position()) + bb.position(), bb);
+};
+
+/**
+ * @param {flatbuffers.ByteBuffer} bb
+ * @param {zkinterface.Root=} obj
+ * @returns {zkinterface.Root}
+ */
+zkinterface.Root.getSizePrefixedRootAsRoot = function(bb, obj) {
+  bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
   return (obj || new zkinterface.Root).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 };
 
@@ -1054,6 +1222,27 @@ zkinterface.Root.endRoot = function(builder) {
 zkinterface.Root.finishRootBuffer = function(builder, offset) {
   builder.finish(offset, 'zkif');
 };
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {flatbuffers.Offset} offset
+ */
+zkinterface.Root.finishSizePrefixedRootBuffer = function(builder, offset) {
+  builder.finish(offset, 'zkif', true);
+};
+
+/**
+ * @param {flatbuffers.Builder} builder
+ * @param {zkinterface.Message} messageType
+ * @param {flatbuffers.Offset} messageOffset
+ * @returns {flatbuffers.Offset}
+ */
+zkinterface.Root.createRoot = function(builder, messageType, messageOffset) {
+  zkinterface.Root.startRoot(builder);
+  zkinterface.Root.addMessageType(builder, messageType);
+  zkinterface.Root.addMessage(builder, messageOffset);
+  return zkinterface.Root.endRoot(builder);
+}
 
 // Exports for Node.js and RequireJS
 this.zkinterface = zkinterface;

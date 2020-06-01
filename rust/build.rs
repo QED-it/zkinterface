@@ -4,6 +4,7 @@ fn main() {
         use std::path::Path;
         use std::process::Command;
 
+        // Latest flatc version: 1.12.0
         match Command::new("flatc").args(&[
             "--rust",
             "--cpp",
