@@ -2,6 +2,7 @@
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io;
+use serde::{Deserialize, Serialize};
 use zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
@@ -15,7 +16,7 @@ use zkinterface_generated::zkinterface::{
 
 // ==== Gadget Call ====
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitOwned {
     pub connections: VariablesOwned,
 
@@ -29,7 +30,7 @@ pub struct CircuitOwned {
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct VariablesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,

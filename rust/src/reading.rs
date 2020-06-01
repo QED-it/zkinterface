@@ -76,7 +76,7 @@ impl fmt::Debug for Messages {
         let mut has_witness = false;
         let mut has_constraints = false;
 
-        for root in self {
+        for root in self.into_iter() {
             match root.message_type() {
                 Circuit => has_circuit = true,
                 Witness => has_witness = true,

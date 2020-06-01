@@ -1,4 +1,5 @@
 pub extern crate flatbuffers;
+pub extern crate serde;
 
 pub mod zkinterface_generated;
 
