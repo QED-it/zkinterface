@@ -9,7 +9,7 @@ use std::error::Error;
 //
 //     cargo run --bin print < example.zkif
 //
-pub fn main() -> Result<(), Box<Error>> {
+pub fn main() -> Result<(), Box<dyn Error>> {
     let mut messages = Messages::new(1);
 
     let mut buffer = vec![];

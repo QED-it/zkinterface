@@ -50,7 +50,7 @@ fn callback_c(
     context.push_message(Vec::from(buf)).is_ok()
 }
 
-pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<Error>> {
+pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<dyn Error>> {
     let mut message_buf = vec![];
     circuit.write(&mut message_buf)?;
 

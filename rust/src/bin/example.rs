@@ -9,7 +9,7 @@ use std::error::Error;
 //
 //     cargo run --bin example > example.zkif
 //
-pub fn main() -> Result<(), Box<Error>> {
+pub fn main() -> Result<(), Box<dyn Error>> {
 
     example_circuit().write(stdout())?;
     write_example_constraints(stdout())?;
