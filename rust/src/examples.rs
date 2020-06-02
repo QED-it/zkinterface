@@ -3,7 +3,7 @@ use std::io;
 use std::mem::size_of;
 use owned::circuit::CircuitOwned;
 use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs, ConstraintType};
+use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -58,7 +58,6 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
     let constraints_built = builder.create_vector(&constraints_built);
     let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
         constraints: Some(constraints_built),
-        constraint_type: ConstraintType::R1CS,
         info: None,
     });
 

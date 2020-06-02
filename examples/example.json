@@ -109,8 +109,7 @@
             ]
           }
         }
-      ],
-      "constraint_type": "R1CS"
+      ]
     }
   ],
   "witnesses": [
