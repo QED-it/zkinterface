@@ -57,6 +57,7 @@ See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) 
 | ------------------------- | --------------------------- |
 | `zkInterface.pdf`         | The interface specification |
 | `zkinterface.fbs`         | The gadget interface definition using FlatBuffers |
+| `examples/`               | An example circuit in binary and JSON |
 | `rust/`                   | Cargo package `zkinterface`           |
 | `rust/src/zkinterface_generated.rs` | Generated Rust code         |
 | `rust/src/reading.rs`               | Rust helpers to read messages |
