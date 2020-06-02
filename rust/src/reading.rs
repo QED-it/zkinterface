@@ -19,18 +19,18 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
     let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
-    let assigned = if call.witness_generation() {
-        let bytes = call.connections()?.values()?;
-        let stride = bytes.len() / input_var_ids.len();
+    let assigned = match call.connections()?.values() {
+        Some(bytes) => {
+            let stride = bytes.len() / input_var_ids.len();
 
-        (0..input_var_ids.len()).map(|i|
-            Variable {
-                id: input_var_ids[i],
-                value: &bytes[stride * i..stride * (i + 1)],
-            }
-        ).collect()
-    } else {
-        vec![]
+            (0..input_var_ids.len()).map(|i|
+                Variable {
+                    id: input_var_ids[i],
+                    value: &bytes[stride * i..stride * (i + 1)],
+                }
+            ).collect()
+        }
+        None => vec![],
     };
 
     Some((call, assigned))
@@ -82,6 +82,7 @@ impl fmt::Debug for Messages {
                 Circuit => has_circuit = true,
                 Witness => has_witness = true,
                 ConstraintSystem => has_constraints = true,
+                Command => {}
                 NONE => {}
             }
         }
@@ -319,12 +320,12 @@ impl Messages {
                             let is_pure_linear =
                                 n_a == 0 && n_b == 0;
 
-                            if ! (is_pure_multiplication || is_pure_linear) {
+                            if !(is_pure_multiplication || is_pure_linear) {
                                 return Err("The circuit should be fan-in 2 but constraints are not in the correct format.".to_string());
                             }
                         }
                     }
-                },
+                }
             };
         }
         Ok(())
@@ -425,19 +426,19 @@ impl<'a> Variable<'a> {
 
     pub fn is_constant_one(&self) -> bool {
         if self.id != 0 {
-            return false
+            return false;
         }
         if self.value.len() > 0 {
             if self.value[0] != 1 {
-                return false
+                return false;
             }
             for v in self.value[1..].iter() {
                 if *v != 0 {
-                    return false
+                    return false;
                 }
             }
         }
-        return true
+        return true;
     }
 }
 

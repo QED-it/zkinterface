@@ -77,7 +77,7 @@ pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<dyn E
 #[test]
 #[cfg(feature = "cpp")]
 fn test_cpp_gadget() {
-    use owned::circuit::VariablesOwned;
+    use owned::variables::VariablesOwned;
 
     let mut call = CircuitOwned {
         connections: VariablesOwned {
@@ -85,11 +85,11 @@ fn test_cpp_gadget() {
             values: None,
         },
         free_variable_id: 102,
-        r1cs_generation: true,
         field_maximum: None,
     };
 
     println!("==== R1CS generation ====");
+    // TODO: Should send a Command with constraints_generation: true.
 
     let r1cs_response = call_gadget_wrapper(&call).unwrap();
 
@@ -111,8 +111,8 @@ fn test_cpp_gadget() {
 
 
     println!("==== Witness generation ====");
+    // TODO: Should send a Command with witness_generation: true.
 
-    call.r1cs_generation = false;
     call.connections.values = Some(vec![4, 5, 6, 14, 15, 16 as u8]);
 
     let witness_response = call_gadget_wrapper(&call).unwrap();

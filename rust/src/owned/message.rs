@@ -38,6 +38,7 @@ impl From<&Messages> for MessagesOwned {
                     let witness_ref = msg.message_as_witness().unwrap();
                     owned.witnesses.push(WitnessOwned::from(witness_ref));
                 }
+                Message::Command => {}
                 Message::NONE => {}
             }
         }

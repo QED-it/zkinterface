@@ -18,7 +18,6 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
             values: Some(serialize_small(&[x, y, zz])),
         },
         free_variable_id: 6,
-        r1cs_generation: true,
         field_maximum: None,
     }
 }

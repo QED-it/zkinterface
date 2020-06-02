@@ -25,11 +25,12 @@ pub enum Message {
   Circuit = 1,
   ConstraintSystem = 2,
   Witness = 3,
+  Command = 4,
 
 }
 
 pub const ENUM_MIN_MESSAGE: u8 = 0;
-pub const ENUM_MAX_MESSAGE: u8 = 3;
+pub const ENUM_MAX_MESSAGE: u8 = 4;
 
 impl<'a> flatbuffers::Follow<'a> for Message {
   type Inner = Self;
@@ -63,19 +64,21 @@ impl flatbuffers::Push for Message {
 }
 
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_MESSAGE:[Message; 4] = [
+pub const ENUM_VALUES_MESSAGE:[Message; 5] = [
   Message::NONE,
   Message::Circuit,
   Message::ConstraintSystem,
-  Message::Witness
+  Message::Witness,
+  Message::Command
 ];
 
 #[allow(non_camel_case_types)]
-pub const ENUM_NAMES_MESSAGE:[&'static str; 4] = [
+pub const ENUM_NAMES_MESSAGE:[&'static str; 5] = [
     "NONE",
     "Circuit",
     "ConstraintSystem",
-    "Witness"
+    "Witness",
+    "Command"
 ];
 
 pub fn enum_name_message(e: Message) -> &'static str {
@@ -180,17 +183,13 @@ impl<'a> Circuit<'a> {
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
-      builder.add_witness_generation(args.witness_generation);
-      builder.add_r1cs_generation(args.r1cs_generation);
       builder.finish()
     }
 
     pub const VT_CONNECTIONS: flatbuffers::VOffsetT = 4;
     pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 8;
-    pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 10;
-    pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 12;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
+    pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 8;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 10;
 
   /// Variables to use as connections to the sub-circuit.
   ///
@@ -198,7 +197,7 @@ impl<'a> Circuit<'a> {
   /// - Or variables to use as output connections from the gadget.
   /// - Variables are allocated by the sender of this message.
   /// - The same structure must be provided for R1CS and witness generations.
-  /// - If `witness_generation=true`, variables must be assigned values.
+  /// - If using `Command.witness_generation`, variables must be assigned values.
   #[inline]
   pub fn connections(&self) -> Option<Variables<'a>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Circuit::VT_CONNECTIONS, None)
@@ -208,18 +207,6 @@ impl<'a> Circuit<'a> {
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
     self._tab.get::<u64>(Circuit::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
-  }
-  /// Whether a constraint system is being generated.
-  /// Provide constraints in ConstraintSystem messages.
-  #[inline]
-  pub fn r1cs_generation(&self) -> bool {
-    self._tab.get::<bool>(Circuit::VT_R1CS_GENERATION, Some(false)).unwrap()
-  }
-  /// Whether a witness is being generated.
-  /// Provide the witness in `connections.values` and Witness messages.
-  #[inline]
-  pub fn witness_generation(&self) -> bool {
-    self._tab.get::<bool>(Circuit::VT_WITNESS_GENERATION, Some(false)).unwrap()
   }
   /// The largest element of the finite field used by the current system.
   /// A canonical little-endian representation of the field order minus one.
@@ -242,8 +229,6 @@ impl<'a> Circuit<'a> {
 pub struct CircuitArgs<'a> {
     pub connections: Option<flatbuffers::WIPOffset<Variables<'a >>>,
     pub free_variable_id: u64,
-    pub r1cs_generation: bool,
-    pub witness_generation: bool,
     pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
@@ -253,8 +238,6 @@ impl<'a> Default for CircuitArgs<'a> {
         CircuitArgs {
             connections: None,
             free_variable_id: 0,
-            r1cs_generation: false,
-            witness_generation: false,
             field_maximum: None,
             configuration: None,
         }
@@ -272,14 +255,6 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
     self.fbb_.push_slot::<u64>(Circuit::VT_FREE_VARIABLE_ID, free_variable_id, 0);
-  }
-  #[inline]
-  pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
-    self.fbb_.push_slot::<bool>(Circuit::VT_R1CS_GENERATION, r1cs_generation, false);
-  }
-  #[inline]
-  pub fn add_witness_generation(&mut self, witness_generation: bool) {
-    self.fbb_.push_slot::<bool>(Circuit::VT_WITNESS_GENERATION, witness_generation, false);
   }
   #[inline]
   pub fn add_field_maximum(&mut self, field_maximum: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
@@ -490,6 +465,122 @@ impl<'a: 'b, 'b> WitnessBuilder<'a, 'b> {
   }
   #[inline]
   pub fn finish(self) -> flatbuffers::WIPOffset<Witness<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+pub enum CommandOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+/// Optional: Command messages can be used to request actions from the receiver. This makes it
+/// possible to write code that works in different environments. Commands and parameters
+/// can be passed over the same byte stream as other messages; if so Command must be the first
+/// message. This reduces the need for environment-specific methods (it can replace CLI --flags, etc).
+pub struct Command<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for Command<'a> {
+    type Inner = Command<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> Command<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        Command {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        args: &'args CommandArgs<'args>) -> flatbuffers::WIPOffset<Command<'bldr>> {
+      let mut builder = CommandBuilder::new(_fbb);
+      if let Some(x) = args.parameters { builder.add_parameters(x); }
+      builder.add_witness_generation(args.witness_generation);
+      builder.add_r1cs_generation(args.r1cs_generation);
+      builder.finish()
+    }
+
+    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 4;
+    pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 6;
+    pub const VT_PARAMETERS: flatbuffers::VOffsetT = 8;
+
+  /// For gadget flows.
+  /// Request the generation of a constraint system (or part thereof).
+  /// If true, this must be followed by a Circuit.
+  /// The response must be another Circuit message with a greater `free_variable_id`
+  /// followed by one or more ConstraintSystem messages.
+  #[inline]
+  pub fn r1cs_generation(&self) -> bool {
+    self._tab.get::<bool>(Command::VT_R1CS_GENERATION, Some(false)).unwrap()
+  }
+  /// For gadget flows.
+  /// Request the generation of a witness (or part thereof).
+  /// If true, this must be followed by a Circuit, and the `connections`
+  /// variables must contain input values.
+  /// The response must be another Circuit message, with a greater `free_variable_id`,
+  /// with output values in `connections` variables, followed by one or more `Witness` messages.
+  #[inline]
+  pub fn witness_generation(&self) -> bool {
+    self._tab.get::<bool>(Command::VT_WITNESS_GENERATION, Some(false)).unwrap()
+  }
+  /// Optional: Any complementary parameter that may be useful.
+  #[inline]
+  pub fn parameters(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Command::VT_PARAMETERS, None)
+  }
+}
+
+pub struct CommandArgs<'a> {
+    pub r1cs_generation: bool,
+    pub witness_generation: bool,
+    pub parameters: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
+}
+impl<'a> Default for CommandArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        CommandArgs {
+            r1cs_generation: false,
+            witness_generation: false,
+            parameters: None,
+        }
+    }
+}
+pub struct CommandBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> CommandBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
+    self.fbb_.push_slot::<bool>(Command::VT_R1CS_GENERATION, r1cs_generation, false);
+  }
+  #[inline]
+  pub fn add_witness_generation(&mut self, witness_generation: bool) {
+    self.fbb_.push_slot::<bool>(Command::VT_WITNESS_GENERATION, witness_generation, false);
+  }
+  #[inline]
+  pub fn add_parameters(&mut self, parameters: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Command::VT_PARAMETERS, parameters);
+  }
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CommandBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    CommandBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<Command<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -888,6 +979,16 @@ impl<'a> Root<'a> {
   pub fn message_as_witness(&self) -> Option<Witness<'a>> {
     if self.message_type() == Message::Witness {
       self.message().map(|u| Witness::init_from_table(u))
+    } else {
+      None
+    }
+  }
+
+  #[inline]
+  #[allow(non_snake_case)]
+  pub fn message_as_command(&self) -> Option<Command<'a>> {
+    if self.message_type() == Message::Command {
+      self.message().map(|u| Command::init_from_table(u))
     } else {
       None
     }
