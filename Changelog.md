@@ -1,3 +1,14 @@
+# Version 1.2.0, 2020-06, Arithmetic circuits
+
+Interface definition:
+- *(breaking)* Position of the field `ConstraintSystem.info` (unused afaik.).
+- Added `ConstraintSystem.constraint_type` to support for both R1CS and arithmetic circuits.
+
+Rust:
+- *(breaking)* New field `ConstraintSystemOwned.constraint_type`
+- A function to validate that a constraint system is indeed an arithmetic circuit (`validate_constraint_type`).
+
+
 # Version v1.1.1, 2020-06, libsnark and gadgetlib
 
 Interface definition:
