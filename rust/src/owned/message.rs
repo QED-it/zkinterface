@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use owned::circuit::CircuitOwned;
-use owned::constraints::ConstraintsOwned;
+use owned::constraints::ConstraintSystemOwned;
 use owned::witness::WitnessOwned;
 use reading::Messages;
 use zkinterface_generated::zkinterface::Message;
@@ -9,7 +9,7 @@ use zkinterface_generated::zkinterface::Message;
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MessagesOwned {
     circuits: Vec<CircuitOwned>,
-    constraints: Vec<ConstraintsOwned>,
+    constraint_systems: Vec<ConstraintSystemOwned>,
     witnesses: Vec<WitnessOwned>,
 }
 
@@ -18,7 +18,7 @@ impl From<&Messages> for MessagesOwned {
     fn from(messages: &Messages) -> MessagesOwned {
         let mut owned = MessagesOwned {
             circuits: vec![],
-            constraints: vec![],
+            constraint_systems: vec![],
             witnesses: vec![],
         };
 
@@ -28,11 +28,11 @@ impl From<&Messages> for MessagesOwned {
                     let circuit_ref = msg.message_as_circuit().unwrap();
                     owned.circuits.push(CircuitOwned::from(circuit_ref));
                 }
-                Message::R1CSConstraints => {
-                    let constraints_ref = msg.message_as_r1csconstraints().unwrap();
+                Message::ConstraintSystem => {
+                    let constraints_ref = msg.message_as_constraint_system().unwrap();
                     owned
-                        .constraints
-                        .push(ConstraintsOwned::from(constraints_ref));
+                        .constraint_systems
+                        .push(ConstraintSystemOwned::from(constraints_ref));
                 }
                 Message::Witness => {
                     let witness_ref = msg.message_as_witness().unwrap();

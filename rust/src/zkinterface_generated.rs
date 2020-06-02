@@ -17,7 +17,7 @@ pub mod zkinterface {
 pub enum Message {
   NONE = 0,
   Circuit = 1,
-  R1CSConstraints = 2,
+  ConstraintSystem = 2,
   Witness = 3,
 
 }
@@ -60,7 +60,7 @@ impl flatbuffers::Push for Message {
 pub const ENUM_VALUES_MESSAGE:[Message; 4] = [
   Message::NONE,
   Message::Circuit,
-  Message::R1CSConstraints,
+  Message::ConstraintSystem,
   Message::Witness
 ];
 
@@ -68,7 +68,7 @@ pub const ENUM_VALUES_MESSAGE:[Message; 4] = [
 pub const ENUM_NAMES_MESSAGE:[&'static str; 4] = [
     "NONE",
     "Circuit",
-    "R1CSConstraints",
+    "ConstraintSystem",
     "Witness"
 ];
 
@@ -206,7 +206,7 @@ impl<'a> Circuit<'a> {
     self._tab.get::<u64>(Circuit::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
   /// Whether a constraint system is being generated.
-  /// Provide constraints in R1CSConstraints messages.
+  /// Provide constraints in ConstraintSystem messages.
   #[inline]
   pub fn r1cs_generation(&self) -> bool {
     self._tab.get::<bool>(Circuit::VT_R1CS_GENERATION, Some(false)).unwrap()
@@ -313,18 +313,18 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   }
 }
 
-pub enum R1CSConstraintsOffset {}
+pub enum ConstraintSystemOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-/// R1CSConstraints represents constraints to be added to the constraint system.
+/// ConstraintSystem represents constraints to be added to the constraint system.
 ///
 /// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
-pub struct R1CSConstraints<'a> {
+pub struct ConstraintSystem<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for R1CSConstraints<'a> {
-    type Inner = R1CSConstraints<'a>;
+impl<'a> flatbuffers::Follow<'a> for ConstraintSystem<'a> {
+    type Inner = ConstraintSystem<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -333,18 +333,18 @@ impl<'a> flatbuffers::Follow<'a> for R1CSConstraints<'a> {
     }
 }
 
-impl<'a> R1CSConstraints<'a> {
+impl<'a> ConstraintSystem<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        R1CSConstraints {
+        ConstraintSystem {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args R1CSConstraintsArgs<'args>) -> flatbuffers::WIPOffset<R1CSConstraints<'bldr>> {
-      let mut builder = R1CSConstraintsBuilder::new(_fbb);
+        args: &'args ConstraintSystemArgs<'args>) -> flatbuffers::WIPOffset<ConstraintSystem<'bldr>> {
+      let mut builder = ConstraintSystemBuilder::new(_fbb);
       if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.constraints { builder.add_constraints(x); }
       builder.finish()
@@ -355,7 +355,7 @@ impl<'a> R1CSConstraints<'a> {
 
   #[inline]
   pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>>(R1CSConstraints::VT_CONSTRAINTS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>>(ConstraintSystem::VT_CONSTRAINTS, None)
   }
   /// Optional: Any complementary info that may be useful.
   ///
@@ -363,46 +363,46 @@ impl<'a> R1CSConstraints<'a> {
   /// Example: custom hints to an optimizer or analyzer.
   #[inline]
   pub fn info(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(R1CSConstraints::VT_INFO, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(ConstraintSystem::VT_INFO, None)
   }
 }
 
-pub struct R1CSConstraintsArgs<'a> {
+pub struct ConstraintSystemArgs<'a> {
     pub constraints: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<BilinearConstraint<'a >>>>>,
     pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
-impl<'a> Default for R1CSConstraintsArgs<'a> {
+impl<'a> Default for ConstraintSystemArgs<'a> {
     #[inline]
     fn default() -> Self {
-        R1CSConstraintsArgs {
+        ConstraintSystemArgs {
             constraints: None,
             info: None,
         }
     }
 }
-pub struct R1CSConstraintsBuilder<'a: 'b, 'b> {
+pub struct ConstraintSystemBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> R1CSConstraintsBuilder<'a, 'b> {
+impl<'a: 'b, 'b> ConstraintSystemBuilder<'a, 'b> {
   #[inline]
   pub fn add_constraints(&mut self, constraints: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<BilinearConstraint<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(R1CSConstraints::VT_CONSTRAINTS, constraints);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ConstraintSystem::VT_CONSTRAINTS, constraints);
   }
   #[inline]
   pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(R1CSConstraints::VT_INFO, info);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ConstraintSystem::VT_INFO, info);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> R1CSConstraintsBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ConstraintSystemBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    R1CSConstraintsBuilder {
+    ConstraintSystemBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<R1CSConstraints<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<ConstraintSystem<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -869,9 +869,9 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_r1csconstraints(&self) -> Option<R1CSConstraints<'a>> {
-    if self.message_type() == Message::R1CSConstraints {
-      self.message().map(|u| R1CSConstraints::init_from_table(u))
+  pub fn message_as_constraint_system(&self) -> Option<ConstraintSystem<'a>> {
+    if self.message_type() == Message::ConstraintSystem {
+      self.message().map(|u| ConstraintSystem::init_from_table(u))
     } else {
       None
     }

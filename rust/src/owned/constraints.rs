@@ -1,9 +1,9 @@
 use owned::variables::VariablesOwned;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::R1CSConstraints;
+use zkinterface_generated::zkinterface::ConstraintSystem;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct ConstraintsOwned {
+pub struct ConstraintSystemOwned {
     constraints: Vec<BilinearConstraintOwned>,
 }
 
@@ -14,10 +14,10 @@ pub struct BilinearConstraintOwned {
     pub linear_combination_c: VariablesOwned,
 }
 
-impl<'a> From<R1CSConstraints<'a>> for ConstraintsOwned {
+impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(constraints_ref: R1CSConstraints) -> ConstraintsOwned {
-        let mut owned = ConstraintsOwned {
+    fn from(constraints_ref: ConstraintSystem) -> ConstraintSystemOwned {
+        let mut owned = ConstraintSystemOwned {
             constraints: vec![],
         };
 

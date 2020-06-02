@@ -81,7 +81,7 @@ impl fmt::Debug for Messages {
             match root.message_type() {
                 Circuit => has_circuit = true,
                 Witness => has_witness = true,
-                R1CSConstraints => has_constraints = true,
+                ConstraintSystem => has_constraints = true,
                 NONE => {}
             }
         }
@@ -111,7 +111,7 @@ impl fmt::Debug for Messages {
         }
 
         if has_constraints {
-            write!(f, "\nZkInterface {:?}\n", R1CSConstraints)?;
+            write!(f, "\nZkInterface {:?}\n", ConstraintSystem)?;
             for constraint in self.iter_constraints() {
                 write!(f, "{:?}\n", constraint)?;
             }
@@ -352,7 +352,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
             let message = self.messages_iter.next()?;
 
             // Parse the message, skip irrelevant message types, or fail if invalid.
-            let constraints = match message.message_as_r1csconstraints() {
+            let constraints = match message.message_as_constraint_system() {
                 Some(message) => message.constraints().unwrap(),
                 None => continue,
             };

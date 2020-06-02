@@ -8,7 +8,7 @@ namespace zkinterface;
 
 union Message {
     Circuit,
-    R1CSConstraints,
+    ConstraintSystem,
     Witness,
 }
 
@@ -37,7 +37,7 @@ table Circuit {
     // but optional in the response from a gadget.
 
     /// Whether a constraint system is being generated.
-    /// Provide constraints in R1CSConstraints messages.
+    /// Provide constraints in ConstraintSystem messages.
     r1cs_generation         :bool;
 
     /// Whether a witness is being generated.
@@ -62,10 +62,10 @@ table Circuit {
     configuration           :[KeyValue];
 }
 
-/// R1CSConstraints represents constraints to be added to the constraint system.
+/// ConstraintSystem represents constraints to be added to the constraint system.
 ///
 /// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
-table R1CSConstraints {
+table ConstraintSystem {
     constraints             :[BilinearConstraint];
 
     /// Optional: Any complementary info that may be useful.

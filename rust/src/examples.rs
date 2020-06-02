@@ -7,8 +7,8 @@ use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     BilinearConstraintArgs,
     Message,
-    R1CSConstraints,
-    R1CSConstraintsArgs,
+    ConstraintSystem,
+    ConstraintSystemArgs,
     Root,
     RootArgs,
     Variables,
@@ -70,13 +70,13 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
     }
 
     let constraints_built = builder.create_vector(&constraints_built);
-    let r1cs = R1CSConstraints::create(&mut builder, &R1CSConstraintsArgs {
+    let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
         constraints: Some(constraints_built),
         info: None,
     });
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::R1CSConstraints,
+        message_type: Message::ConstraintSystem,
         message: Some(r1cs.as_union_value()),
     });
     builder.finish_size_prefixed(message, None);
