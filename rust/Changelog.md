@@ -1,10 +1,9 @@
-# Version 1.1.0, 2020-06, Arithmetic circuits
+# Version 1.1.0, 2020-06, Simplifications
 
 Interface definition:
 - *(breaking)* Renamed R1CSContraints to ConstraintSystem.
 - *(breaking)* Moved r1cs_generation and witness_generation from Circuit to Command.
 - Added a dedicated Command message type to help with interoperable execution.
-- Added constraint_type to support for both R1CS and arithmetic circuits.
 - Added an example file in binary and JSON.
 
 Rust:
