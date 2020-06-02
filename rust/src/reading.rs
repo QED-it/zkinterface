@@ -95,7 +95,7 @@ impl fmt::Debug for Messages {
                 }
             }
             if let Some(circuit) = self.last_circuit() {
-                //write!(f, "{:?}\n", super::writing::CircuitOwned::from(circuit))?;
+                //write!(f, "{:?}\n", super::owned::circuit::CircuitOwned::from(circuit))?;
                 write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
             }
         }
