@@ -12,18 +12,21 @@ use zkinterface::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct CircuitJson {
-    circuit: CircuitOwned,
+    Circuit: CircuitOwned,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct WitnessJson {
-    witness: WitnessOwned,
+    Witness: WitnessOwned,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct ConstraintsJson {
-    constraints: ConstraintsOwned,
+    R1CSConstraints: ConstraintsOwned,
 }
 
 // Example:
@@ -44,7 +47,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             Message::Circuit => {
                 let circuit_ref = msg.message_as_circuit().unwrap();
                 let json = CircuitJson {
-                    circuit: CircuitOwned::from(circuit_ref),
+                    Circuit: CircuitOwned::from(circuit_ref),
                 };
 
                 if pretty {
@@ -56,7 +59,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             Message::Witness => {
                 let witness_ref = msg.message_as_witness().unwrap();
                 let json = WitnessJson {
-                    witness: WitnessOwned::from(witness_ref),
+                    Witness: WitnessOwned::from(witness_ref),
                 };
 
                 if pretty {
@@ -68,7 +71,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             Message::R1CSConstraints => {
                 let constraints_ref = msg.message_as_r1csconstraints().unwrap();
                 let json = ConstraintsJson {
-                    constraints: ConstraintsOwned::from(constraints_ref),
+                    R1CSConstraints: ConstraintsOwned::from(constraints_ref),
                 };
 
                 if pretty {
