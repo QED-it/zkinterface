@@ -3,19 +3,7 @@ use std::io;
 use std::mem::size_of;
 use owned::circuit::CircuitOwned;
 use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{
-    BilinearConstraint,
-    BilinearConstraintArgs,
-    Message,
-    ConstraintSystem,
-    ConstraintSystemArgs,
-    Root,
-    RootArgs,
-    Variables,
-    VariablesArgs,
-    Witness,
-    WitnessArgs,
-};
+use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs, ConstraintType};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -32,7 +20,6 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
         free_variable_id: 6,
         r1cs_generation: true,
         field_maximum: None,
-        circuit_type: "R1CS".to_string(),
     }
 }
 
@@ -72,6 +59,7 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
     let constraints_built = builder.create_vector(&constraints_built);
     let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
         constraints: Some(constraints_built),
+        constraint_type: ConstraintType::R1CS,
         info: None,
     });
 

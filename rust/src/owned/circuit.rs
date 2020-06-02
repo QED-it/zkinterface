@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
-    CircuitType,
     Message,
     Root,
     RootArgs,
@@ -25,8 +24,6 @@ pub struct CircuitOwned {
 
     pub field_maximum: Option<Vec<u8>>,
 
-    pub circuit_type: String,
-
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
@@ -38,7 +35,6 @@ impl<'a> From<Circuit<'a>> for CircuitOwned {
             free_variable_id: circuit_ref.free_variable_id(),
             r1cs_generation: circuit_ref.r1cs_generation(),
             field_maximum: None,
-            circuit_type: "R1CS".to_string(),
         }
     }
 }
@@ -56,7 +52,6 @@ impl CircuitOwned {
             free_variable_id: first_local_id,
             r1cs_generation: false,
             field_maximum: None,
-            circuit_type: "R1CS".to_string(),
         }
     }
 
@@ -73,7 +68,6 @@ impl CircuitOwned {
             free_variable_id: first_local_id + num_locals,
             r1cs_generation: false,
             field_maximum: None,
-            circuit_type: "R1CS".to_string(),
         }
     }
 
@@ -94,7 +88,6 @@ impl CircuitOwned {
             r1cs_generation: self.r1cs_generation,
             witness_generation: self.connections.values.is_some(),
             field_maximum,
-            circuit_type: CircuitType::R1CS,
             configuration: None,
         });
 

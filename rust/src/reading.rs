@@ -9,7 +9,7 @@ use std::path::Path;
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
-    CircuitType,
+    ConstraintType,
     get_size_prefixed_root_as_root,
     Root,
     Variables,
@@ -300,25 +300,32 @@ impl Messages {
         }
     }
 
-    pub fn validate_circuit_type(&self) -> Result<(), String> {
-        for circuit in self.circuits() {
-            if circuit.circuit_type() == CircuitType::FanIn2 {
-                for cons in self.iter_constraints() {
-                    let n_a = cons.a.len();
-                    let n_b = cons.b.len();
-                    let n_c = cons.c.len();
+    pub fn validate_constraint_type(&self) -> Result<(), String> {
+        for message in self.into_iter() {
+            match message.message_as_constraint_system() {
+                None => continue,
+                Some(cs) => {
+                    if cs.constraint_type() == ConstraintType::FanIn2 {
+                        let constraints = cs.constraints().unwrap();
+                        for i in 0..constraints.len() {
+                            let constraint = constraints.get(i);
+                            let n_a = constraint.linear_combination_a().unwrap().variable_ids().unwrap().len();
+                            let n_b = constraint.linear_combination_b().unwrap().variable_ids().unwrap().len();
+                            let n_c = constraint.linear_combination_c().unwrap().variable_ids().unwrap().len();
 
-                    let is_pure_multiplication =
-                        n_a == 1 && n_b == 1 && n_c == 1;
+                            let is_pure_multiplication =
+                                n_a == 1 && n_b == 1 && n_c == 1;
 
-                    let is_pure_linear =
-                        n_a == 0 && n_b == 0;
+                            let is_pure_linear =
+                                n_a == 0 && n_b == 0;
 
-                    if ! (is_pure_multiplication || is_pure_linear) {
-                        return Err("The circuit should be fan-in 2 but constraints are not in the correct format.".to_string());
+                            if ! (is_pure_multiplication || is_pure_linear) {
+                                return Err("The circuit should be fan-in 2 but constraints are not in the correct format.".to_string());
+                            }
+                        }
                     }
-                }
-            }
+                },
+            };
         }
         Ok(())
     }

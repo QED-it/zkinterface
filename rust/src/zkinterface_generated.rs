@@ -81,16 +81,16 @@ pub struct MessageUnionTableOffset {}
 #[allow(non_camel_case_types)]
 #[repr(i8)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum CircuitType {
+pub enum ConstraintType {
   R1CS = 0,
   FanIn2 = 1,
 
 }
 
-pub const ENUM_MIN_CIRCUIT_TYPE: i8 = 0;
-pub const ENUM_MAX_CIRCUIT_TYPE: i8 = 1;
+pub const ENUM_MIN_CONSTRAINT_TYPE: i8 = 0;
+pub const ENUM_MAX_CONSTRAINT_TYPE: i8 = 1;
 
-impl<'a> flatbuffers::Follow<'a> for CircuitType {
+impl<'a> flatbuffers::Follow<'a> for ConstraintType {
   type Inner = Self;
   #[inline]
   fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
@@ -98,44 +98,44 @@ impl<'a> flatbuffers::Follow<'a> for CircuitType {
   }
 }
 
-impl flatbuffers::EndianScalar for CircuitType {
+impl flatbuffers::EndianScalar for ConstraintType {
   #[inline]
   fn to_little_endian(self) -> Self {
     let n = i8::to_le(self as i8);
-    let p = &n as *const i8 as *const CircuitType;
+    let p = &n as *const i8 as *const ConstraintType;
     unsafe { *p }
   }
   #[inline]
   fn from_little_endian(self) -> Self {
     let n = i8::from_le(self as i8);
-    let p = &n as *const i8 as *const CircuitType;
+    let p = &n as *const i8 as *const ConstraintType;
     unsafe { *p }
   }
 }
 
-impl flatbuffers::Push for CircuitType {
-    type Output = CircuitType;
+impl flatbuffers::Push for ConstraintType {
+    type Output = ConstraintType;
     #[inline]
     fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<CircuitType>(dst, *self);
+        flatbuffers::emplace_scalar::<ConstraintType>(dst, *self);
     }
 }
 
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_CIRCUIT_TYPE:[CircuitType; 2] = [
-  CircuitType::R1CS,
-  CircuitType::FanIn2
+pub const ENUM_VALUES_CONSTRAINT_TYPE:[ConstraintType; 2] = [
+  ConstraintType::R1CS,
+  ConstraintType::FanIn2
 ];
 
 #[allow(non_camel_case_types)]
-pub const ENUM_NAMES_CIRCUIT_TYPE:[&'static str; 2] = [
+pub const ENUM_NAMES_CONSTRAINT_TYPE:[&'static str; 2] = [
     "R1CS",
     "FanIn2"
 ];
 
-pub fn enum_name_circuit_type(e: CircuitType) -> &'static str {
+pub fn enum_name_constraint_type(e: ConstraintType) -> &'static str {
   let index = e as i8;
-  ENUM_NAMES_CIRCUIT_TYPE[index as usize]
+  ENUM_NAMES_CONSTRAINT_TYPE[index as usize]
 }
 
 pub enum CircuitOffset {}
@@ -174,7 +174,6 @@ impl<'a> Circuit<'a> {
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
       if let Some(x) = args.connections { builder.add_connections(x); }
-      builder.add_circuit_type(args.circuit_type);
       builder.add_witness_generation(args.witness_generation);
       builder.add_r1cs_generation(args.r1cs_generation);
       builder.finish()
@@ -185,8 +184,7 @@ impl<'a> Circuit<'a> {
     pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 8;
     pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 10;
     pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 12;
-    pub const VT_CIRCUIT_TYPE: flatbuffers::VOffsetT = 14;
-    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 16;
+    pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 14;
 
   /// Variables to use as connections to the sub-circuit.
   ///
@@ -224,13 +222,6 @@ impl<'a> Circuit<'a> {
   pub fn field_maximum(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
   }
-  /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
-  /// A special case is a boolean circuit with XOR and AND gates,
-  /// then circuit_type == FanIn2 and field_maximum == 1.
-  #[inline]
-  pub fn circuit_type(&self) -> CircuitType {
-    self._tab.get::<CircuitType>(Circuit::VT_CIRCUIT_TYPE, Some(CircuitType::R1CS)).unwrap()
-  }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
   /// Example: function_name, if a gadget supports multiple function variants.
@@ -248,7 +239,6 @@ pub struct CircuitArgs<'a> {
     pub r1cs_generation: bool,
     pub witness_generation: bool,
     pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-    pub circuit_type: CircuitType,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for CircuitArgs<'a> {
@@ -260,7 +250,6 @@ impl<'a> Default for CircuitArgs<'a> {
             r1cs_generation: false,
             witness_generation: false,
             field_maximum: None,
-            circuit_type: CircuitType::R1CS,
             configuration: None,
         }
     }
@@ -289,10 +278,6 @@ impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
   #[inline]
   pub fn add_field_maximum(&mut self, field_maximum: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_MAXIMUM, field_maximum);
-  }
-  #[inline]
-  pub fn add_circuit_type(&mut self, circuit_type: CircuitType) {
-    self.fbb_.push_slot::<CircuitType>(Circuit::VT_CIRCUIT_TYPE, circuit_type, CircuitType::R1CS);
   }
   #[inline]
   pub fn add_configuration(&mut self, configuration: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
@@ -347,15 +332,24 @@ impl<'a> ConstraintSystem<'a> {
       let mut builder = ConstraintSystemBuilder::new(_fbb);
       if let Some(x) = args.info { builder.add_info(x); }
       if let Some(x) = args.constraints { builder.add_constraints(x); }
+      builder.add_constraint_type(args.constraint_type);
       builder.finish()
     }
 
     pub const VT_CONSTRAINTS: flatbuffers::VOffsetT = 4;
-    pub const VT_INFO: flatbuffers::VOffsetT = 6;
+    pub const VT_CONSTRAINT_TYPE: flatbuffers::VOffsetT = 6;
+    pub const VT_INFO: flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub fn constraints(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>>(ConstraintSystem::VT_CONSTRAINTS, None)
+  }
+  /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
+  /// A special case is a boolean circuit with XOR and AND gates,
+  /// then constraint_type == FanIn2 and circuit.field_maximum == 1.
+  #[inline]
+  pub fn constraint_type(&self) -> ConstraintType {
+    self._tab.get::<ConstraintType>(ConstraintSystem::VT_CONSTRAINT_TYPE, Some(ConstraintType::R1CS)).unwrap()
   }
   /// Optional: Any complementary info that may be useful.
   ///
@@ -369,6 +363,7 @@ impl<'a> ConstraintSystem<'a> {
 
 pub struct ConstraintSystemArgs<'a> {
     pub constraints: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<BilinearConstraint<'a >>>>>,
+    pub constraint_type: ConstraintType,
     pub info: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
 impl<'a> Default for ConstraintSystemArgs<'a> {
@@ -376,6 +371,7 @@ impl<'a> Default for ConstraintSystemArgs<'a> {
     fn default() -> Self {
         ConstraintSystemArgs {
             constraints: None,
+            constraint_type: ConstraintType::R1CS,
             info: None,
         }
     }
@@ -388,6 +384,10 @@ impl<'a: 'b, 'b> ConstraintSystemBuilder<'a, 'b> {
   #[inline]
   pub fn add_constraints(&mut self, constraints: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<BilinearConstraint<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ConstraintSystem::VT_CONSTRAINTS, constraints);
+  }
+  #[inline]
+  pub fn add_constraint_type(&mut self, constraint_type: ConstraintType) {
+    self.fbb_.push_slot::<ConstraintType>(ConstraintSystem::VT_CONSTRAINT_TYPE, constraint_type, ConstraintType::R1CS);
   }
   #[inline]
   pub fn add_info(&mut self, info: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
