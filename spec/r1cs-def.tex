@@ -83,7 +83,7 @@ By definition, this system $\System$ is satisfiable with input $\inst_1$ if the 
   \end{equation*}
   }
 
-When we prove this NP statement using zk-SNARK, the instance will be the public input that is visible to the verifer, and the witness will be the additional data that is known only to the prover, and used in the construction of the proof, but whose privacy is protected by the zero-knowledge property.
+When we prove this NP statement using zk-SNARK, the instance will be the public input that is visible to the verifier, and the witness will be the additional data that is known only to the prover, and used in the construction of the proof, but whose privacy is protected by the zero-knowledge property.
 
 \parhead{Complexity measure}
 For backends that consume R1CS natively, the cost of producing the zk-SNARK proofs (in time and memory) typically depends mostly on the \textbf{number of constraints}, $\NumConstr$.
