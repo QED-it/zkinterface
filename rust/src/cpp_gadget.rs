@@ -5,7 +5,7 @@
 use reading::Messages;
 use std::error::Error;
 use std::slice;
-use writing::CircuitOwned;
+use owned::circuit::CircuitOwned;
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -77,7 +77,7 @@ pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<dyn E
 #[test]
 #[cfg(feature = "cpp")]
 fn test_cpp_gadget() {
-    use writing::VariablesOwned;
+    use owned::circuit::VariablesOwned;
 
     let mut call = CircuitOwned {
         connections: VariablesOwned {

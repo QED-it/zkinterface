@@ -7,12 +7,23 @@ use std::error::Error;
 use std::io::{stdin, Read};
 
 use zkinterface::{
-    reading::Messages, writing::CircuitOwned, zkinterface_generated::zkinterface::Message,
+    owned::constraints::ConstraintsOwned, reading::Messages, owned::witness::WitnessOwned,
+    owned::circuit::CircuitOwned, zkinterface_generated::zkinterface::Message,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-struct JsonCircuit {
+struct CircuitJson {
     circuit: CircuitOwned,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct WitnessJson {
+    witness: WitnessOwned,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ConstraintsJson {
+    constraints: ConstraintsOwned,
 }
 
 // Example:
@@ -31,8 +42,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     for msg in messages.into_iter() {
         match msg.message_type() {
             Message::Circuit => {
-                let json = JsonCircuit {
-                    circuit: CircuitOwned::from(msg.message_as_circuit().unwrap()),
+                let circuit_ref = msg.message_as_circuit().unwrap();
+                let json = CircuitJson {
+                    circuit: CircuitOwned::from(circuit_ref),
                 };
 
                 if pretty {
@@ -41,8 +53,30 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     serde_json::to_writer(std::io::stdout(), &json)?;
                 }
             }
-            Message::Witness => {}
-            Message::R1CSConstraints => {}
+            Message::Witness => {
+                let witness_ref = msg.message_as_witness().unwrap();
+                let json = WitnessJson {
+                    witness: WitnessOwned::from(witness_ref),
+                };
+
+                if pretty {
+                    serde_json::to_writer_pretty(std::io::stdout(), &json)?;
+                } else {
+                    serde_json::to_writer(std::io::stdout(), &json)?;
+                }
+            }
+            Message::R1CSConstraints => {
+                let constraints_ref = msg.message_as_r1csconstraints().unwrap();
+                let json = ConstraintsJson {
+                    constraints: ConstraintsOwned::from(constraints_ref),
+                };
+
+                if pretty {
+                    serde_json::to_writer_pretty(std::io::stdout(), &json)?;
+                } else {
+                    serde_json::to_writer(std::io::stdout(), &json)?;
+                }
+            }
             Message::NONE => {}
         }
         print!("\n");

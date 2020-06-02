@@ -1,0 +1,7 @@
+# Version 1.1.0 (2020-06)
+
+- Added a tool to convert to JSON.
+- Added "owned" versions of all message types.
+
+Breaking changes:
+- Moved "writing" helpers to the "owned" modules.

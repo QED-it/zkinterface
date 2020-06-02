@@ -9,12 +9,9 @@ use zkinterface_generated::zkinterface::{
     Message,
     Root,
     RootArgs,
-    Variables,
-    VariablesArgs,
 };
+use owned::variables::VariablesOwned;
 
-
-// ==== Gadget Call ====
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitOwned {
@@ -30,11 +27,16 @@ pub struct CircuitOwned {
     //pub configuration: Option<Vec<(String, &'a [u8])>>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct VariablesOwned {
-    pub variable_ids: Vec<u64>,
-    pub values: Option<Vec<u8>>,
-    // pub info: Option<Vec<(String, &'a [u8])>>,
+impl<'a> From<Circuit<'a>> for CircuitOwned {
+    /// Convert from Flatbuffers references to owned structure.
+    fn from(circuit_ref: Circuit) -> CircuitOwned {
+        CircuitOwned {
+            connections: VariablesOwned::from(circuit_ref.connections().unwrap()),
+            free_variable_id: circuit_ref.free_variable_id(),
+            r1cs_generation: circuit_ref.r1cs_generation(),
+            field_maximum: None,
+        }
+    }
 }
 
 impl CircuitOwned {
@@ -69,6 +71,7 @@ impl CircuitOwned {
         }
     }
 
+    /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
@@ -94,53 +97,11 @@ impl CircuitOwned {
         })
     }
 
+    /// Write this structure as a Flatbuffers message.
     pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);
         writer.write_all(builder.finished_data())
-    }
-}
-
-impl<'a> From<Circuit<'a>> for CircuitOwned {
-    fn from(circuit: Circuit) -> CircuitOwned {
-        CircuitOwned {
-            connections: VariablesOwned::from(circuit.connections().unwrap()),
-            free_variable_id: circuit.free_variable_id(),
-            r1cs_generation: circuit.r1cs_generation(),
-            field_maximum: None,
-        }
-    }
-}
-
-impl VariablesOwned {
-    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        &'args self,
-        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Variables<'bldr>>
-    {
-        let variable_ids = Some(builder.create_vector(&self.variable_ids));
-
-        let values = self.values.as_ref().map(|values|
-            builder.create_vector(values));
-
-        Variables::create(builder, &VariablesArgs {
-            variable_ids,
-            values,
-            info: None,
-        })
-    }
-}
-
-impl<'a> From<Variables<'a>> for VariablesOwned {
-    fn from(vars: Variables) -> VariablesOwned {
-        VariablesOwned {
-            variable_ids: match vars.variable_ids() {
-                Some(var_ids) => Vec::from(var_ids.safe_slice()),
-                None => vec![],
-            },
-            values: vars.values().map(|bytes|
-                Vec::from(bytes)),
-        }
     }
 }

@@ -1,7 +1,8 @@
 use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
-use writing::{CircuitOwned, VariablesOwned};
+use owned::circuit::CircuitOwned;
+use owned::variables::VariablesOwned;
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     BilinearConstraintArgs,
