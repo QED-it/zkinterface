@@ -302,8 +302,22 @@ impl Messages {
 
     pub fn validate_circuit_type(&self) -> Result<(), String> {
         for circuit in self.circuits() {
-            if circuit.circuit_type() != CircuitType::R1CS {
-                return Err("fan-in 2 not supported".to_string());
+            if circuit.circuit_type() == CircuitType::FanIn2 {
+                for cons in self.iter_constraints() {
+                    let n_a = cons.a.len();
+                    let n_b = cons.b.len();
+                    let n_c = cons.c.len();
+
+                    let is_pure_multiplication =
+                        n_a == 1 && n_b == 1 && n_c == 1;
+
+                    let is_pure_linear =
+                        n_a == 0 && n_b == 0;
+
+                    if ! (is_pure_multiplication || is_pure_linear) {
+                        return Err("The circuit should be fan-in 2 but constraints are not in the correct format.".to_string());
+                    }
+                }
             }
         }
         Ok(())
@@ -400,6 +414,23 @@ pub struct Variable<'a> {
 impl<'a> Variable<'a> {
     pub fn has_value(&self) -> bool {
         self.value.len() > 0
+    }
+
+    pub fn is_constant_one(&self) -> bool {
+        if self.id != 0 {
+            return false
+        }
+        if self.value.len() > 0 {
+            if self.value[0] != 1 {
+                return false
+            }
+            for v in self.value[1..].iter() {
+                if *v != 0 {
+                    return false
+                }
+            }
+        }
+        return true
     }
 }
 

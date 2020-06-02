@@ -12,6 +12,9 @@ union Message {
     Witness,
 }
 
+// A circuit can be R1CS or arithmetic (fan-in 2 multiplications).
+enum CircuitType : byte { R1CS = 0, FanIn2 = 1 }
+
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
@@ -46,7 +49,9 @@ table Circuit {
     /// See `Variables.values` below.
     field_maximum           :[ubyte];
 
-    /// Whether this is an R1CS or arithmetic circuit.
+    /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
+    /// A special case is a boolean circuit with XOR and AND gates,
+    /// then circuit_type == FanIn2 and field_maximum == 1.
     circuit_type            :CircuitType;
 
     /// Optional: Any custom parameter that may influence the circuit construction.
@@ -56,9 +61,6 @@ table Circuit {
     /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
     configuration           :[KeyValue];
 }
-
-// A circuit can be R1CS or arithmetic (fan-in 2 multiplications).
-enum CircuitType : byte { R1CS = 0, FanIn2 = 1 }
 
 /// R1CSConstraints represents constraints to be added to the constraint system.
 ///

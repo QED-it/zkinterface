@@ -224,7 +224,9 @@ impl<'a> Circuit<'a> {
   pub fn field_maximum(&self) -> Option<&'a [u8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
   }
-  /// Whether this is R1CS or arithmetic circuit.
+  /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
+  /// A special case is a boolean circuit with XOR and AND gates,
+  /// then circuit_type == FanIn2 and field_maximum == 1.
   #[inline]
   pub fn circuit_type(&self) -> CircuitType {
     self._tab.get::<CircuitType>(Circuit::VT_CIRCUIT_TYPE, Some(CircuitType::R1CS)).unwrap()
