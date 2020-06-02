@@ -305,7 +305,7 @@ impl Messages {
             match message.message_as_constraint_system() {
                 None => continue,
                 Some(cs) => {
-                    if cs.constraint_type() == ConstraintType::FanIn2 {
+                    if cs.constraint_type() == ConstraintType::arithmetic {
                         let constraints = cs.constraints().unwrap();
                         for i in 0..constraints.len() {
                             let constraint = constraints.get(i);

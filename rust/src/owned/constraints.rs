@@ -1,24 +1,6 @@
 use owned::variables::VariablesOwned;
 use serde::{Deserialize, Serialize};
 use zkinterface_generated::zkinterface::{ConstraintSystem, ConstraintType};
-use owned::constraints::ConstraintTypeOwned::R1CS;
-
-#[allow(non_camel_case_types)]
-#[repr(i8)]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub enum ConstraintTypeOwned {
-    R1CS = 0,
-    FanIn2 = 1,
-}
-
-impl From<ConstraintType> for ConstraintTypeOwned {
-    fn from(ct: ConstraintType) -> Self {
-        match ct {
-            ConstraintType::R1CS => ConstraintTypeOwned::R1CS,
-            ConstraintType::FanIn2 => ConstraintTypeOwned::FanIn2,
-        }
-    }
-}
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
@@ -53,5 +35,32 @@ impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
         }
 
         owned
+    }
+}
+
+
+#[allow(non_camel_case_types)]
+#[repr(i8)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub enum ConstraintTypeOwned {
+    R1CS = 0,
+    arithmetic = 1,
+}
+
+impl From<ConstraintType> for ConstraintTypeOwned {
+    fn from(ct: ConstraintType) -> Self {
+        match ct {
+            ConstraintType::R1CS => ConstraintTypeOwned::R1CS,
+            ConstraintType::arithmetic => ConstraintTypeOwned::arithmetic,
+        }
+    }
+}
+
+impl Into<ConstraintType> for ConstraintTypeOwned {
+    fn into(self) -> ConstraintType {
+        match self {
+            ConstraintTypeOwned::R1CS => ConstraintType::R1CS,
+            ConstraintTypeOwned::arithmetic => ConstraintType::arithmetic,
+        }
     }
 }

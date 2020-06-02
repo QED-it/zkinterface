@@ -55,7 +55,7 @@ table Circuit {
 }
 
 // A circuit can be R1CS or arithmetic (fan-in 2 multiplications).
-enum ConstraintType : byte { R1CS = 0, FanIn2 = 1 }
+enum ConstraintType : byte { R1CS = 0, arithmetic = 1 }
 
 /// ConstraintSystem represents constraints to be added to the constraint system.
 ///
@@ -65,7 +65,7 @@ table ConstraintSystem {
 
     /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
     /// A special case is a boolean circuit with XOR and AND gates,
-    /// then constraint_type == FanIn2 and circuit.field_maximum == 1.
+    /// then constraint_type == arithmetic and circuit.field_maximum == 1.
     constraint_type            :ConstraintType;
 
     /// Optional: Any complementary info that may be useful.
