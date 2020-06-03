@@ -4,6 +4,8 @@ cpp/CMakeFiles/
 cpp/Makefile
 cpp/CMakeCache.txt
 cpp/cmake_install.cmake
+target/
+libsnark
 *.a
 local/
 .idea/
