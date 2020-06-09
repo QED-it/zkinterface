@@ -22,7 +22,8 @@ using libff::bit_vector;
 
 namespace zkinterface_libsnark {
 
-    typedef libff::Fr<libff::default_ec_pp> FieldT;
+    typedef libff::default_ec_pp CurveT;
+    typedef libff::Fr<CurveT> FieldT;
     const mp_size_t r_limbs = alt_bn128_r_limbs;
     size_t fieldt_size = 32;
 
@@ -49,6 +50,13 @@ namespace zkinterface_libsnark {
         return sizeof(uoffset_t) + message_length;
     }
 
+    class MessageNotFoundException : public std::exception {
+    public:
+        const char *what() const throw() {
+            return "message of the required type not found";
+        }
+    };
+
     const Root *find_message(vector<char> &buffer, Message type) {
         auto offset = 0;
 
@@ -69,14 +77,16 @@ namespace zkinterface_libsnark {
             offset += size;
         }
 
-        throw "message not found";
+        throw MessageNotFoundException();
     }
 
 
 // ==== Element conversion helpers ====
 
     // Bytes to Bigint. Little-Endian.
-    bigint<r_limbs> from_le(const uint8_t *bytes, size_t size) {
+    bigint<r_limbs>
+
+    from_le(const uint8_t *bytes, size_t size) {
         bigint<r_limbs> num;
         size_t bytes_per_limb = sizeof(num.data[0]);
         assert(bytes_per_limb * r_limbs >= size);

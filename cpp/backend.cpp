@@ -5,17 +5,16 @@
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
 #include "libsnark_zkif_import.cpp"
 
+using namespace std;
 using namespace zkinterface_libsnark;
 
-vector<char> read_file() {
-    string testPath = "../examples/example.zkif";
-
-    ifstream testFile(testPath, ios::binary);
-    vector<char> buf((istreambuf_iterator<char>(testFile)),
+vector<char> read_file(string zkifPath) {
+    ifstream zkifFile(zkifPath, ios::binary);
+    vector<char> buf((istreambuf_iterator<char>(zkifFile)),
                      istreambuf_iterator<char>());
 
-    if (testFile) {
-        cerr << "Read messages from file." << endl;
+    if (zkifFile) {
+        cerr << "Read messages from file " << zkifPath << endl;
     } else {
         throw "Error: could not open file";
     }
@@ -23,45 +22,90 @@ vector<char> read_file() {
     return buf;
 }
 
-void run() {
-    libff::default_ec_pp::init_public_params();
-
-    auto buf = read_file();
+protoboard<FieldT> load_protoboard(string zkifPath, bool with_constraints, bool with_witness) {
+    CurveT::init_public_params();
+    libff::inhibit_profiling_info = true;
 
     protoboard<FieldT> pb;
-
     import_zkif iz(pb, "import_zkif");
+
+    auto buf = read_file(zkifPath);
     iz.load(buf);
-
-    auto begin = chrono::steady_clock::now();
-
     iz.allocate_variables();
-    iz.generate_constraints();
-    iz.generate_witness();
-
-    auto end = chrono::steady_clock::now();
-    cout << "It took " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "µs"
-         << endl;
-
-    cout << pb.num_inputs() << " public inputs" << endl;
-    cout << pb.num_variables() << " variables" << endl;
-    cout << pb.num_constraints() << " constraints" << endl;
-    cout << "Satisfied: " << (pb.is_satisfied() ? "YES" : "NO") << endl;
-
-    // Setup, prove, verify.
-    auto cs = pb.get_constraint_system();
-    auto keypair = r1cs_gg_ppzksnark_generator<libff::default_ec_pp>(cs);
-    auto proof = r1cs_gg_ppzksnark_prover<libff::default_ec_pp>(keypair.pk, pb.primary_input(), pb.auxiliary_input());
-    auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(keypair.vk, pb.primary_input(), proof);
-    cout << "Proof verified: " << (ok ? "YES" : "NO") << endl;
+    if (with_constraints) iz.generate_constraints();
+    if (with_witness) iz.generate_witness();
+    return pb;
 }
 
-int main(int, char **) {
+void print_protoboard(protoboard<FieldT> &pb) {
+    cerr << pb.num_inputs() << " public inputs" << endl;
+    cerr << pb.num_variables() << " variables" << endl;
+    cerr << pb.num_constraints() << " constraints" << endl;
+}
+
+void run(string action, string zkifPath) {
+    if (action == "validate") {
+        auto pb = load_protoboard(zkifPath, true, true);
+        print_protoboard(pb);
+        cerr << "Satisfied: " << (pb.is_satisfied() ? "YES" : "NO") << endl;
+
+    } else if (action == "setup") {
+        auto pb = load_protoboard(zkifPath, true, false);
+
+        auto keypair = r1cs_gg_ppzksnark_generator<CurveT>(pb.get_constraint_system());
+        ofstream(zkifPath + ".pk", ios::binary) << keypair.pk;
+        ofstream(zkifPath + ".vk", ios::binary) << keypair.vk;
+
+    } else if (action == "prove") {
+        auto pb = load_protoboard(zkifPath, false, true);
+
+        r1cs_gg_ppzksnark_keypair<CurveT> keypair;
+        ifstream(zkifPath + ".pk", ios::binary) >> keypair.pk;
+
+        auto proof = r1cs_gg_ppzksnark_prover<CurveT>(keypair.pk, pb.primary_input(), pb.auxiliary_input());
+        ofstream(zkifPath + ".proof", ios::binary) << proof;
+
+    } else if (action == "verify") {
+        auto pb = load_protoboard(zkifPath, false, false);
+
+        r1cs_gg_ppzksnark_keypair<CurveT> keypair;
+        ifstream(zkifPath + ".pk", ios::binary) >> keypair.pk;
+        ifstream(zkifPath + ".vk", ios::binary) >> keypair.vk;
+
+        r1cs_gg_ppzksnark_proof<CurveT> proof;
+        ifstream(zkifPath + ".proof", ios::binary) >> proof;
+
+        auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(keypair.vk, pb.primary_input(), proof);
+        cout << endl << "Proof verified: " << (ok ? "YES" : "NO") << endl;
+    }
+
+    //auto begin = chrono::steady_clock::now();
+    //auto end = chrono::steady_clock::now();
+    //cout << "It took " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "µs" << endl;
+}
+
+static const char USAGE[] =
+        R"(libsnark prover.
+
+    Usage:
+      snark validate <zkinterface_file>
+      snark setup <zkinterface_file>
+      snark prove <zkinterface_file>
+      snark verify <zkinterface_file>
+)";
+
+int main(int argc, const char **argv) {
+
+    if (argc < 3) {
+        cerr << USAGE << endl;
+        return 1;
+    }
+
     try {
-        run();
+        run(string(argv[1]), string(argv[2]));
         return 0;
     } catch (const char *msg) {
         cerr << msg << endl;
-        return 1;
+        return 2;
     }
 }
