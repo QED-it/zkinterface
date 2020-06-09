@@ -20,9 +20,10 @@ namespace zkinterface_libsnark {
         vector<char> buffer;
 
     public:
-        import_zkif(protoboard<FieldT> &pb,
-                    const std::string &annotation_prefix) :
+        import_zkif(protoboard<FieldT> &pb, const std::string &annotation_prefix) :
                 gadget<FieldT>(pb, annotation_prefix) {}
+
+        protoboard<FieldT>* get_pb() { return &pb; }
 
         void load(vector<char> &buf) {
             buffer = buf;
