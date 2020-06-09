@@ -18,12 +18,13 @@ using namespace std;
 
 namespace zkinterface_libsnark {
 
-
-    class import_zkif {
+    class import_zkif : public gadget<FieldT> {
         vector<char> buffer;
 
     public:
-        import_zkif() {}
+        import_zkif(protoboard<FieldT> &pb,
+                    const std::string &annotation_prefix) :
+                gadget<FieldT>(pb, annotation_prefix) {}
 
         void load(vector<char> &buf) {
             buffer = buf;
@@ -44,27 +45,43 @@ namespace zkinterface_libsnark {
             return root->message_as_Witness();
         }
 
+        void allocate_variables() {
+            auto circuit = get_circuit();
+            auto n_vars = circuit->free_variable_id();
+            pb_variable_array<FieldT> pb_vars;
+            pb_vars.allocate(pb, n_vars, FMT(annotation_prefix, "private variables"));
+            auto variable_ids = circuit->connections()->variable_ids();
+            auto num_variables = variable_ids->size();
+            pb.set_input_sizes(num_variables);
+
+            // Validate the connection IDs.
+            for (auto i = 0; i < variable_ids->size(); ++i) {
+                if (variable_ids->Get(i) != 1 + i) {
+                    throw "Circuit connections must use contiguous IDs starting at 1.";
+                }
+            }
+
+            // If connections values are given, store them into the protoboard.
+            auto values = circuit->connections()->values();
+            if (values != nullptr) {
+                copy_variables_into_protoboard(pb, circuit->connections());
+            }
+        }
+
         void generate_constraints() {
             auto constraints = get_constraints()->constraints();
 
-            cout << constraints->size() << " constraints:" << endl;
+            cout << constraints->size() << " constraints" << endl;
 
             for (auto i = constraints->begin(); i < constraints->end(); ++i) {
-                auto a_ids = i->linear_combination_a()->variable_ids();
-                for (auto j = a_ids->begin(); j < a_ids->end(); ++j)
-                    cout << "Constraint " << *j << endl;
+                pb.add_r1cs_constraint(deserialize_constraint(*i),
+                                       FMT(annotation_prefix, " constraint"));
             }
         }
 
         void generate_witness() {
             auto witness = get_witness()->assigned_variables();
-
-            cout << witness->variable_ids()->size() << " variables:" << endl;
-
-            auto ids = witness->variable_ids();
-            for (auto it = ids->begin(); it != ids->end(); ++it) {
-                cout << "Variable " << *it << endl;
-            }
+            copy_variables_into_protoboard(pb, witness);
         }
     };
 

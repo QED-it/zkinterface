@@ -72,7 +72,7 @@ namespace zkinterface_libsnark {
     }
 
 
-// ==== Conversion helpers ====
+// ==== Element conversion helpers ====
 
     // Bytes to Bigint. Little-Endian.
     bigint<alt_bn128_r_limbs> from_le(const uint8_t *bytes, size_t size) {
@@ -248,6 +248,45 @@ namespace zkinterface_libsnark {
         auto root = CreateRoot(builder, Message_Witness, witness.Union());
         builder.FinishSizePrefixed(root);
         return builder;
+    }
+
+
+// ==== Helpers to write into a protoboard ====
+
+    linear_combination<FieldT> deserialize_lincomb(
+            const Variables *terms
+    ) {
+        auto lc = linear_combination<FieldT>();
+        auto ids = terms->variable_ids();
+        for (auto term = ids->begin(); term < ids->end(); ++term) {
+            lc.add_term(variable<FieldT>(*term)); // TODO: use ID.
+        }
+        return lc;
+    }
+
+    r1cs_constraint<FieldT> deserialize_constraint(
+            const BilinearConstraint *constraint
+    ) {
+        return r1cs_constraint<FieldT>(
+                deserialize_lincomb(constraint->linear_combination_a()),
+                deserialize_lincomb(constraint->linear_combination_b()),
+                deserialize_lincomb(constraint->linear_combination_c()));
+    }
+
+    // Write variable assignments into a protoboard.
+    void copy_variables_into_protoboard(
+            protoboard<FieldT> &pb,
+            const Variables *variables
+    ) {
+        auto variable_ids = variables->variable_ids();
+        auto num_variables = variable_ids->size();
+        auto elements = deserialize_elements(variables->values(), num_variables);
+
+        for (auto i = 0; i < num_variables; i++) {
+            uint64_t id = variable_ids->Get(i);
+            if (id == 0) continue;
+            pb.val(id) = elements[i];
+        }
     }
 
 } // namespace zkinterface_libsnark
