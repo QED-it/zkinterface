@@ -43,6 +43,19 @@ void print_protoboard(protoboard<FieldT> &pb) {
     cerr << pb.num_constraints() << " constraints" << endl;
 }
 
+class Benchmark {
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+public:
+    void print() {
+        auto dur = chrono::steady_clock::now() - begin;
+        cerr << "ZKPROOF_BENCHMARK: {"
+             << "\"iterations\":1, "
+             << "\"microseconds\":"
+             << chrono::duration_cast<chrono::microseconds>(dur).count()
+             << "}" << endl;
+    }
+};
+
 void run(string action, string zkifPath) {
     if (action == "validate") {
         auto pb = load_protoboard(zkifPath, true, true);
@@ -53,35 +66,37 @@ void run(string action, string zkifPath) {
         auto pb = load_protoboard(zkifPath, true, false);
 
         auto keypair = r1cs_gg_ppzksnark_generator<CurveT>(pb.get_constraint_system());
+
         ofstream(zkifPath + ".pk", ios::binary) << keypair.pk;
         ofstream(zkifPath + ".vk", ios::binary) << keypair.vk;
 
     } else if (action == "prove") {
         auto pb = load_protoboard(zkifPath, false, true);
 
-        r1cs_gg_ppzksnark_keypair<CurveT> keypair;
-        ifstream(zkifPath + ".pk", ios::binary) >> keypair.pk;
+        r1cs_gg_ppzksnark_proving_key<CurveT> pk;
+        ifstream(zkifPath + ".pk", ios::binary) >> pk;
+        Benchmark bench;
 
-        auto proof = r1cs_gg_ppzksnark_prover<CurveT>(keypair.pk, pb.primary_input(), pb.auxiliary_input());
+        auto proof = r1cs_gg_ppzksnark_prover<CurveT>(pk, pb.primary_input(), pb.auxiliary_input());
+
+        bench.print();
         ofstream(zkifPath + ".proof", ios::binary) << proof;
 
     } else if (action == "verify") {
         auto pb = load_protoboard(zkifPath, false, false);
 
-        r1cs_gg_ppzksnark_keypair<CurveT> keypair;
-        ifstream(zkifPath + ".pk", ios::binary) >> keypair.pk;
-        ifstream(zkifPath + ".vk", ios::binary) >> keypair.vk;
+        r1cs_gg_ppzksnark_verification_key<CurveT> vk;
+        ifstream(zkifPath + ".vk", ios::binary) >> vk;
 
         r1cs_gg_ppzksnark_proof<CurveT> proof;
         ifstream(zkifPath + ".proof", ios::binary) >> proof;
+        Benchmark bench;
 
-        auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(keypair.vk, pb.primary_input(), proof);
+        auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(vk, pb.primary_input(), proof);
+
+        bench.print();
         cout << endl << "Proof verified: " << (ok ? "YES" : "NO") << endl;
     }
-
-    //auto begin = chrono::steady_clock::now();
-    //auto end = chrono::steady_clock::now();
-    //cout << "It took " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "µs" << endl;
 }
 
 static const char USAGE[] =
