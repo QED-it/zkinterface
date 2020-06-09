@@ -22,7 +22,8 @@ using libff::bit_vector;
 
 namespace zkinterface_libsnark {
 
-    typedef libff::Fr<libff::alt_bn128_pp> FieldT;
+    typedef libff::Fr<libff::default_ec_pp> FieldT;
+    const mp_size_t r_limbs = alt_bn128_r_limbs;
     size_t fieldt_size = 32;
 
 // ==== Gadget ====
@@ -75,10 +76,10 @@ namespace zkinterface_libsnark {
 // ==== Element conversion helpers ====
 
     // Bytes to Bigint. Little-Endian.
-    bigint<alt_bn128_r_limbs> from_le(const uint8_t *bytes, size_t size) {
-        bigint<alt_bn128_r_limbs> num;
+    bigint<r_limbs> from_le(const uint8_t *bytes, size_t size) {
+        bigint<r_limbs> num;
         size_t bytes_per_limb = sizeof(num.data[0]);
-        assert(bytes_per_limb * alt_bn128_r_limbs >= size);
+        assert(bytes_per_limb * r_limbs >= size);
 
         for (size_t byte = 0; byte < size; byte++) {
             size_t limb = byte / bytes_per_limb;
@@ -89,9 +90,9 @@ namespace zkinterface_libsnark {
     }
 
     // Bigint to Bytes. Little-endian.
-    void into_le(const bigint<alt_bn128_r_limbs> &num, uint8_t *out, size_t size) {
+    void into_le(const bigint<r_limbs> &num, uint8_t *out, size_t size) {
         size_t bytes_per_limb = sizeof(num.data[0]);
-        assert(size >= bytes_per_limb * alt_bn128_r_limbs);
+        assert(size >= bytes_per_limb * r_limbs);
 
         for (size_t byte = 0; byte < size; byte++) {
             size_t limb = byte / bytes_per_limb;
