@@ -2,8 +2,6 @@
  * Import a zkInterface circuit into a protoboard.
  */
 
-#include <iostream>
-
 #include "libff/common/default_types/ec_pp.hpp"
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
@@ -70,9 +68,6 @@ namespace zkinterface_libsnark {
 
         void generate_constraints() {
             auto constraints = get_constraints()->constraints();
-
-            cout << constraints->size() << " constraints" << endl;
-
             for (auto i = constraints->begin(); i < constraints->end(); ++i) {
                 pb.add_r1cs_constraint(deserialize_constraint(*i),
                                        FMT(annotation_prefix, " constraint"));

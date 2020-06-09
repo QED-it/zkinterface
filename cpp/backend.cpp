@@ -2,6 +2,7 @@
 #include <iterator>
 #include <chrono>
 #include <libff/common/default_types/ec_pp.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
 #include "libsnark_zkif_import.cpp"
 
 using namespace zkinterface_libsnark;
@@ -23,7 +24,7 @@ vector<char> read_file() {
 }
 
 void run() {
-    libff::alt_bn128_pp::init_public_params();
+    libff::default_ec_pp::init_public_params();
 
     auto buf = read_file();
 
@@ -38,11 +39,6 @@ void run() {
     iz.generate_constraints();
     iz.generate_witness();
 
-    cout << pb.get_constraint_system() << endl;
-    for(auto i=0;i<6;i++){
-        cout << i << ": " << pb.val(i).as_ulong() << endl;
-    }
-
     auto end = chrono::steady_clock::now();
     cout << "It took " << chrono::duration_cast<chrono::microseconds>(end - begin).count() << "µs"
          << endl;
@@ -51,6 +47,13 @@ void run() {
     cout << pb.num_variables() << " variables" << endl;
     cout << pb.num_constraints() << " constraints" << endl;
     cout << "Satisfied: " << (pb.is_satisfied() ? "YES" : "NO") << endl;
+
+    // Setup, prove, verify.
+    auto cs = pb.get_constraint_system();
+    auto keypair = r1cs_gg_ppzksnark_generator<libff::default_ec_pp>(cs);
+    auto proof = r1cs_gg_ppzksnark_prover<libff::default_ec_pp>(keypair.pk, pb.primary_input(), pb.auxiliary_input());
+    auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(keypair.vk, pb.primary_input(), proof);
+    cout << "Proof verified: " << (ok ? "YES" : "NO") << endl;
 }
 
 int main(int, char **) {
