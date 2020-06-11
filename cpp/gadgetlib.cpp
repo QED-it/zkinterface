@@ -1,11 +1,15 @@
 #include <iostream>
+#include <libsnark/gadgetlib1/gadget.hpp>
+#include <libsnark/gadgetlib1/protoboard.hpp>
 #include "zkinterface_generated.h"
 #include "zkinterface.h"
+#include "zkinterface_generated.h"
+#include "libsnark_integration.hpp"
 
-using std::cout;
-using std::endl;
-using std::vector;
+using namespace std;
+using flatbuffers::uoffset_t;
 using namespace zkinterface;
+using namespace zkinterface_libsnark;
 
 
 bool r1cs_request(
@@ -207,4 +211,31 @@ bool call_gadget(
     }
 
     return true;
+}
+
+void run(string zkif_out_path) {
+
+}
+
+static const char USAGE[] =
+        R"(libsnark gadget lib.
+
+    Usage:
+      gadgetlib <zkinterface_output_file>
+)";
+
+int main(int argc, const char **argv) {
+
+    if (argc < 2) {
+        cerr << USAGE << endl;
+        return 1;
+    }
+
+    try {
+        run(string(argv[1]));
+        return 0;
+    } catch (const char *msg) {
+        cerr << msg << endl;
+        return 2;
+    }
 }
