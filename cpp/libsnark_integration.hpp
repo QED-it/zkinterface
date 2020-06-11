@@ -267,10 +267,14 @@ namespace zkinterface_libsnark {
     linear_combination<FieldT> deserialize_lincomb(
             const Variables *terms
     ) {
+        auto variable_ids = terms->variable_ids();
+        auto num_terms = variable_ids->size();
+        auto elements = deserialize_elements(terms->values(), num_terms);
         auto lc = linear_combination<FieldT>();
-        auto ids = terms->variable_ids();
-        for (auto term = ids->begin(); term < ids->end(); ++term) {
-            lc.add_term(variable<FieldT>(*term)); // TODO: use ID.
+        for (auto i = 0; i < num_terms; i++) {
+            lc.add_term(
+                    variable<FieldT>(variable_ids->Get(i)),
+                    elements[i]);
         }
         return lc;
     }
