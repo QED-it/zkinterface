@@ -2,7 +2,6 @@
  * Import a zkInterface circuit into a protoboard.
  */
 
-#include "libff/common/default_types/ec_pp.hpp"
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
 
