@@ -35,13 +35,24 @@ FlatBufferBuilder make_input_circuit() {
     return builder;
 }
 
+FlatBufferBuilder make_command(string action) {
+    bool constraints_generation = (action == "constraints");
+    bool witness_generation = (action == "witness");
+
+    FlatBufferBuilder builder;
+    auto command = CreateCommand(builder, constraints_generation, witness_generation);
+    auto root = CreateRoot(builder, Message_Command, command.Union());
+    builder.FinishSizePrefixed(root);
+    return builder;
+}
+
 void run(string action, string zkif_out_path) {
 
     auto circuit_builder = make_input_circuit();
     auto circuit_msg = circuit_builder.GetBufferPointer();
 
-    // TODO: make Command.
-    //if (action == "constraints") {} else if (action == "witness") {}
+    auto command_build = make_command(action);
+    auto command_msg = command_build.GetBufferPointer();
 
     string constraints_name = "out_constraints.zkif";
     string witness_name = "out_witness.zkif";
