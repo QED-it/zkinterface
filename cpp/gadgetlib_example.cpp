@@ -14,15 +14,28 @@ namespace gadgetlib_example {
             gadget_callback_t return_callback,
             void *return_context
     ) {
-        auto root = find_message(call_msg, Message_Circuit);
-        const Circuit *call = root->message_as_Circuit();
+        const Circuit *circuit = find_message(call_msg, Message_Circuit)->message_as_Circuit();
+        const Command *command = find_message(call_msg, Message_Command)->message_as_Command();
 
-        return constraints_request(call, constraints_callback, constraints_context, return_callback, return_context);
-        // TODO: assignment.
+        if (command->constraints_generation()) {
+            bool ok = make_constraints(circuit,
+                                       constraints_callback, constraints_context,
+                                       return_callback, return_context);
+            if (!ok) return false;
+        }
+
+        if (command->witness_generation()) {
+            bool ok = make_witness(circuit,
+                                   witness_callback, witness_context,
+                                   return_callback, return_context);
+            if (!ok) return false;
+        }
+
+        return true;
     }
 
 
-    bool constraints_request(
+    bool make_constraints(
             const Circuit *request,
 
             gadget_callback_t result_stream_callback,
@@ -33,7 +46,7 @@ namespace gadgetlib_example {
     ) {
         // Read the request.
         uint64_t first_output_id = request->free_variable_id();
-        cout << "C++ got R1CS request"
+        cout << "C++ got a request to make constraints"
              << ", first_output_id="
              << first_output_id << endl;
 
@@ -105,7 +118,7 @@ namespace gadgetlib_example {
     }
 
 
-    bool assignments_request(
+    bool make_witness(
             const Circuit *call,
 
             gadget_callback_t result_stream_callback,
@@ -116,7 +129,7 @@ namespace gadgetlib_example {
     ) {
         // Read the call.
         uint64_t first_output_id = call->free_variable_id();
-        cout << "C++ got assignment request"
+        cout << "C++ got a request to make a witness"
              << ", first_output_id="
              << first_output_id << endl;
 

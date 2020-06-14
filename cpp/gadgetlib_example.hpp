@@ -28,7 +28,7 @@ namespace gadgetlib_example {
     );
 
 
-    bool constraints_request(
+    bool make_constraints(
             const Circuit *request,
 
             gadget_callback_t result_stream_callback,
@@ -39,7 +39,7 @@ namespace gadgetlib_example {
     );
 
 
-    bool assignments_request(
+    bool make_witness(
             const Circuit *call,
 
             gadget_callback_t result_stream_callback,
