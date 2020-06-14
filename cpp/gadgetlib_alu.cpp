@@ -66,20 +66,28 @@ namespace gadgetlib_alu {
             }
         };
 
+        // Read input values (or zeros if omitted).
+        vector<FieldT> inputs = deserialize_incoming_elements(circuit);
+        if (inputs.size() != 4) {
+            cerr << "Expected 4 inputs" << endl;
+            return false;
+        }
+
         // Allocate inputs.
         Variable destval;
         Variable arg1val;
         Variable arg2val;
         Variable flag;
+
         destval.allocate(pb);
         arg1val.allocate(pb);
         arg2val.allocate(pb);
         flag.allocate(pb);
 
-        // TODO: Assign input values from `circuit.connections`.
-        pb.val(destval) = FieldT::one();
-        pb.val(arg1val) = FieldT::one();
-        pb.val(arg2val) = FieldT::one();
+        pb.val(destval) = inputs[0];
+        pb.val(arg1val) = inputs[1];
+        pb.val(arg2val) = inputs[2];
+        pb.val(flag) = inputs[3];
 
         // Call the transition.
         // In principle, this block could be iterated over multiple instructions.
