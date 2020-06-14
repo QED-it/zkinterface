@@ -5,6 +5,11 @@
 namespace gadgetlib_alu {
     using namespace zkinterface_libsnark;
 
+    typedef pb_variable<FieldT> Variable;
+    typedef word_variable_gadget<FieldT> Word;
+    typedef pair<pb_variable<FieldT>, pb_variable<FieldT>> Pair;
+    typedef pb_variable_array<FieldT> Array;
+
 
     bool call_gadget(
             char *call_msg,
@@ -21,56 +26,91 @@ namespace gadgetlib_alu {
         const Circuit *circuit = find_message(call_msg, Message_Circuit)->message_as_Circuit();
         const Command *command = find_message(call_msg, Message_Command)->message_as_Command();
 
-        // Allocate.
+        // Setup.
         tinyram_architecture_params tinyram_params(8, 4);
         tinyram_protoboard<FieldT> pb(tinyram_params);
 
-        cout << "PB init, variables: " << pb.num_variables() << endl;
+        // Transition function.
+        auto transition = [&](
+                Variable destval,
+                Variable arg1val,
+                Variable arg2val,
+                Variable flag,
+                Variable out_result,
+                Variable out_flag
+        ) {
+            // Allocate.
+            Array opcode_indicators; // Unused.
+            Word destword(pb, destval);
+            Word arg1word(pb, arg1val);
+            Word arg2word(pb, arg2val);
 
-        pb_variable_array<FieldT> opcode_indicators;
-        word_variable_gadget<FieldT> desval(pb);
-        word_variable_gadget<FieldT> arg1val(pb);
-        word_variable_gadget<FieldT> arg2val(pb);
-        pb_variable<FieldT> flag;
-        pb_variable<FieldT> result;
-        pb_variable<FieldT> result_flag;
+            // ALU gadget.
+            ALU_and_gadget<FieldT> gadget(pb, opcode_indicators, destword, arg1word, arg2word, flag, out_result,
+                                          out_flag);
+
+            // Constraints.
+            if (command->constraints_generation()) {
+                destword.generate_r1cs_constraints(false); // TODO: true
+                arg1word.generate_r1cs_constraints(false);
+                arg2word.generate_r1cs_constraints(false);
+                gadget.generate_r1cs_constraints();
+            }
+
+            // Witness.
+            if (command->witness_generation()) {
+                destword.generate_r1cs_witness_from_packed();
+                arg1word.generate_r1cs_witness_from_packed();
+                arg2word.generate_r1cs_witness_from_packed();
+                gadget.generate_r1cs_witness();
+            }
+        };
+
+        // Allocate inputs.
+        Variable destval;
+        Variable arg1val;
+        Variable arg2val;
+        Variable flag;
+        destval.allocate(pb);
+        arg1val.allocate(pb);
+        arg2val.allocate(pb);
         flag.allocate(pb);
-        result.allocate(pb);
-        result_flag.allocate(pb);
 
-        // ALU gadget.
-        ALU_and_gadget<FieldT> gadget(pb, opcode_indicators, desval, arg1val, arg2val, flag, result, result_flag);
+        // TODO: Assign input values from `circuit.connections`.
+        pb.val(destval) = FieldT::one();
+        pb.val(arg1val) = FieldT::one();
+        pb.val(arg2val) = FieldT::one();
 
-        cout << "PB ready, variables: " << pb.num_variables() << endl;
+        // Call the transition.
+        // In principle, this block could be iterated over multiple instructions.
+        {
+            // Allocate outputs.
+            Variable out_result;
+            Variable out_flag;
+            out_result.allocate(pb);
+            out_flag.allocate(pb);
 
-        uint64_t new_variables = pb.num_variables();
+            transition(destval, arg1val, arg2val, flag, out_result, out_flag);
+            destval = out_result;
+            flag = out_flag;
+
+            cout << "Variables: " << pb.num_variables() << endl;
+            cout << "Result: " << destval.index << " = " << pb.val(destval).as_ulong() << endl;
+        }
+
+        Variable result = destval;
         uint64_t first_id = circuit->free_variable_id();
+        uint64_t new_variables = pb.num_variables();
         uint64_t free_id_after = first_id + new_variables;
-        uint64_t result_id = result.index;
 
-        // TODO: assign input values from `circuit.connections`.
-        pb.val(desval.packed) = FieldT::one();
-        pb.val(arg1val.packed) = FieldT::one();
-        pb.val(arg2val.packed) = FieldT::one();
-
-        // Gadget constraints.
+        // Serialize constraints.
         if (command->constraints_generation()) {
-            desval.generate_r1cs_constraints(false);
-            arg1val.generate_r1cs_constraints(false);
-            arg2val.generate_r1cs_constraints(false);
-            gadget.generate_r1cs_constraints();
-
             auto builder = serialize_protoboard_constraints(circuit, pb);
             constraints_callback(constraints_context, builder.GetBufferPointer());
         }
 
-        // Gadget witness.
+        // Serialize witness.
         if (command->witness_generation()) {
-            desval.generate_r1cs_witness_from_packed();
-            arg1val.generate_r1cs_witness_from_packed();
-            arg2val.generate_r1cs_witness_from_packed();
-            gadget.generate_r1cs_witness();
-
             auto builder = serialize_protoboard_local_assignment(circuit, pb);
             witness_callback(witness_context, builder.GetBufferPointer());
         }
@@ -83,7 +123,7 @@ namespace gadgetlib_alu {
 
             auto connections = CreateVariables(
                     builder,
-                    builder.CreateVector(vector<uint64_t>({result_id})),
+                    builder.CreateVector(vector<uint64_t>({result.index})),
                     builder.CreateVector(values));
 
             auto response = CreateCircuit(
