@@ -824,6 +824,8 @@ pub enum KeyValueOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
 /// Generic key-value for custom attributes.
+/// The key must be a string.
+/// The value can be one of several types.
 pub struct KeyValue<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
@@ -850,34 +852,50 @@ impl<'a> KeyValue<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args KeyValueArgs<'args>) -> flatbuffers::WIPOffset<KeyValue<'bldr>> {
       let mut builder = KeyValueBuilder::new(_fbb);
-      if let Some(x) = args.value { builder.add_value(x); }
+      builder.add_number(args.number);
+      if let Some(x) = args.data { builder.add_data(x); }
+      if let Some(x) = args.text { builder.add_text(x); }
       if let Some(x) = args.key { builder.add_key(x); }
       builder.finish()
     }
 
     pub const VT_KEY: flatbuffers::VOffsetT = 4;
-    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+    pub const VT_TEXT: flatbuffers::VOffsetT = 6;
+    pub const VT_DATA: flatbuffers::VOffsetT = 8;
+    pub const VT_NUMBER: flatbuffers::VOffsetT = 10;
 
   #[inline]
   pub fn key(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(KeyValue::VT_KEY, None)
   }
   #[inline]
-  pub fn value(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(KeyValue::VT_VALUE, None).map(|v| v.safe_slice())
+  pub fn text(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(KeyValue::VT_TEXT, None)
+  }
+  #[inline]
+  pub fn data(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(KeyValue::VT_DATA, None).map(|v| v.safe_slice())
+  }
+  #[inline]
+  pub fn number(&self) -> i64 {
+    self._tab.get::<i64>(KeyValue::VT_NUMBER, Some(0)).unwrap()
   }
 }
 
 pub struct KeyValueArgs<'a> {
     pub key: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub value: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub text: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub number: i64,
 }
 impl<'a> Default for KeyValueArgs<'a> {
     #[inline]
     fn default() -> Self {
         KeyValueArgs {
             key: None,
-            value: None,
+            text: None,
+            data: None,
+            number: 0,
         }
     }
 }
@@ -891,8 +909,16 @@ impl<'a: 'b, 'b> KeyValueBuilder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_KEY, key);
   }
   #[inline]
-  pub fn add_value(&mut self, value: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_VALUE, value);
+  pub fn add_text(&mut self, text: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_TEXT, text);
+  }
+  #[inline]
+  pub fn add_data(&mut self, data: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(KeyValue::VT_DATA, data);
+  }
+  #[inline]
+  pub fn add_number(&mut self, number: i64) {
+    self.fbb_.push_slot::<i64>(KeyValue::VT_NUMBER, number, 0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> KeyValueBuilder<'a, 'b> {

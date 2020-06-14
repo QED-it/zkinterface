@@ -151,9 +151,14 @@ table Variables {
 }
 
 /// Generic key-value for custom attributes.
+/// The key must be a string.
+/// The value can be one of several types.
 table KeyValue {
     key                     :string;
-    value                   :[ubyte];
+    // The value goes into one the following:
+    text                    :string;
+    data                    :[ubyte];
+    number                  :int64;
 }
 
 

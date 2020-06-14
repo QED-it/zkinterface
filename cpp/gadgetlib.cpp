@@ -6,17 +6,34 @@ using namespace std;
 using namespace flatbuffers;
 using namespace zkinterface_utils;
 
+
+Offset<Vector<Offset<KeyValue>>>
+make_configuration(FlatBufferBuilder &builder, vector<pair<string, string>> keyvalues) {
+    vector<Offset<KeyValue>> config;
+    for (auto kv = keyvalues.begin(); kv != keyvalues.end(); kv++) {
+        config.emplace_back(
+                CreateKeyValue(builder,
+                               builder.CreateString(kv->first),
+                               builder.CreateString(kv->second)));
+    }
+    return builder.CreateVector(config);
+}
+
 void make_input_circuit(vector<char> &out_buffer) {
     FlatBufferBuilder builder;
 
-    auto connections = CreateVariables(
-            builder,
-            builder.CreateVector(vector<uint64_t>({1, 2, 3, 4})));
+    auto connections = CreateVariables(builder, builder.CreateVector(vector<uint64_t>(
+            {1, 2, 3, 4})));
+
+    auto config = make_configuration(builder, {
+            {"function", "and"}});
 
     auto circuit = CreateCircuit(
             builder,
             connections,
-            5);
+            5,
+            0,
+            config);
 
     auto root = CreateRoot(builder, Message_Circuit, circuit.Union());
     builder.FinishSizePrefixed(root);

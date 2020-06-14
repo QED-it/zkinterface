@@ -45,4 +45,43 @@ namespace zkinterface_utils {
         return find_message(buffer.data(), buffer.size(), type);
     }
 
+    const KeyValue *find_config(const Circuit *circuit, string key) {
+        auto config = circuit->configuration();
+        if (config != nullptr) {
+            for (auto kv = config->begin(); kv != config->end(); kv++) {
+                if (kv->key()->str() == key) {
+                    return *kv;
+                }
+            }
+        }
+        return nullptr; // Not found.
+    }
+
+    string find_config_text(const Circuit *circuit, string key, string default_) {
+        auto kv = find_config(circuit, key);
+        if (kv != nullptr && kv->text() != nullptr) {
+            return kv->text()->str();
+        } else {
+            return default_;
+        }
+    }
+
+    const Vector<uint8_t> *find_config_data(const Circuit *circuit, string key) {
+        auto kv = find_config(circuit, key);
+        if (kv != nullptr && kv->text() != nullptr) {
+            return kv->data();
+        } else {
+            return nullptr;
+        }
+    }
+
+    int64_t find_config_number(const Circuit *circuit, string key, int64_t default_) {
+        auto kv = find_config(circuit, key);
+        if (kv != nullptr && kv->text() != nullptr) {
+            return kv->number();
+        } else {
+            return default_;
+        }
+    }
+
 } // namespace zkinterface_utils
