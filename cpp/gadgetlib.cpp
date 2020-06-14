@@ -4,21 +4,9 @@
 
 using namespace std;
 using namespace flatbuffers;
+using namespace zkinterface_utils;
 
-uoffset_t read_message_size(unsigned char *message) {
-    return ReadScalar<uoffset_t>(message) + sizeof(uoffset_t);
-}
-
-bool write_to_file(void *context, unsigned char *message) {
-    string name = *reinterpret_cast<string *>(context);
-    uoffset_t size = read_message_size(message);
-    cout << "write_to_file " << name << " : " << size << " bytes" << endl;
-    ofstream out(name, ios::binary);
-    out.write(reinterpret_cast<char *>(message), size);
-    return true;
-}
-
-FlatBufferBuilder make_input_circuit() {
+void make_input_circuit(vector<char> &output) {
     FlatBufferBuilder builder;
 
     auto connections = CreateVariables(
@@ -32,10 +20,13 @@ FlatBufferBuilder make_input_circuit() {
 
     auto root = CreateRoot(builder, Message_Circuit, circuit.Union());
     builder.FinishSizePrefixed(root);
-    return builder;
+
+    // Append to the output buffer.
+    char *begin = (char *) builder.GetBufferPointer();
+    output.insert(output.end(), begin, begin + builder.GetSize());
 }
 
-FlatBufferBuilder make_command(string action) {
+void make_command(vector<char> &output, string &action) {
     bool constraints_generation = (action == "constraints");
     bool witness_generation = (action == "witness");
 
@@ -43,26 +34,35 @@ FlatBufferBuilder make_command(string action) {
     auto command = CreateCommand(builder, constraints_generation, witness_generation);
     auto root = CreateRoot(builder, Message_Command, command.Union());
     builder.FinishSizePrefixed(root);
-    return builder;
+
+    // Append to the output buffer.
+    char *begin = (char *) builder.GetBufferPointer();
+    output.insert(output.end(), begin, begin + builder.GetSize());
 }
 
-void run(string action, string zkif_out_path) {
+bool callback_write_to_file(void *context, unsigned char *message) {
+    string name = *reinterpret_cast<string *>(context);
+    uoffset_t size = read_size_prefix(message);
+    cout << "callback_write_to_file " << name << ", " << size << " bytes" << endl;
+    ofstream out(name, ios::binary);
+    out.write(reinterpret_cast<char *>(message), size);
+    return true;
+}
 
-    auto circuit_builder = make_input_circuit();
-    auto circuit_msg = circuit_builder.GetBufferPointer();
+void run(string action, string zkif_out_prefix) {
+    vector<char> buf;
+    make_input_circuit(buf);
+    make_command(buf, action);
 
-    auto command_build = make_command(action);
-    auto command_msg = command_build.GetBufferPointer();
-
-    string constraints_name = "out_constraints.zkif";
-    string witness_name = "out_witness.zkif";
-    string return_name = "out_return.zkif";
+    string constraints_name = zkif_out_prefix + "_constraints.zkif";
+    string witness_name = zkif_out_prefix + "_witness.zkif";
+    string return_name = zkif_out_prefix + "_return.zkif";
 
     gadgetlib_example::call_gadget_example(
-            circuit_msg,
-            write_to_file, &constraints_name,
-            write_to_file, &witness_name,
-            write_to_file, &return_name);
+            buf.data(),
+            callback_write_to_file, &constraints_name,
+            callback_write_to_file, &witness_name,
+            callback_write_to_file, &return_name);
 }
 
 static const char USAGE[] =
