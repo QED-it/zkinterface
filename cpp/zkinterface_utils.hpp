@@ -27,6 +27,14 @@ namespace zkinterface_utils {
     // find_message in a vector, with buffer size validation.
     const Root *find_message(vector<char> &buffer, Message type);
 
+    const KeyValue *find_config(const Circuit *circuit, string key);
+
+    string find_config_text(const Circuit *circuit, string key, string default_ = "");
+
+    const Vector<uint8_t> *find_config_data(const Circuit *circuit, string key);
+
+    int64_t find_config_number(const Circuit *circuit, string key, int64_t default_ = 0);
+
     class MessageNotFoundException : public std::exception {
     public:
         inline const char *what() const throw() {

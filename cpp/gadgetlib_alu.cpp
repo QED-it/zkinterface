@@ -26,6 +26,9 @@ namespace gadgetlib_alu {
         const Circuit *circuit = find_message(call_msg, Message_Circuit)->message_as_Circuit();
         const Command *command = find_message(call_msg, Message_Command)->message_as_Command();
 
+        string function_name = find_config_text(circuit, "function", "");
+        cout << "Function: " << function_name << endl;
+
         // Setup.
         tinyram_architecture_params tinyram_params(8, 4);
         tinyram_protoboard<FieldT> pb(tinyram_params);
