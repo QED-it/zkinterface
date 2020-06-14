@@ -14,7 +14,7 @@ enable_testing()
 
 
 # Frontend gadgetlib.
-add_executable(gadgetlib gadgetlib.cpp zkinterface_utils.cpp libsnark_integration.cpp gadgetlib_example.cpp)
+add_executable(gadgetlib gadgetlib.cpp zkinterface_utils.cpp libsnark_integration.cpp gadgetlib_example.cpp gadgetlib_alu.cpp)
 # Dependencies.
 target_link_libraries(gadgetlib ff gmp)
 target_include_directories(gadgetlib PRIVATE . libsnark libsnark/depends/libff libsnark/depends/libfqfft /usr/local/include)

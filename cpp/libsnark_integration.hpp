@@ -84,7 +84,6 @@ namespace zkinterface_libsnark {
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            size_t num_outputs,
             const protoboard<FieldT> &pb);
 
 
