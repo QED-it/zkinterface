@@ -7,37 +7,6 @@
 
 namespace zkinterface_libsnark {
 
-// ==== Reading helpers ====
-
-    uoffset_t read_size_prefix(void *buffer) {
-        uoffset_t message_length = *reinterpret_cast<uoffset_t *>(buffer);
-        return sizeof(uoffset_t) + message_length;
-    }
-
-    const Root *find_message(vector<char> &buffer, Message type) {
-        auto offset = 0;
-
-        while (offset + sizeof(uoffset_t) * 2 <= buffer.size()) {
-            auto current = buffer.data() + offset;
-
-            auto size = read_size_prefix(current);
-            if (offset + size > buffer.size()) {
-                throw "invalid offset";
-            }
-
-            auto root = GetSizePrefixedRoot(current);
-
-            if (root->message_type() == type) {
-                return root; // Found.
-            }
-
-            offset += size;
-        }
-
-        throw MessageNotFoundException();
-    }
-
-
 // ==== Element conversion helpers ====
 
     // Bytes to Bigint. Little-Endian.

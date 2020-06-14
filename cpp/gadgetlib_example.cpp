@@ -1,11 +1,9 @@
 #include "gadgetlib_example.hpp"
 
 namespace gadgetlib_example {
-    using namespace std;
-
 
     bool call_gadget_example(
-            unsigned char *call_msg,
+            char *call_msg,
 
             gadget_callback_t constraints_callback,
             void *constraints_context,
@@ -16,7 +14,7 @@ namespace gadgetlib_example {
             gadget_callback_t return_callback,
             void *return_context
     ) {
-        auto root = GetSizePrefixedRoot(call_msg);
+        auto root = find_message(call_msg, Message_Circuit);
         const Circuit *call = root->message_as_Circuit();
 
         return constraints_request(call, constraints_callback, constraints_context, return_callback, return_context);

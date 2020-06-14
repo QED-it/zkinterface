@@ -14,7 +14,7 @@ enable_testing()
 
 
 # Frontend gadgetlib.
-add_executable(gadgetlib gadgetlib.cpp libsnark_integration.cpp gadgetlib_example.cpp)
+add_executable(gadgetlib gadgetlib.cpp zkinterface_utils.cpp libsnark_integration.cpp gadgetlib_example.cpp)
 # Dependencies.
 target_link_libraries(gadgetlib ff gmp)
 target_include_directories(gadgetlib PRIVATE . libsnark libsnark/depends/libff libsnark/depends/libfqfft /usr/local/include)
@@ -24,7 +24,7 @@ target_compile_definitions(gadgetlib PRIVATE -DBINARY_OUTPUT -DCURVE_ALT_BN128 -
 
 
 # Backend.
-add_executable(backend backend.cpp libsnark_integration.cpp)
+add_executable(backend backend.cpp zkinterface_utils.cpp libsnark_integration.cpp)
 add_test(backend backend)
 # Dependencies.
 target_link_libraries(backend ff gmp)
