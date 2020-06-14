@@ -6,27 +6,27 @@ using namespace std;
 using namespace flatbuffers;
 using namespace zkinterface_utils;
 
-void make_input_circuit(vector<char> &output) {
+void make_input_circuit(vector<char> &out_buffer) {
     FlatBufferBuilder builder;
 
     auto connections = CreateVariables(
             builder,
-            builder.CreateVector(vector<uint64_t>({})));
+            builder.CreateVector(vector<uint64_t>({1, 2, 3, 4})));
 
     auto circuit = CreateCircuit(
             builder,
             connections,
-            1);
+            5);
 
     auto root = CreateRoot(builder, Message_Circuit, circuit.Union());
     builder.FinishSizePrefixed(root);
 
-    // Append to the output buffer.
+    // Append to the out_buffer buffer.
     char *begin = (char *) builder.GetBufferPointer();
-    output.insert(output.end(), begin, begin + builder.GetSize());
+    out_buffer.insert(out_buffer.end(), begin, begin + builder.GetSize());
 }
 
-void make_command(vector<char> &output, string &action) {
+void make_command(vector<char> &out_buffer, string &action) {
     bool constraints_generation = (action == "constraints" || action == "combined");
     bool witness_generation = (action == "witness" || action == "combined");
 
@@ -35,9 +35,9 @@ void make_command(vector<char> &output, string &action) {
     auto root = CreateRoot(builder, Message_Command, command.Union());
     builder.FinishSizePrefixed(root);
 
-    // Append to the output buffer.
+    // Append to the out_buffer buffer.
     char *begin = (char *) builder.GetBufferPointer();
-    output.insert(output.end(), begin, begin + builder.GetSize());
+    out_buffer.insert(out_buffer.end(), begin, begin + builder.GetSize());
 }
 
 bool callback_write_to_file(void *context, unsigned char *message) {
@@ -52,16 +52,16 @@ bool callback_write_to_file(void *context, unsigned char *message) {
 void run(string action, string zkif_out_prefix) {
     zkinterface_libsnark::CurveT::init_public_params();
 
-    vector<char> buf;
-    make_input_circuit(buf);
-    make_command(buf, action);
+    vector<char> buffer;
+    make_input_circuit(buffer);
+    make_command(buffer, action);
 
     string constraints_name = zkif_out_prefix + "_constraints.zkif";
     string witness_name = zkif_out_prefix + "_witness.zkif";
     string return_name = zkif_out_prefix + "_return.zkif";
 
     gadgetlib_alu::call_gadget(
-            buf.data(),
+            buffer.data(),
             callback_write_to_file, &constraints_name,
             callback_write_to_file, &witness_name,
             callback_write_to_file, &return_name);

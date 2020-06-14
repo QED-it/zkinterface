@@ -48,6 +48,7 @@ namespace zkinterface_libsnark {
     }
 
     // Bytes to elements.
+    // `from_bytes` can be null if `element_size` is 0.
     vector<FieldT> le_into_elements(const uint8_t *from_bytes, size_t num_elements, size_t element_size) {
         vector<FieldT> to_elements(num_elements);
         for (size_t i = 0; i < num_elements; ++i) {
@@ -60,6 +61,9 @@ namespace zkinterface_libsnark {
 
     // FlatBuffers bytes into elements.
     vector<FieldT> deserialize_elements(const flatbuffers::Vector<uint8_t> *from_bytes, size_t num_elements) {
+        if (from_bytes == nullptr) {
+            return le_into_elements(nullptr, num_elements, 0);
+        }
         size_t element_size = from_bytes->size() / num_elements;
         return le_into_elements(from_bytes->data(), num_elements, element_size);
     }
