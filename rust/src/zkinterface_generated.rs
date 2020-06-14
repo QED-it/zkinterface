@@ -430,11 +430,11 @@ impl<'a> Command<'a> {
       let mut builder = CommandBuilder::new(_fbb);
       if let Some(x) = args.parameters { builder.add_parameters(x); }
       builder.add_witness_generation(args.witness_generation);
-      builder.add_r1cs_generation(args.r1cs_generation);
+      builder.add_constraints_generation(args.constraints_generation);
       builder.finish()
     }
 
-    pub const VT_R1CS_GENERATION: flatbuffers::VOffsetT = 4;
+    pub const VT_CONSTRAINTS_GENERATION: flatbuffers::VOffsetT = 4;
     pub const VT_WITNESS_GENERATION: flatbuffers::VOffsetT = 6;
     pub const VT_PARAMETERS: flatbuffers::VOffsetT = 8;
 
@@ -444,8 +444,8 @@ impl<'a> Command<'a> {
   /// The response must be another Circuit message with a greater `free_variable_id`
   /// followed by one or more ConstraintSystem messages.
   #[inline]
-  pub fn r1cs_generation(&self) -> bool {
-    self._tab.get::<bool>(Command::VT_R1CS_GENERATION, Some(false)).unwrap()
+  pub fn constraints_generation(&self) -> bool {
+    self._tab.get::<bool>(Command::VT_CONSTRAINTS_GENERATION, Some(false)).unwrap()
   }
   /// For gadget flows.
   /// Request the generation of a witness (or part thereof).
@@ -465,7 +465,7 @@ impl<'a> Command<'a> {
 }
 
 pub struct CommandArgs<'a> {
-    pub r1cs_generation: bool,
+    pub constraints_generation: bool,
     pub witness_generation: bool,
     pub parameters: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
@@ -473,7 +473,7 @@ impl<'a> Default for CommandArgs<'a> {
     #[inline]
     fn default() -> Self {
         CommandArgs {
-            r1cs_generation: false,
+            constraints_generation: false,
             witness_generation: false,
             parameters: None,
         }
@@ -485,8 +485,8 @@ pub struct CommandBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> CommandBuilder<'a, 'b> {
   #[inline]
-  pub fn add_r1cs_generation(&mut self, r1cs_generation: bool) {
-    self.fbb_.push_slot::<bool>(Command::VT_R1CS_GENERATION, r1cs_generation, false);
+  pub fn add_constraints_generation(&mut self, constraints_generation: bool) {
+    self.fbb_.push_slot::<bool>(Command::VT_CONSTRAINTS_GENERATION, constraints_generation, false);
   }
   #[inline]
   pub fn add_witness_generation(&mut self, witness_generation: bool) {

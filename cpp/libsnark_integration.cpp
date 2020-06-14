@@ -174,9 +174,9 @@ namespace zkinterface_libsnark {
                     make_lc(lib_constraint->c.terms)));
         }
 
-        auto r1csConstraints = CreateR1CSConstraints(builder, builder.CreateVector(fb_constraints));
+        auto constraint_system = CreateConstraintSystem(builder, builder.CreateVector(fb_constraints));
 
-        auto root = CreateRoot(builder, Message_R1CSConstraints, r1csConstraints.Union());
+        auto root = CreateRoot(builder, Message_ConstraintSystem, constraint_system.Union());
         builder.FinishSizePrefixed(root);
         return builder;
     }

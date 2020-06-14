@@ -76,7 +76,7 @@ table Command {
     /// If true, this must be followed by a Circuit.
     /// The response must be another Circuit message with a greater `free_variable_id`
     /// followed by one or more ConstraintSystem messages.
-    r1cs_generation         :bool;
+    constraints_generation  :bool;
 
     /// For gadget flows.
     /// Request the generation of a witness (or part thereof).

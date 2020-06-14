@@ -68,12 +68,11 @@ namespace gadgetlib_example {
             constraints.push_back(constraint);
             constraints.push_back(constraint);
 
-            auto r1csConstraints = CreateR1CSConstraints(builder,
-                                                         builder.CreateVector(
-                                                                 constraints));
+            auto constraints_system = CreateConstraintSystem(builder,
+                                                             builder.CreateVector(constraints));
 
-            auto root = CreateRoot(builder, Message_R1CSConstraints,
-                                   r1csConstraints.Union());
+            auto root = CreateRoot(builder, Message_ConstraintSystem,
+                                   constraints_system.Union());
             builder.FinishSizePrefixed(root);
 
             if (result_stream_callback != nullptr) {
