@@ -152,13 +152,12 @@ namespace zkinterface_libsnark {
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            size_t num_outputs,
             const protoboard<FieldT> &pb) {
         FlatBufferBuilder builder;
 
         size_t all_vars = pb.num_variables();
-        size_t shared_vars = circuit->connections()->variable_ids()->size() + num_outputs;
-        size_t local_vars = all_vars - shared_vars;
+        size_t input_vars = circuit->connections()->variable_ids()->size();
+        size_t local_vars = all_vars - input_vars;
 
         vector<uint64_t> variable_ids(local_vars);
         vector<uint8_t> elements(fieldt_size * local_vars);
@@ -168,7 +167,7 @@ namespace zkinterface_libsnark {
         for (size_t index = 0; index < local_vars; ++index) {
             variable_ids[index] = free_id + index;
             into_le(
-                    pb.val(1 + shared_vars + index).as_bigint(),
+                    pb.val(1 + input_vars + index).as_bigint(),
                     elements.data() + fieldt_size * index,
                     fieldt_size);
         }
