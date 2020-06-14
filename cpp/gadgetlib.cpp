@@ -1,14 +1,57 @@
 #include <iostream>
+#include <fstream>
 #include "gadgetlib_example.hpp"
 
 using namespace std;
+using namespace flatbuffers;
+
+uoffset_t read_message_size(unsigned char *message) {
+    return ReadScalar<uoffset_t>(message) + sizeof(uoffset_t);
+}
+
+bool write_to_file(void *context, unsigned char *message) {
+    string name = *reinterpret_cast<string *>(context);
+    uoffset_t size = read_message_size(message);
+    cout << "write_to_file " << name << " : " << size << " bytes" << endl;
+    ofstream out(name, ios::binary);
+    out.write(reinterpret_cast<char *>(message), size);
+    return true;
+}
+
+FlatBufferBuilder make_input_circuit() {
+    FlatBufferBuilder builder;
+
+    auto connections = CreateVariables(
+            builder,
+            builder.CreateVector(vector<uint64_t>({})));
+
+    auto circuit = CreateCircuit(
+            builder,
+            connections,
+            1);
+
+    auto root = CreateRoot(builder, Message_Circuit, circuit.Union());
+    builder.FinishSizePrefixed(root);
+    return builder;
+}
 
 void run(string action, string zkif_out_path) {
-    if (action == "constraints") {
-        r1cs_request(nullptr, nullptr, nullptr, nullptr, nullptr);
-    } else if (action == "witness") {
-        assignments_request(nullptr, nullptr, nullptr, nullptr, nullptr);
-    }
+
+    auto circuit_builder = make_input_circuit();
+    auto circuit_msg = circuit_builder.GetBufferPointer();
+
+    // TODO: make Command.
+    //if (action == "constraints") {} else if (action == "witness") {}
+
+    string constraints_name = "out_constraints.zkif";
+    string witness_name = "out_witness.zkif";
+    string return_name = "out_return.zkif";
+
+    gadgetlib_example::call_gadget_example(
+            circuit_msg,
+            write_to_file, &constraints_name,
+            write_to_file, &witness_name,
+            write_to_file, &return_name);
 }
 
 static const char USAGE[] =
