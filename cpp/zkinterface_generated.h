@@ -989,8 +989,8 @@ flatbuffers::Offset<Variables> CreateVariables(flatbuffers::FlatBufferBuilder &_
 struct KeyValueT : public flatbuffers::NativeTable {
   typedef KeyValue TableType;
   std::string key;
-  std::string text;
   std::vector<uint8_t> data;
+  std::string text;
   int64_t number;
   KeyValueT()
       : number(0) {
@@ -1000,8 +1000,8 @@ struct KeyValueT : public flatbuffers::NativeTable {
 inline bool operator==(const KeyValueT &lhs, const KeyValueT &rhs) {
   return
       (lhs.key == rhs.key) &&
-      (lhs.text == rhs.text) &&
       (lhs.data == rhs.data) &&
+      (lhs.text == rhs.text) &&
       (lhs.number == rhs.number);
 }
 
@@ -1018,8 +1018,8 @@ struct KeyValue FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef KeyValueBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_KEY = 4,
-    VT_TEXT = 6,
-    VT_DATA = 8,
+    VT_DATA = 6,
+    VT_TEXT = 8,
     VT_NUMBER = 10
   };
   const flatbuffers::String *key() const {
@@ -1028,17 +1028,17 @@ struct KeyValue FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::String *mutable_key() {
     return GetPointer<flatbuffers::String *>(VT_KEY);
   }
-  const flatbuffers::String *text() const {
-    return GetPointer<const flatbuffers::String *>(VT_TEXT);
-  }
-  flatbuffers::String *mutable_text() {
-    return GetPointer<flatbuffers::String *>(VT_TEXT);
-  }
   const flatbuffers::Vector<uint8_t> *data() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_DATA);
   }
   flatbuffers::Vector<uint8_t> *mutable_data() {
     return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_DATA);
+  }
+  const flatbuffers::String *text() const {
+    return GetPointer<const flatbuffers::String *>(VT_TEXT);
+  }
+  flatbuffers::String *mutable_text() {
+    return GetPointer<flatbuffers::String *>(VT_TEXT);
   }
   int64_t number() const {
     return GetField<int64_t>(VT_NUMBER, 0);
@@ -1050,10 +1050,10 @@ struct KeyValue FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_KEY) &&
            verifier.VerifyString(key()) &&
-           VerifyOffset(verifier, VT_TEXT) &&
-           verifier.VerifyString(text()) &&
            VerifyOffset(verifier, VT_DATA) &&
            verifier.VerifyVector(data()) &&
+           VerifyOffset(verifier, VT_TEXT) &&
+           verifier.VerifyString(text()) &&
            VerifyField<int64_t>(verifier, VT_NUMBER) &&
            verifier.EndTable();
   }
@@ -1069,11 +1069,11 @@ struct KeyValueBuilder {
   void add_key(flatbuffers::Offset<flatbuffers::String> key) {
     fbb_.AddOffset(KeyValue::VT_KEY, key);
   }
-  void add_text(flatbuffers::Offset<flatbuffers::String> text) {
-    fbb_.AddOffset(KeyValue::VT_TEXT, text);
-  }
   void add_data(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data) {
     fbb_.AddOffset(KeyValue::VT_DATA, data);
+  }
+  void add_text(flatbuffers::Offset<flatbuffers::String> text) {
+    fbb_.AddOffset(KeyValue::VT_TEXT, text);
   }
   void add_number(int64_t number) {
     fbb_.AddElement<int64_t>(KeyValue::VT_NUMBER, number, 0);
@@ -1093,13 +1093,13 @@ struct KeyValueBuilder {
 inline flatbuffers::Offset<KeyValue> CreateKeyValue(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> key = 0,
-    flatbuffers::Offset<flatbuffers::String> text = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data = 0,
+    flatbuffers::Offset<flatbuffers::String> text = 0,
     int64_t number = 0) {
   KeyValueBuilder builder_(_fbb);
   builder_.add_number(number);
-  builder_.add_data(data);
   builder_.add_text(text);
+  builder_.add_data(data);
   builder_.add_key(key);
   return builder_.Finish();
 }
@@ -1107,17 +1107,17 @@ inline flatbuffers::Offset<KeyValue> CreateKeyValue(
 inline flatbuffers::Offset<KeyValue> CreateKeyValueDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *key = nullptr,
-    const char *text = nullptr,
     const std::vector<uint8_t> *data = nullptr,
+    const char *text = nullptr,
     int64_t number = 0) {
   auto key__ = key ? _fbb.CreateString(key) : 0;
-  auto text__ = text ? _fbb.CreateString(text) : 0;
   auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
+  auto text__ = text ? _fbb.CreateString(text) : 0;
   return zkinterface::CreateKeyValue(
       _fbb,
       key__,
-      text__,
       data__,
+      text__,
       number);
 }
 
@@ -1430,8 +1430,8 @@ inline void KeyValue::UnPackTo(KeyValueT *_o, const flatbuffers::resolver_functi
   (void)_o;
   (void)_resolver;
   { auto _e = key(); if (_e) _o->key = _e->str(); }
-  { auto _e = text(); if (_e) _o->text = _e->str(); }
   { auto _e = data(); if (_e) { _o->data.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->data[_i] = _e->Get(_i); } } }
+  { auto _e = text(); if (_e) _o->text = _e->str(); }
   { auto _e = number(); _o->number = _e; }
 }
 
@@ -1444,14 +1444,14 @@ inline flatbuffers::Offset<KeyValue> CreateKeyValue(flatbuffers::FlatBufferBuild
   (void)_o;
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const KeyValueT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _key = _o->key.empty() ? 0 : _fbb.CreateString(_o->key);
-  auto _text = _o->text.empty() ? 0 : _fbb.CreateString(_o->text);
   auto _data = _o->data.size() ? _fbb.CreateVector(_o->data) : 0;
+  auto _text = _o->text.empty() ? 0 : _fbb.CreateString(_o->text);
   auto _number = _o->number;
   return zkinterface::CreateKeyValue(
       _fbb,
       _key,
-      _text,
       _data,
+      _text,
       _number);
 }
 
