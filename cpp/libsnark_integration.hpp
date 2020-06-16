@@ -6,11 +6,12 @@
 #ifndef ZKIF_LIBSNARK_INTEGRATION_H_
 #define ZKIF_LIBSNARK_INTEGRATION_H_
 
-#include "zkinterface.h"
-#include "zkinterface_generated.h"
-
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"
+
+#include "zkinterface.h"
+#include "zkinterface_generated.h"
+#include "zkinterface_utils.hpp"
 
 using namespace zkinterface;
 using flatbuffers::FlatBufferBuilder;
@@ -24,6 +25,7 @@ using libff::bigint;
 using libff::bit_vector;
 
 namespace zkinterface_libsnark {
+    using namespace zkinterface_utils;
 
     typedef libff::default_ec_pp CurveT;
     typedef libff::Fr<CurveT> FieldT;
@@ -44,20 +46,6 @@ namespace zkinterface_libsnark {
 
         virtual vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements);
     };
-
-
-// ==== Reading helpers ====
-
-    uoffset_t read_size_prefix(void *buffer);
-
-    class MessageNotFoundException : public std::exception {
-    public:
-        inline const char *what() const throw() {
-            return "message of the required type not found";
-        }
-    };
-
-    const Root *find_message(vector<char> &buffer, Message type);
 
 
 // ==== Element conversion helpers ====
@@ -96,7 +84,6 @@ namespace zkinterface_libsnark {
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            size_t num_outputs,
             const protoboard<FieldT> &pb);
 
 

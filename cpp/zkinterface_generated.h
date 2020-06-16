@@ -9,52 +9,90 @@
 namespace zkinterface {
 
 struct Circuit;
+struct CircuitBuilder;
+struct CircuitT;
 
-struct R1CSConstraints;
+struct ConstraintSystem;
+struct ConstraintSystemBuilder;
+struct ConstraintSystemT;
 
 struct Witness;
+struct WitnessBuilder;
+struct WitnessT;
+
+struct Command;
+struct CommandBuilder;
+struct CommandT;
 
 struct BilinearConstraint;
+struct BilinearConstraintBuilder;
+struct BilinearConstraintT;
 
 struct Variables;
+struct VariablesBuilder;
+struct VariablesT;
 
 struct KeyValue;
+struct KeyValueBuilder;
+struct KeyValueT;
 
 struct Root;
+struct RootBuilder;
+struct RootT;
+
+bool operator==(const CircuitT &lhs, const CircuitT &rhs);
+bool operator!=(const CircuitT &lhs, const CircuitT &rhs);
+bool operator==(const ConstraintSystemT &lhs, const ConstraintSystemT &rhs);
+bool operator!=(const ConstraintSystemT &lhs, const ConstraintSystemT &rhs);
+bool operator==(const WitnessT &lhs, const WitnessT &rhs);
+bool operator!=(const WitnessT &lhs, const WitnessT &rhs);
+bool operator==(const CommandT &lhs, const CommandT &rhs);
+bool operator!=(const CommandT &lhs, const CommandT &rhs);
+bool operator==(const BilinearConstraintT &lhs, const BilinearConstraintT &rhs);
+bool operator!=(const BilinearConstraintT &lhs, const BilinearConstraintT &rhs);
+bool operator==(const VariablesT &lhs, const VariablesT &rhs);
+bool operator!=(const VariablesT &lhs, const VariablesT &rhs);
+bool operator==(const KeyValueT &lhs, const KeyValueT &rhs);
+bool operator!=(const KeyValueT &lhs, const KeyValueT &rhs);
+bool operator==(const RootT &lhs, const RootT &rhs);
+bool operator!=(const RootT &lhs, const RootT &rhs);
 
 enum Message {
   Message_NONE = 0,
   Message_Circuit = 1,
-  Message_R1CSConstraints = 2,
+  Message_ConstraintSystem = 2,
   Message_Witness = 3,
+  Message_Command = 4,
   Message_MIN = Message_NONE,
-  Message_MAX = Message_Witness
+  Message_MAX = Message_Command
 };
 
-inline const Message (&EnumValuesMessage())[4] {
+inline const Message (&EnumValuesMessage())[5] {
   static const Message values[] = {
     Message_NONE,
     Message_Circuit,
-    Message_R1CSConstraints,
-    Message_Witness
+    Message_ConstraintSystem,
+    Message_Witness,
+    Message_Command
   };
   return values;
 }
 
 inline const char * const *EnumNamesMessage() {
-  static const char * const names[] = {
+  static const char * const names[6] = {
     "NONE",
     "Circuit",
-    "R1CSConstraints",
+    "ConstraintSystem",
     "Witness",
+    "Command",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMessage(Message e) {
-  if (e < Message_NONE || e > Message_Witness) return "";
-  const size_t index = static_cast<int>(e);
+  if (flatbuffers::IsOutRange(e, Message_NONE, Message_Command)) return "";
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesMessage()[index];
 }
 
@@ -62,32 +100,189 @@ template<typename T> struct MessageTraits {
   static const Message enum_value = Message_NONE;
 };
 
-template<> struct MessageTraits<Circuit> {
+template<> struct MessageTraits<zkinterface::Circuit> {
   static const Message enum_value = Message_Circuit;
 };
 
-template<> struct MessageTraits<R1CSConstraints> {
-  static const Message enum_value = Message_R1CSConstraints;
+template<> struct MessageTraits<zkinterface::ConstraintSystem> {
+  static const Message enum_value = Message_ConstraintSystem;
 };
 
-template<> struct MessageTraits<Witness> {
+template<> struct MessageTraits<zkinterface::Witness> {
   static const Message enum_value = Message_Witness;
 };
 
+template<> struct MessageTraits<zkinterface::Command> {
+  static const Message enum_value = Message_Command;
+};
+
+struct MessageUnion {
+  Message type;
+  void *value;
+
+  MessageUnion() : type(Message_NONE), value(nullptr) {}
+  MessageUnion(MessageUnion&& u) FLATBUFFERS_NOEXCEPT :
+    type(Message_NONE), value(nullptr)
+    { std::swap(type, u.type); std::swap(value, u.value); }
+  MessageUnion(const MessageUnion &);
+  MessageUnion &operator=(const MessageUnion &u)
+    { MessageUnion t(u); std::swap(type, t.type); std::swap(value, t.value); return *this; }
+  MessageUnion &operator=(MessageUnion &&u) FLATBUFFERS_NOEXCEPT
+    { std::swap(type, u.type); std::swap(value, u.value); return *this; }
+  ~MessageUnion() { Reset(); }
+
+  void Reset();
+
+#ifndef FLATBUFFERS_CPP98_STL
+  template <typename T>
+  void Set(T&& val) {
+    using RT = typename std::remove_reference<T>::type;
+    Reset();
+    type = MessageTraits<typename RT::TableType>::enum_value;
+    if (type != Message_NONE) {
+      value = new RT(std::forward<T>(val));
+    }
+  }
+#endif  // FLATBUFFERS_CPP98_STL
+
+  static void *UnPack(const void *obj, Message type, const flatbuffers::resolver_function_t *resolver);
+  flatbuffers::Offset<void> Pack(flatbuffers::FlatBufferBuilder &_fbb, const flatbuffers::rehasher_function_t *_rehasher = nullptr) const;
+
+  zkinterface::CircuitT *AsCircuit() {
+    return type == Message_Circuit ?
+      reinterpret_cast<zkinterface::CircuitT *>(value) : nullptr;
+  }
+  const zkinterface::CircuitT *AsCircuit() const {
+    return type == Message_Circuit ?
+      reinterpret_cast<const zkinterface::CircuitT *>(value) : nullptr;
+  }
+  zkinterface::ConstraintSystemT *AsConstraintSystem() {
+    return type == Message_ConstraintSystem ?
+      reinterpret_cast<zkinterface::ConstraintSystemT *>(value) : nullptr;
+  }
+  const zkinterface::ConstraintSystemT *AsConstraintSystem() const {
+    return type == Message_ConstraintSystem ?
+      reinterpret_cast<const zkinterface::ConstraintSystemT *>(value) : nullptr;
+  }
+  zkinterface::WitnessT *AsWitness() {
+    return type == Message_Witness ?
+      reinterpret_cast<zkinterface::WitnessT *>(value) : nullptr;
+  }
+  const zkinterface::WitnessT *AsWitness() const {
+    return type == Message_Witness ?
+      reinterpret_cast<const zkinterface::WitnessT *>(value) : nullptr;
+  }
+  zkinterface::CommandT *AsCommand() {
+    return type == Message_Command ?
+      reinterpret_cast<zkinterface::CommandT *>(value) : nullptr;
+  }
+  const zkinterface::CommandT *AsCommand() const {
+    return type == Message_Command ?
+      reinterpret_cast<const zkinterface::CommandT *>(value) : nullptr;
+  }
+};
+
+
+inline bool operator==(const MessageUnion &lhs, const MessageUnion &rhs) {
+  if (lhs.type != rhs.type) return false;
+  switch (lhs.type) {
+    case Message_NONE: {
+      return true;
+    }
+    case Message_Circuit: {
+      return *(reinterpret_cast<const zkinterface::CircuitT *>(lhs.value)) ==
+             *(reinterpret_cast<const zkinterface::CircuitT *>(rhs.value));
+    }
+    case Message_ConstraintSystem: {
+      return *(reinterpret_cast<const zkinterface::ConstraintSystemT *>(lhs.value)) ==
+             *(reinterpret_cast<const zkinterface::ConstraintSystemT *>(rhs.value));
+    }
+    case Message_Witness: {
+      return *(reinterpret_cast<const zkinterface::WitnessT *>(lhs.value)) ==
+             *(reinterpret_cast<const zkinterface::WitnessT *>(rhs.value));
+    }
+    case Message_Command: {
+      return *(reinterpret_cast<const zkinterface::CommandT *>(lhs.value)) ==
+             *(reinterpret_cast<const zkinterface::CommandT *>(rhs.value));
+    }
+    default: {
+      return false;
+    }
+  }
+}
+
+inline bool operator!=(const MessageUnion &lhs, const MessageUnion &rhs) {
+    return !(lhs == rhs);
+}
+
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
 bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
+
+enum ConstraintType {
+  ConstraintType_R1CS = 0,
+  ConstraintType_arithmetic = 1,
+  ConstraintType_MIN = ConstraintType_R1CS,
+  ConstraintType_MAX = ConstraintType_arithmetic
+};
+
+inline const ConstraintType (&EnumValuesConstraintType())[2] {
+  static const ConstraintType values[] = {
+    ConstraintType_R1CS,
+    ConstraintType_arithmetic
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesConstraintType() {
+  static const char * const names[3] = {
+    "R1CS",
+    "arithmetic",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameConstraintType(ConstraintType e) {
+  if (flatbuffers::IsOutRange(e, ConstraintType_R1CS, ConstraintType_arithmetic)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesConstraintType()[index];
+}
+
+struct CircuitT : public flatbuffers::NativeTable {
+  typedef Circuit TableType;
+  std::unique_ptr<zkinterface::VariablesT> connections;
+  uint64_t free_variable_id;
+  std::vector<uint8_t> field_maximum;
+  std::vector<std::unique_ptr<zkinterface::KeyValueT>> configuration;
+  CircuitT()
+      : free_variable_id(0) {
+  }
+};
+
+inline bool operator==(const CircuitT &lhs, const CircuitT &rhs) {
+  return
+      (lhs.connections == rhs.connections) &&
+      (lhs.free_variable_id == rhs.free_variable_id) &&
+      (lhs.field_maximum == rhs.field_maximum) &&
+      (lhs.configuration == rhs.configuration);
+}
+
+inline bool operator!=(const CircuitT &lhs, const CircuitT &rhs) {
+    return !(lhs == rhs);
+}
+
 
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
 struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef CircuitT NativeTableType;
+  typedef CircuitBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONNECTIONS = 4,
     VT_FREE_VARIABLE_ID = 6,
-    VT_R1CS_GENERATION = 8,
-    VT_WITNESS_GENERATION = 10,
-    VT_FIELD_MAXIMUM = 12,
-    VT_CONFIGURATION = 14
+    VT_FIELD_MAXIMUM = 8,
+    VT_CONFIGURATION = 10
   };
   /// Variables to use as connections to the sub-circuit.
   ///
@@ -95,24 +290,20 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   /// - Or variables to use as output connections from the gadget.
   /// - Variables are allocated by the sender of this message.
   /// - The same structure must be provided for R1CS and witness generations.
-  /// - If `witness_generation=true`, variables must be assigned values.
-  const Variables *connections() const {
-    return GetPointer<const Variables *>(VT_CONNECTIONS);
+  /// - If using `Command.witness_generation`, variables must be assigned values.
+  const zkinterface::Variables *connections() const {
+    return GetPointer<const zkinterface::Variables *>(VT_CONNECTIONS);
+  }
+  zkinterface::Variables *mutable_connections() {
+    return GetPointer<zkinterface::Variables *>(VT_CONNECTIONS);
   }
   /// A variable ID greater than all IDs allocated by the sender of this message.
   /// The recipient of this message can allocate new IDs >= free_variable_id.
   uint64_t free_variable_id() const {
     return GetField<uint64_t>(VT_FREE_VARIABLE_ID, 0);
   }
-  /// Whether a constraint system is being generated.
-  /// Provide constraints in R1CSConstraints messages.
-  bool r1cs_generation() const {
-    return GetField<uint8_t>(VT_R1CS_GENERATION, 0) != 0;
-  }
-  /// Whether a witness is being generated.
-  /// Provide the witness in `connections.values` and Witness messages.
-  bool witness_generation() const {
-    return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
+  bool mutate_free_variable_id(uint64_t _free_variable_id) {
+    return SetField<uint64_t>(VT_FREE_VARIABLE_ID, _free_variable_id, 0);
   }
   /// The largest element of the finite field used by the current system.
   /// A canonical little-endian representation of the field order minus one.
@@ -120,21 +311,25 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint8_t> *field_maximum() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_FIELD_MAXIMUM);
   }
+  flatbuffers::Vector<uint8_t> *mutable_field_maximum() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_FIELD_MAXIMUM);
+  }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
   /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
   /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
-  const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *configuration() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *>(VT_CONFIGURATION);
+  const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *configuration() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_CONFIGURATION);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *mutable_configuration() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_CONFIGURATION);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_CONNECTIONS) &&
            verifier.VerifyTable(connections()) &&
            VerifyField<uint64_t>(verifier, VT_FREE_VARIABLE_ID) &&
-           VerifyField<uint8_t>(verifier, VT_R1CS_GENERATION) &&
-           VerifyField<uint8_t>(verifier, VT_WITNESS_GENERATION) &&
            VerifyOffset(verifier, VT_FIELD_MAXIMUM) &&
            verifier.VerifyVector(field_maximum()) &&
            VerifyOffset(verifier, VT_CONFIGURATION) &&
@@ -142,27 +337,25 @@ struct Circuit FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVectorOfTables(configuration()) &&
            verifier.EndTable();
   }
+  CircuitT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(CircuitT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Circuit> Pack(flatbuffers::FlatBufferBuilder &_fbb, const CircuitT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
 struct CircuitBuilder {
+  typedef Circuit Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_connections(flatbuffers::Offset<Variables> connections) {
+  void add_connections(flatbuffers::Offset<zkinterface::Variables> connections) {
     fbb_.AddOffset(Circuit::VT_CONNECTIONS, connections);
   }
   void add_free_variable_id(uint64_t free_variable_id) {
     fbb_.AddElement<uint64_t>(Circuit::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
-  void add_r1cs_generation(bool r1cs_generation) {
-    fbb_.AddElement<uint8_t>(Circuit::VT_R1CS_GENERATION, static_cast<uint8_t>(r1cs_generation), 0);
-  }
-  void add_witness_generation(bool witness_generation) {
-    fbb_.AddElement<uint8_t>(Circuit::VT_WITNESS_GENERATION, static_cast<uint8_t>(witness_generation), 0);
-  }
   void add_field_maximum(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_maximum) {
     fbb_.AddOffset(Circuit::VT_FIELD_MAXIMUM, field_maximum);
   }
-  void add_configuration(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration) {
+  void add_configuration(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> configuration) {
     fbb_.AddOffset(Circuit::VT_CONFIGURATION, configuration);
   }
   explicit CircuitBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -179,114 +372,179 @@ struct CircuitBuilder {
 
 inline flatbuffers::Offset<Circuit> CreateCircuit(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Variables> connections = 0,
+    flatbuffers::Offset<zkinterface::Variables> connections = 0,
     uint64_t free_variable_id = 0,
-    bool r1cs_generation = false,
-    bool witness_generation = false,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> field_maximum = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> configuration = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> configuration = 0) {
   CircuitBuilder builder_(_fbb);
   builder_.add_free_variable_id(free_variable_id);
   builder_.add_configuration(configuration);
   builder_.add_field_maximum(field_maximum);
   builder_.add_connections(connections);
-  builder_.add_witness_generation(witness_generation);
-  builder_.add_r1cs_generation(r1cs_generation);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<Circuit> CreateCircuitDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Variables> connections = 0,
+    flatbuffers::Offset<zkinterface::Variables> connections = 0,
     uint64_t free_variable_id = 0,
-    bool r1cs_generation = false,
-    bool witness_generation = false,
     const std::vector<uint8_t> *field_maximum = nullptr,
-    const std::vector<flatbuffers::Offset<KeyValue>> *configuration = nullptr) {
+    const std::vector<flatbuffers::Offset<zkinterface::KeyValue>> *configuration = nullptr) {
   auto field_maximum__ = field_maximum ? _fbb.CreateVector<uint8_t>(*field_maximum) : 0;
-  auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*configuration) : 0;
+  auto configuration__ = configuration ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>>(*configuration) : 0;
   return zkinterface::CreateCircuit(
       _fbb,
       connections,
       free_variable_id,
-      r1cs_generation,
-      witness_generation,
       field_maximum__,
       configuration__);
 }
 
-/// R1CSConstraints represents constraints to be added to the constraint system.
+flatbuffers::Offset<Circuit> CreateCircuit(flatbuffers::FlatBufferBuilder &_fbb, const CircuitT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct ConstraintSystemT : public flatbuffers::NativeTable {
+  typedef ConstraintSystem TableType;
+  std::vector<std::unique_ptr<zkinterface::BilinearConstraintT>> constraints;
+  zkinterface::ConstraintType constraint_type;
+  std::vector<std::unique_ptr<zkinterface::KeyValueT>> info;
+  ConstraintSystemT()
+      : constraint_type(zkinterface::ConstraintType_R1CS) {
+  }
+};
+
+inline bool operator==(const ConstraintSystemT &lhs, const ConstraintSystemT &rhs) {
+  return
+      (lhs.constraints == rhs.constraints) &&
+      (lhs.constraint_type == rhs.constraint_type) &&
+      (lhs.info == rhs.info);
+}
+
+inline bool operator!=(const ConstraintSystemT &lhs, const ConstraintSystemT &rhs) {
+    return !(lhs == rhs);
+}
+
+
+/// ConstraintSystem represents constraints to be added to the constraint system.
 ///
 /// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
-struct R1CSConstraints FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ConstraintSystem FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ConstraintSystemT NativeTableType;
+  typedef ConstraintSystemBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONSTRAINTS = 4,
-    VT_INFO = 6
+    VT_CONSTRAINT_TYPE = 6,
+    VT_INFO = 8
   };
-  const flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>> *constraints() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>> *>(VT_CONSTRAINTS);
+  const flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *constraints() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *>(VT_CONSTRAINTS);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *mutable_constraints() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *>(VT_CONSTRAINTS);
+  }
+  /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
+  /// A special case is a boolean circuit with XOR and AND gates,
+  /// then constraint_type == arithmetic and circuit.field_maximum == 1.
+  zkinterface::ConstraintType constraint_type() const {
+    return static_cast<zkinterface::ConstraintType>(GetField<int8_t>(VT_CONSTRAINT_TYPE, 0));
+  }
+  bool mutate_constraint_type(zkinterface::ConstraintType _constraint_type) {
+    return SetField<int8_t>(VT_CONSTRAINT_TYPE, static_cast<int8_t>(_constraint_type), 0);
   }
   /// Optional: Any complementary info that may be useful.
   ///
   /// Example: human-readable descriptions.
   /// Example: custom hints to an optimizer or analyzer.
-  const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *info() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *>(VT_INFO);
+  const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *info() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_INFO);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *mutable_info() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_INFO);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_CONSTRAINTS) &&
            verifier.VerifyVector(constraints()) &&
            verifier.VerifyVectorOfTables(constraints()) &&
+           VerifyField<int8_t>(verifier, VT_CONSTRAINT_TYPE) &&
            VerifyOffset(verifier, VT_INFO) &&
            verifier.VerifyVector(info()) &&
            verifier.VerifyVectorOfTables(info()) &&
            verifier.EndTable();
   }
+  ConstraintSystemT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(ConstraintSystemT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<ConstraintSystem> Pack(flatbuffers::FlatBufferBuilder &_fbb, const ConstraintSystemT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
-struct R1CSConstraintsBuilder {
+struct ConstraintSystemBuilder {
+  typedef ConstraintSystem Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>>> constraints) {
-    fbb_.AddOffset(R1CSConstraints::VT_CONSTRAINTS, constraints);
+  void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>>> constraints) {
+    fbb_.AddOffset(ConstraintSystem::VT_CONSTRAINTS, constraints);
   }
-  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info) {
-    fbb_.AddOffset(R1CSConstraints::VT_INFO, info);
+  void add_constraint_type(zkinterface::ConstraintType constraint_type) {
+    fbb_.AddElement<int8_t>(ConstraintSystem::VT_CONSTRAINT_TYPE, static_cast<int8_t>(constraint_type), 0);
   }
-  explicit R1CSConstraintsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info) {
+    fbb_.AddOffset(ConstraintSystem::VT_INFO, info);
+  }
+  explicit ConstraintSystemBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  R1CSConstraintsBuilder &operator=(const R1CSConstraintsBuilder &);
-  flatbuffers::Offset<R1CSConstraints> Finish() {
+  ConstraintSystemBuilder &operator=(const ConstraintSystemBuilder &);
+  flatbuffers::Offset<ConstraintSystem> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<R1CSConstraints>(end);
+    auto o = flatbuffers::Offset<ConstraintSystem>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraints(
+inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystem(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BilinearConstraint>>> constraints = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info = 0) {
-  R1CSConstraintsBuilder builder_(_fbb);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>>> constraints = 0,
+    zkinterface::ConstraintType constraint_type = zkinterface::ConstraintType_R1CS,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info = 0) {
+  ConstraintSystemBuilder builder_(_fbb);
   builder_.add_info(info);
   builder_.add_constraints(constraints);
+  builder_.add_constraint_type(constraint_type);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraintsDirect(
+inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystemDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<BilinearConstraint>> *constraints = nullptr,
-    const std::vector<flatbuffers::Offset<KeyValue>> *info = nullptr) {
-  auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<BilinearConstraint>>(*constraints) : 0;
-  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*info) : 0;
-  return zkinterface::CreateR1CSConstraints(
+    const std::vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *constraints = nullptr,
+    zkinterface::ConstraintType constraint_type = zkinterface::ConstraintType_R1CS,
+    const std::vector<flatbuffers::Offset<zkinterface::KeyValue>> *info = nullptr) {
+  auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::BilinearConstraint>>(*constraints) : 0;
+  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>>(*info) : 0;
+  return zkinterface::CreateConstraintSystem(
       _fbb,
       constraints__,
+      constraint_type,
       info__);
 }
+
+flatbuffers::Offset<ConstraintSystem> CreateConstraintSystem(flatbuffers::FlatBufferBuilder &_fbb, const ConstraintSystemT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct WitnessT : public flatbuffers::NativeTable {
+  typedef Witness TableType;
+  std::unique_ptr<zkinterface::VariablesT> assigned_variables;
+  WitnessT() {
+  }
+};
+
+inline bool operator==(const WitnessT &lhs, const WitnessT &rhs) {
+  return
+      (lhs.assigned_variables == rhs.assigned_variables);
+}
+
+inline bool operator!=(const WitnessT &lhs, const WitnessT &rhs) {
+    return !(lhs == rhs);
+}
+
 
 /// Witness represents an assignment of values to variables.
 ///
@@ -294,11 +552,16 @@ inline flatbuffers::Offset<R1CSConstraints> CreateR1CSConstraintsDirect(
 /// - Does not include the constant one variable.
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef WitnessT NativeTableType;
+  typedef WitnessBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ASSIGNED_VARIABLES = 4
   };
-  const Variables *assigned_variables() const {
-    return GetPointer<const Variables *>(VT_ASSIGNED_VARIABLES);
+  const zkinterface::Variables *assigned_variables() const {
+    return GetPointer<const zkinterface::Variables *>(VT_ASSIGNED_VARIABLES);
+  }
+  zkinterface::Variables *mutable_assigned_variables() {
+    return GetPointer<zkinterface::Variables *>(VT_ASSIGNED_VARIABLES);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -306,12 +569,16 @@ struct Witness FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyTable(assigned_variables()) &&
            verifier.EndTable();
   }
+  WitnessT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(WitnessT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Witness> Pack(flatbuffers::FlatBufferBuilder &_fbb, const WitnessT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
 struct WitnessBuilder {
+  typedef Witness Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_assigned_variables(flatbuffers::Offset<Variables> assigned_variables) {
+  void add_assigned_variables(flatbuffers::Offset<zkinterface::Variables> assigned_variables) {
     fbb_.AddOffset(Witness::VT_ASSIGNED_VARIABLES, assigned_variables);
   }
   explicit WitnessBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -328,11 +595,165 @@ struct WitnessBuilder {
 
 inline flatbuffers::Offset<Witness> CreateWitness(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Variables> assigned_variables = 0) {
+    flatbuffers::Offset<zkinterface::Variables> assigned_variables = 0) {
   WitnessBuilder builder_(_fbb);
   builder_.add_assigned_variables(assigned_variables);
   return builder_.Finish();
 }
+
+flatbuffers::Offset<Witness> CreateWitness(flatbuffers::FlatBufferBuilder &_fbb, const WitnessT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct CommandT : public flatbuffers::NativeTable {
+  typedef Command TableType;
+  bool constraints_generation;
+  bool witness_generation;
+  std::vector<std::unique_ptr<zkinterface::KeyValueT>> parameters;
+  CommandT()
+      : constraints_generation(false),
+        witness_generation(false) {
+  }
+};
+
+inline bool operator==(const CommandT &lhs, const CommandT &rhs) {
+  return
+      (lhs.constraints_generation == rhs.constraints_generation) &&
+      (lhs.witness_generation == rhs.witness_generation) &&
+      (lhs.parameters == rhs.parameters);
+}
+
+inline bool operator!=(const CommandT &lhs, const CommandT &rhs) {
+    return !(lhs == rhs);
+}
+
+
+/// Optional: Command messages can be used to request actions from the receiver. This makes it
+/// possible to write code that works in different environments. Commands and parameters
+/// can be passed over the same byte stream as other messages; if so Command must be the first
+/// message. This reduces the need for environment-specific methods (it can replace CLI --flags, etc).
+struct Command FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef CommandT NativeTableType;
+  typedef CommandBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CONSTRAINTS_GENERATION = 4,
+    VT_WITNESS_GENERATION = 6,
+    VT_PARAMETERS = 8
+  };
+  /// For gadget flows.
+  /// Request the generation of a constraint system (or part thereof).
+  /// If true, this must be followed by a Circuit.
+  /// The response must be another Circuit message with a greater `free_variable_id`
+  /// followed by one or more ConstraintSystem messages.
+  bool constraints_generation() const {
+    return GetField<uint8_t>(VT_CONSTRAINTS_GENERATION, 0) != 0;
+  }
+  bool mutate_constraints_generation(bool _constraints_generation) {
+    return SetField<uint8_t>(VT_CONSTRAINTS_GENERATION, static_cast<uint8_t>(_constraints_generation), 0);
+  }
+  /// For gadget flows.
+  /// Request the generation of a witness (or part thereof).
+  /// If true, this must be followed by a Circuit, and the `connections`
+  /// variables must contain input values.
+  /// The response must be another Circuit message, with a greater `free_variable_id`,
+  /// with output values in `connections` variables, followed by one or more `Witness` messages.
+  bool witness_generation() const {
+    return GetField<uint8_t>(VT_WITNESS_GENERATION, 0) != 0;
+  }
+  bool mutate_witness_generation(bool _witness_generation) {
+    return SetField<uint8_t>(VT_WITNESS_GENERATION, static_cast<uint8_t>(_witness_generation), 0);
+  }
+  /// Optional: Any complementary parameter that may be useful.
+  const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *parameters() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_PARAMETERS);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *mutable_parameters() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_PARAMETERS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_CONSTRAINTS_GENERATION) &&
+           VerifyField<uint8_t>(verifier, VT_WITNESS_GENERATION) &&
+           VerifyOffset(verifier, VT_PARAMETERS) &&
+           verifier.VerifyVector(parameters()) &&
+           verifier.VerifyVectorOfTables(parameters()) &&
+           verifier.EndTable();
+  }
+  CommandT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(CommandT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Command> Pack(flatbuffers::FlatBufferBuilder &_fbb, const CommandT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+};
+
+struct CommandBuilder {
+  typedef Command Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_constraints_generation(bool constraints_generation) {
+    fbb_.AddElement<uint8_t>(Command::VT_CONSTRAINTS_GENERATION, static_cast<uint8_t>(constraints_generation), 0);
+  }
+  void add_witness_generation(bool witness_generation) {
+    fbb_.AddElement<uint8_t>(Command::VT_WITNESS_GENERATION, static_cast<uint8_t>(witness_generation), 0);
+  }
+  void add_parameters(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> parameters) {
+    fbb_.AddOffset(Command::VT_PARAMETERS, parameters);
+  }
+  explicit CommandBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  CommandBuilder &operator=(const CommandBuilder &);
+  flatbuffers::Offset<Command> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Command>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Command> CreateCommand(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    bool constraints_generation = false,
+    bool witness_generation = false,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> parameters = 0) {
+  CommandBuilder builder_(_fbb);
+  builder_.add_parameters(parameters);
+  builder_.add_witness_generation(witness_generation);
+  builder_.add_constraints_generation(constraints_generation);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<Command> CreateCommandDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    bool constraints_generation = false,
+    bool witness_generation = false,
+    const std::vector<flatbuffers::Offset<zkinterface::KeyValue>> *parameters = nullptr) {
+  auto parameters__ = parameters ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>>(*parameters) : 0;
+  return zkinterface::CreateCommand(
+      _fbb,
+      constraints_generation,
+      witness_generation,
+      parameters__);
+}
+
+flatbuffers::Offset<Command> CreateCommand(flatbuffers::FlatBufferBuilder &_fbb, const CommandT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct BilinearConstraintT : public flatbuffers::NativeTable {
+  typedef BilinearConstraint TableType;
+  std::unique_ptr<zkinterface::VariablesT> linear_combination_a;
+  std::unique_ptr<zkinterface::VariablesT> linear_combination_b;
+  std::unique_ptr<zkinterface::VariablesT> linear_combination_c;
+  BilinearConstraintT() {
+  }
+};
+
+inline bool operator==(const BilinearConstraintT &lhs, const BilinearConstraintT &rhs) {
+  return
+      (lhs.linear_combination_a == rhs.linear_combination_a) &&
+      (lhs.linear_combination_b == rhs.linear_combination_b) &&
+      (lhs.linear_combination_c == rhs.linear_combination_c);
+}
+
+inline bool operator!=(const BilinearConstraintT &lhs, const BilinearConstraintT &rhs) {
+    return !(lhs == rhs);
+}
+
 
 /// A single R1CS constraint between variables.
 ///
@@ -340,19 +761,30 @@ inline flatbuffers::Offset<Witness> CreateWitness(
 ///       (A) * (B) = (C)
 /// - A linear combination is given as a sequence of (variable ID, coefficient).
 struct BilinearConstraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef BilinearConstraintT NativeTableType;
+  typedef BilinearConstraintBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_LINEAR_COMBINATION_A = 4,
     VT_LINEAR_COMBINATION_B = 6,
     VT_LINEAR_COMBINATION_C = 8
   };
-  const Variables *linear_combination_a() const {
-    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_A);
+  const zkinterface::Variables *linear_combination_a() const {
+    return GetPointer<const zkinterface::Variables *>(VT_LINEAR_COMBINATION_A);
   }
-  const Variables *linear_combination_b() const {
-    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_B);
+  zkinterface::Variables *mutable_linear_combination_a() {
+    return GetPointer<zkinterface::Variables *>(VT_LINEAR_COMBINATION_A);
   }
-  const Variables *linear_combination_c() const {
-    return GetPointer<const Variables *>(VT_LINEAR_COMBINATION_C);
+  const zkinterface::Variables *linear_combination_b() const {
+    return GetPointer<const zkinterface::Variables *>(VT_LINEAR_COMBINATION_B);
+  }
+  zkinterface::Variables *mutable_linear_combination_b() {
+    return GetPointer<zkinterface::Variables *>(VT_LINEAR_COMBINATION_B);
+  }
+  const zkinterface::Variables *linear_combination_c() const {
+    return GetPointer<const zkinterface::Variables *>(VT_LINEAR_COMBINATION_C);
+  }
+  zkinterface::Variables *mutable_linear_combination_c() {
+    return GetPointer<zkinterface::Variables *>(VT_LINEAR_COMBINATION_C);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -364,18 +796,22 @@ struct BilinearConstraint FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyTable(linear_combination_c()) &&
            verifier.EndTable();
   }
+  BilinearConstraintT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(BilinearConstraintT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<BilinearConstraint> Pack(flatbuffers::FlatBufferBuilder &_fbb, const BilinearConstraintT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
 struct BilinearConstraintBuilder {
+  typedef BilinearConstraint Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_linear_combination_a(flatbuffers::Offset<Variables> linear_combination_a) {
+  void add_linear_combination_a(flatbuffers::Offset<zkinterface::Variables> linear_combination_a) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_A, linear_combination_a);
   }
-  void add_linear_combination_b(flatbuffers::Offset<Variables> linear_combination_b) {
+  void add_linear_combination_b(flatbuffers::Offset<zkinterface::Variables> linear_combination_b) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_B, linear_combination_b);
   }
-  void add_linear_combination_c(flatbuffers::Offset<Variables> linear_combination_c) {
+  void add_linear_combination_c(flatbuffers::Offset<zkinterface::Variables> linear_combination_c) {
     fbb_.AddOffset(BilinearConstraint::VT_LINEAR_COMBINATION_C, linear_combination_c);
   }
   explicit BilinearConstraintBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -392,15 +828,38 @@ struct BilinearConstraintBuilder {
 
 inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<Variables> linear_combination_a = 0,
-    flatbuffers::Offset<Variables> linear_combination_b = 0,
-    flatbuffers::Offset<Variables> linear_combination_c = 0) {
+    flatbuffers::Offset<zkinterface::Variables> linear_combination_a = 0,
+    flatbuffers::Offset<zkinterface::Variables> linear_combination_b = 0,
+    flatbuffers::Offset<zkinterface::Variables> linear_combination_c = 0) {
   BilinearConstraintBuilder builder_(_fbb);
   builder_.add_linear_combination_c(linear_combination_c);
   builder_.add_linear_combination_b(linear_combination_b);
   builder_.add_linear_combination_a(linear_combination_a);
   return builder_.Finish();
 }
+
+flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(flatbuffers::FlatBufferBuilder &_fbb, const BilinearConstraintT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct VariablesT : public flatbuffers::NativeTable {
+  typedef Variables TableType;
+  std::vector<uint64_t> variable_ids;
+  std::vector<uint8_t> values;
+  std::vector<std::unique_ptr<zkinterface::KeyValueT>> info;
+  VariablesT() {
+  }
+};
+
+inline bool operator==(const VariablesT &lhs, const VariablesT &rhs) {
+  return
+      (lhs.variable_ids == rhs.variable_ids) &&
+      (lhs.values == rhs.values) &&
+      (lhs.info == rhs.info);
+}
+
+inline bool operator!=(const VariablesT &lhs, const VariablesT &rhs) {
+    return !(lhs == rhs);
+}
+
 
 /// A description of multiple variables.
 ///
@@ -412,6 +871,8 @@ inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(
 /// - In `BilinearConstraint` linear combinations, the values are the coefficients
 ///   applied to variables in a linear combination.
 struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef VariablesT NativeTableType;
+  typedef VariablesBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VARIABLE_IDS = 4,
     VT_VALUES = 6,
@@ -423,6 +884,9 @@ struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   /// - The ID 0 always represents the constant variable one.
   const flatbuffers::Vector<uint64_t> *variable_ids() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_VARIABLE_IDS);
+  }
+  flatbuffers::Vector<uint64_t> *mutable_variable_ids() {
+    return GetPointer<flatbuffers::Vector<uint64_t> *>(VT_VARIABLE_IDS);
   }
   /// Optional: values assigned to variables.
   ///
@@ -438,13 +902,19 @@ struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<uint8_t> *values() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_VALUES);
   }
+  flatbuffers::Vector<uint8_t> *mutable_values() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_VALUES);
+  }
   /// Optional: Any complementary info that may be useful to the recipient.
   ///
   /// Example: human-readable names.
   /// Example: custom variable typing information (`is_bit`, ...).
   /// Example: a Merkle authentication path in some custom format.
-  const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *info() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<KeyValue>> *>(VT_INFO);
+  const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *info() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_INFO);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *mutable_info() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>> *>(VT_INFO);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -457,9 +927,13 @@ struct Variables FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVectorOfTables(info()) &&
            verifier.EndTable();
   }
+  VariablesT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(VariablesT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Variables> Pack(flatbuffers::FlatBufferBuilder &_fbb, const VariablesT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
 struct VariablesBuilder {
+  typedef Variables Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_variable_ids(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids) {
@@ -468,7 +942,7 @@ struct VariablesBuilder {
   void add_values(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values) {
     fbb_.AddOffset(Variables::VT_VALUES, values);
   }
-  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info) {
+  void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info) {
     fbb_.AddOffset(Variables::VT_INFO, info);
   }
   explicit VariablesBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -487,7 +961,7 @@ inline flatbuffers::Offset<Variables> CreateVariables(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> variable_ids = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> values = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<KeyValue>>> info = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info = 0) {
   VariablesBuilder builder_(_fbb);
   builder_.add_info(info);
   builder_.add_values(values);
@@ -499,10 +973,10 @@ inline flatbuffers::Offset<Variables> CreateVariablesDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint64_t> *variable_ids = nullptr,
     const std::vector<uint8_t> *values = nullptr,
-    const std::vector<flatbuffers::Offset<KeyValue>> *info = nullptr) {
+    const std::vector<flatbuffers::Offset<zkinterface::KeyValue>> *info = nullptr) {
   auto variable_ids__ = variable_ids ? _fbb.CreateVector<uint64_t>(*variable_ids) : 0;
   auto values__ = values ? _fbb.CreateVector<uint8_t>(*values) : 0;
-  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<KeyValue>>(*info) : 0;
+  auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>>(*info) : 0;
   return zkinterface::CreateVariables(
       _fbb,
       variable_ids__,
@@ -510,36 +984,99 @@ inline flatbuffers::Offset<Variables> CreateVariablesDirect(
       info__);
 }
 
+flatbuffers::Offset<Variables> CreateVariables(flatbuffers::FlatBufferBuilder &_fbb, const VariablesT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct KeyValueT : public flatbuffers::NativeTable {
+  typedef KeyValue TableType;
+  std::string key;
+  std::vector<uint8_t> data;
+  std::string text;
+  int64_t number;
+  KeyValueT()
+      : number(0) {
+  }
+};
+
+inline bool operator==(const KeyValueT &lhs, const KeyValueT &rhs) {
+  return
+      (lhs.key == rhs.key) &&
+      (lhs.data == rhs.data) &&
+      (lhs.text == rhs.text) &&
+      (lhs.number == rhs.number);
+}
+
+inline bool operator!=(const KeyValueT &lhs, const KeyValueT &rhs) {
+    return !(lhs == rhs);
+}
+
+
 /// Generic key-value for custom attributes.
+/// The key must be a string.
+/// The value can be one of several types.
 struct KeyValue FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef KeyValueT NativeTableType;
+  typedef KeyValueBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_KEY = 4,
-    VT_VALUE = 6
+    VT_DATA = 6,
+    VT_TEXT = 8,
+    VT_NUMBER = 10
   };
   const flatbuffers::String *key() const {
     return GetPointer<const flatbuffers::String *>(VT_KEY);
   }
-  const flatbuffers::Vector<uint8_t> *value() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_VALUE);
+  flatbuffers::String *mutable_key() {
+    return GetPointer<flatbuffers::String *>(VT_KEY);
+  }
+  const flatbuffers::Vector<uint8_t> *data() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_DATA);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_data() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_DATA);
+  }
+  const flatbuffers::String *text() const {
+    return GetPointer<const flatbuffers::String *>(VT_TEXT);
+  }
+  flatbuffers::String *mutable_text() {
+    return GetPointer<flatbuffers::String *>(VT_TEXT);
+  }
+  int64_t number() const {
+    return GetField<int64_t>(VT_NUMBER, 0);
+  }
+  bool mutate_number(int64_t _number) {
+    return SetField<int64_t>(VT_NUMBER, _number, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_KEY) &&
            verifier.VerifyString(key()) &&
-           VerifyOffset(verifier, VT_VALUE) &&
-           verifier.VerifyVector(value()) &&
+           VerifyOffset(verifier, VT_DATA) &&
+           verifier.VerifyVector(data()) &&
+           VerifyOffset(verifier, VT_TEXT) &&
+           verifier.VerifyString(text()) &&
+           VerifyField<int64_t>(verifier, VT_NUMBER) &&
            verifier.EndTable();
   }
+  KeyValueT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(KeyValueT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<KeyValue> Pack(flatbuffers::FlatBufferBuilder &_fbb, const KeyValueT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
 struct KeyValueBuilder {
+  typedef KeyValue Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_key(flatbuffers::Offset<flatbuffers::String> key) {
     fbb_.AddOffset(KeyValue::VT_KEY, key);
   }
-  void add_value(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> value) {
-    fbb_.AddOffset(KeyValue::VT_VALUE, value);
+  void add_data(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data) {
+    fbb_.AddOffset(KeyValue::VT_DATA, data);
+  }
+  void add_text(flatbuffers::Offset<flatbuffers::String> text) {
+    fbb_.AddOffset(KeyValue::VT_TEXT, text);
+  }
+  void add_number(int64_t number) {
+    fbb_.AddElement<int64_t>(KeyValue::VT_NUMBER, number, 0);
   }
   explicit KeyValueBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -556,9 +1093,13 @@ struct KeyValueBuilder {
 inline flatbuffers::Offset<KeyValue> CreateKeyValue(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> key = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> value = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data = 0,
+    flatbuffers::Offset<flatbuffers::String> text = 0,
+    int64_t number = 0) {
   KeyValueBuilder builder_(_fbb);
-  builder_.add_value(value);
+  builder_.add_number(number);
+  builder_.add_text(text);
+  builder_.add_data(data);
   builder_.add_key(key);
   return builder_.Finish();
 }
@@ -566,35 +1107,67 @@ inline flatbuffers::Offset<KeyValue> CreateKeyValue(
 inline flatbuffers::Offset<KeyValue> CreateKeyValueDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *key = nullptr,
-    const std::vector<uint8_t> *value = nullptr) {
+    const std::vector<uint8_t> *data = nullptr,
+    const char *text = nullptr,
+    int64_t number = 0) {
   auto key__ = key ? _fbb.CreateString(key) : 0;
-  auto value__ = value ? _fbb.CreateVector<uint8_t>(*value) : 0;
+  auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
+  auto text__ = text ? _fbb.CreateString(text) : 0;
   return zkinterface::CreateKeyValue(
       _fbb,
       key__,
-      value__);
+      data__,
+      text__,
+      number);
 }
 
+flatbuffers::Offset<KeyValue> CreateKeyValue(flatbuffers::FlatBufferBuilder &_fbb, const KeyValueT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+struct RootT : public flatbuffers::NativeTable {
+  typedef Root TableType;
+  zkinterface::MessageUnion message;
+  RootT() {
+  }
+};
+
+inline bool operator==(const RootT &lhs, const RootT &rhs) {
+  return
+      (lhs.message == rhs.message);
+}
+
+inline bool operator!=(const RootT &lhs, const RootT &rhs) {
+    return !(lhs == rhs);
+}
+
+
 struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef RootT NativeTableType;
+  typedef RootBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_MESSAGE_TYPE = 4,
     VT_MESSAGE = 6
   };
-  Message message_type() const {
-    return static_cast<Message>(GetField<uint8_t>(VT_MESSAGE_TYPE, 0));
+  zkinterface::Message message_type() const {
+    return static_cast<zkinterface::Message>(GetField<uint8_t>(VT_MESSAGE_TYPE, 0));
   }
   const void *message() const {
     return GetPointer<const void *>(VT_MESSAGE);
   }
   template<typename T> const T *message_as() const;
-  const Circuit *message_as_Circuit() const {
-    return message_type() == Message_Circuit ? static_cast<const Circuit *>(message()) : nullptr;
+  const zkinterface::Circuit *message_as_Circuit() const {
+    return message_type() == zkinterface::Message_Circuit ? static_cast<const zkinterface::Circuit *>(message()) : nullptr;
   }
-  const R1CSConstraints *message_as_R1CSConstraints() const {
-    return message_type() == Message_R1CSConstraints ? static_cast<const R1CSConstraints *>(message()) : nullptr;
+  const zkinterface::ConstraintSystem *message_as_ConstraintSystem() const {
+    return message_type() == zkinterface::Message_ConstraintSystem ? static_cast<const zkinterface::ConstraintSystem *>(message()) : nullptr;
   }
-  const Witness *message_as_Witness() const {
-    return message_type() == Message_Witness ? static_cast<const Witness *>(message()) : nullptr;
+  const zkinterface::Witness *message_as_Witness() const {
+    return message_type() == zkinterface::Message_Witness ? static_cast<const zkinterface::Witness *>(message()) : nullptr;
+  }
+  const zkinterface::Command *message_as_Command() const {
+    return message_type() == zkinterface::Message_Command ? static_cast<const zkinterface::Command *>(message()) : nullptr;
+  }
+  void *mutable_message() {
+    return GetPointer<void *>(VT_MESSAGE);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -603,24 +1176,32 @@ struct Root FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyMessage(verifier, message(), message_type()) &&
            verifier.EndTable();
   }
+  RootT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  void UnPackTo(RootT *_o, const flatbuffers::resolver_function_t *_resolver = nullptr) const;
+  static flatbuffers::Offset<Root> Pack(flatbuffers::FlatBufferBuilder &_fbb, const RootT* _o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
 };
 
-template<> inline const Circuit *Root::message_as<Circuit>() const {
+template<> inline const zkinterface::Circuit *Root::message_as<zkinterface::Circuit>() const {
   return message_as_Circuit();
 }
 
-template<> inline const R1CSConstraints *Root::message_as<R1CSConstraints>() const {
-  return message_as_R1CSConstraints();
+template<> inline const zkinterface::ConstraintSystem *Root::message_as<zkinterface::ConstraintSystem>() const {
+  return message_as_ConstraintSystem();
 }
 
-template<> inline const Witness *Root::message_as<Witness>() const {
+template<> inline const zkinterface::Witness *Root::message_as<zkinterface::Witness>() const {
   return message_as_Witness();
 }
 
+template<> inline const zkinterface::Command *Root::message_as<zkinterface::Command>() const {
+  return message_as_Command();
+}
+
 struct RootBuilder {
+  typedef Root Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_message_type(Message message_type) {
+  void add_message_type(zkinterface::Message message_type) {
     fbb_.AddElement<uint8_t>(Root::VT_MESSAGE_TYPE, static_cast<uint8_t>(message_type), 0);
   }
   void add_message(flatbuffers::Offset<void> message) {
@@ -640,12 +1221,267 @@ struct RootBuilder {
 
 inline flatbuffers::Offset<Root> CreateRoot(
     flatbuffers::FlatBufferBuilder &_fbb,
-    Message message_type = Message_NONE,
+    zkinterface::Message message_type = zkinterface::Message_NONE,
     flatbuffers::Offset<void> message = 0) {
   RootBuilder builder_(_fbb);
   builder_.add_message(message);
   builder_.add_message_type(message_type);
   return builder_.Finish();
+}
+
+flatbuffers::Offset<Root> CreateRoot(flatbuffers::FlatBufferBuilder &_fbb, const RootT *_o, const flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+inline CircuitT *Circuit::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::CircuitT> _o = std::unique_ptr<zkinterface::CircuitT>(new CircuitT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Circuit::UnPackTo(CircuitT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = connections(); if (_e) _o->connections = std::unique_ptr<zkinterface::VariablesT>(_e->UnPack(_resolver)); }
+  { auto _e = free_variable_id(); _o->free_variable_id = _e; }
+  { auto _e = field_maximum(); if (_e) { _o->field_maximum.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->field_maximum[_i] = _e->Get(_i); } } }
+  { auto _e = configuration(); if (_e) { _o->configuration.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->configuration[_i] = std::unique_ptr<zkinterface::KeyValueT>(_e->Get(_i)->UnPack(_resolver)); } } }
+}
+
+inline flatbuffers::Offset<Circuit> Circuit::Pack(flatbuffers::FlatBufferBuilder &_fbb, const CircuitT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateCircuit(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Circuit> CreateCircuit(flatbuffers::FlatBufferBuilder &_fbb, const CircuitT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const CircuitT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _connections = _o->connections ? CreateVariables(_fbb, _o->connections.get(), _rehasher) : 0;
+  auto _free_variable_id = _o->free_variable_id;
+  auto _field_maximum = _o->field_maximum.size() ? _fbb.CreateVector(_o->field_maximum) : 0;
+  auto _configuration = _o->configuration.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>> (_o->configuration.size(), [](size_t i, _VectorArgs *__va) { return CreateKeyValue(*__va->__fbb, __va->__o->configuration[i].get(), __va->__rehasher); }, &_va ) : 0;
+  return zkinterface::CreateCircuit(
+      _fbb,
+      _connections,
+      _free_variable_id,
+      _field_maximum,
+      _configuration);
+}
+
+inline ConstraintSystemT *ConstraintSystem::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::ConstraintSystemT> _o = std::unique_ptr<zkinterface::ConstraintSystemT>(new ConstraintSystemT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void ConstraintSystem::UnPackTo(ConstraintSystemT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = constraints(); if (_e) { _o->constraints.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->constraints[_i] = std::unique_ptr<zkinterface::BilinearConstraintT>(_e->Get(_i)->UnPack(_resolver)); } } }
+  { auto _e = constraint_type(); _o->constraint_type = _e; }
+  { auto _e = info(); if (_e) { _o->info.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->info[_i] = std::unique_ptr<zkinterface::KeyValueT>(_e->Get(_i)->UnPack(_resolver)); } } }
+}
+
+inline flatbuffers::Offset<ConstraintSystem> ConstraintSystem::Pack(flatbuffers::FlatBufferBuilder &_fbb, const ConstraintSystemT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateConstraintSystem(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystem(flatbuffers::FlatBufferBuilder &_fbb, const ConstraintSystemT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const ConstraintSystemT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _constraints = _o->constraints.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::BilinearConstraint>> (_o->constraints.size(), [](size_t i, _VectorArgs *__va) { return CreateBilinearConstraint(*__va->__fbb, __va->__o->constraints[i].get(), __va->__rehasher); }, &_va ) : 0;
+  auto _constraint_type = _o->constraint_type;
+  auto _info = _o->info.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>> (_o->info.size(), [](size_t i, _VectorArgs *__va) { return CreateKeyValue(*__va->__fbb, __va->__o->info[i].get(), __va->__rehasher); }, &_va ) : 0;
+  return zkinterface::CreateConstraintSystem(
+      _fbb,
+      _constraints,
+      _constraint_type,
+      _info);
+}
+
+inline WitnessT *Witness::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::WitnessT> _o = std::unique_ptr<zkinterface::WitnessT>(new WitnessT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Witness::UnPackTo(WitnessT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = assigned_variables(); if (_e) _o->assigned_variables = std::unique_ptr<zkinterface::VariablesT>(_e->UnPack(_resolver)); }
+}
+
+inline flatbuffers::Offset<Witness> Witness::Pack(flatbuffers::FlatBufferBuilder &_fbb, const WitnessT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateWitness(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Witness> CreateWitness(flatbuffers::FlatBufferBuilder &_fbb, const WitnessT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const WitnessT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _assigned_variables = _o->assigned_variables ? CreateVariables(_fbb, _o->assigned_variables.get(), _rehasher) : 0;
+  return zkinterface::CreateWitness(
+      _fbb,
+      _assigned_variables);
+}
+
+inline CommandT *Command::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::CommandT> _o = std::unique_ptr<zkinterface::CommandT>(new CommandT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Command::UnPackTo(CommandT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = constraints_generation(); _o->constraints_generation = _e; }
+  { auto _e = witness_generation(); _o->witness_generation = _e; }
+  { auto _e = parameters(); if (_e) { _o->parameters.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->parameters[_i] = std::unique_ptr<zkinterface::KeyValueT>(_e->Get(_i)->UnPack(_resolver)); } } }
+}
+
+inline flatbuffers::Offset<Command> Command::Pack(flatbuffers::FlatBufferBuilder &_fbb, const CommandT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateCommand(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Command> CreateCommand(flatbuffers::FlatBufferBuilder &_fbb, const CommandT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const CommandT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _constraints_generation = _o->constraints_generation;
+  auto _witness_generation = _o->witness_generation;
+  auto _parameters = _o->parameters.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>> (_o->parameters.size(), [](size_t i, _VectorArgs *__va) { return CreateKeyValue(*__va->__fbb, __va->__o->parameters[i].get(), __va->__rehasher); }, &_va ) : 0;
+  return zkinterface::CreateCommand(
+      _fbb,
+      _constraints_generation,
+      _witness_generation,
+      _parameters);
+}
+
+inline BilinearConstraintT *BilinearConstraint::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::BilinearConstraintT> _o = std::unique_ptr<zkinterface::BilinearConstraintT>(new BilinearConstraintT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void BilinearConstraint::UnPackTo(BilinearConstraintT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = linear_combination_a(); if (_e) _o->linear_combination_a = std::unique_ptr<zkinterface::VariablesT>(_e->UnPack(_resolver)); }
+  { auto _e = linear_combination_b(); if (_e) _o->linear_combination_b = std::unique_ptr<zkinterface::VariablesT>(_e->UnPack(_resolver)); }
+  { auto _e = linear_combination_c(); if (_e) _o->linear_combination_c = std::unique_ptr<zkinterface::VariablesT>(_e->UnPack(_resolver)); }
+}
+
+inline flatbuffers::Offset<BilinearConstraint> BilinearConstraint::Pack(flatbuffers::FlatBufferBuilder &_fbb, const BilinearConstraintT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateBilinearConstraint(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<BilinearConstraint> CreateBilinearConstraint(flatbuffers::FlatBufferBuilder &_fbb, const BilinearConstraintT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const BilinearConstraintT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _linear_combination_a = _o->linear_combination_a ? CreateVariables(_fbb, _o->linear_combination_a.get(), _rehasher) : 0;
+  auto _linear_combination_b = _o->linear_combination_b ? CreateVariables(_fbb, _o->linear_combination_b.get(), _rehasher) : 0;
+  auto _linear_combination_c = _o->linear_combination_c ? CreateVariables(_fbb, _o->linear_combination_c.get(), _rehasher) : 0;
+  return zkinterface::CreateBilinearConstraint(
+      _fbb,
+      _linear_combination_a,
+      _linear_combination_b,
+      _linear_combination_c);
+}
+
+inline VariablesT *Variables::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::VariablesT> _o = std::unique_ptr<zkinterface::VariablesT>(new VariablesT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Variables::UnPackTo(VariablesT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = variable_ids(); if (_e) { _o->variable_ids.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->variable_ids[_i] = _e->Get(_i); } } }
+  { auto _e = values(); if (_e) { _o->values.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->values[_i] = _e->Get(_i); } } }
+  { auto _e = info(); if (_e) { _o->info.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->info[_i] = std::unique_ptr<zkinterface::KeyValueT>(_e->Get(_i)->UnPack(_resolver)); } } }
+}
+
+inline flatbuffers::Offset<Variables> Variables::Pack(flatbuffers::FlatBufferBuilder &_fbb, const VariablesT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateVariables(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Variables> CreateVariables(flatbuffers::FlatBufferBuilder &_fbb, const VariablesT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const VariablesT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _variable_ids = _o->variable_ids.size() ? _fbb.CreateVector(_o->variable_ids) : 0;
+  auto _values = _o->values.size() ? _fbb.CreateVector(_o->values) : 0;
+  auto _info = _o->info.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>> (_o->info.size(), [](size_t i, _VectorArgs *__va) { return CreateKeyValue(*__va->__fbb, __va->__o->info[i].get(), __va->__rehasher); }, &_va ) : 0;
+  return zkinterface::CreateVariables(
+      _fbb,
+      _variable_ids,
+      _values,
+      _info);
+}
+
+inline KeyValueT *KeyValue::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::KeyValueT> _o = std::unique_ptr<zkinterface::KeyValueT>(new KeyValueT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void KeyValue::UnPackTo(KeyValueT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = key(); if (_e) _o->key = _e->str(); }
+  { auto _e = data(); if (_e) { _o->data.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->data[_i] = _e->Get(_i); } } }
+  { auto _e = text(); if (_e) _o->text = _e->str(); }
+  { auto _e = number(); _o->number = _e; }
+}
+
+inline flatbuffers::Offset<KeyValue> KeyValue::Pack(flatbuffers::FlatBufferBuilder &_fbb, const KeyValueT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateKeyValue(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<KeyValue> CreateKeyValue(flatbuffers::FlatBufferBuilder &_fbb, const KeyValueT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const KeyValueT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _key = _o->key.empty() ? 0 : _fbb.CreateString(_o->key);
+  auto _data = _o->data.size() ? _fbb.CreateVector(_o->data) : 0;
+  auto _text = _o->text.empty() ? 0 : _fbb.CreateString(_o->text);
+  auto _number = _o->number;
+  return zkinterface::CreateKeyValue(
+      _fbb,
+      _key,
+      _data,
+      _text,
+      _number);
+}
+
+inline RootT *Root::UnPack(const flatbuffers::resolver_function_t *_resolver) const {
+  std::unique_ptr<zkinterface::RootT> _o = std::unique_ptr<zkinterface::RootT>(new RootT());
+  UnPackTo(_o.get(), _resolver);
+  return _o.release();
+}
+
+inline void Root::UnPackTo(RootT *_o, const flatbuffers::resolver_function_t *_resolver) const {
+  (void)_o;
+  (void)_resolver;
+  { auto _e = message_type(); _o->message.type = _e; }
+  { auto _e = message(); if (_e) _o->message.value = zkinterface::MessageUnion::UnPack(_e, message_type(), _resolver); }
+}
+
+inline flatbuffers::Offset<Root> Root::Pack(flatbuffers::FlatBufferBuilder &_fbb, const RootT* _o, const flatbuffers::rehasher_function_t *_rehasher) {
+  return CreateRoot(_fbb, _o, _rehasher);
+}
+
+inline flatbuffers::Offset<Root> CreateRoot(flatbuffers::FlatBufferBuilder &_fbb, const RootT *_o, const flatbuffers::rehasher_function_t *_rehasher) {
+  (void)_rehasher;
+  (void)_o;
+  struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const RootT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _message_type = _o->message.type;
+  auto _message = _o->message.Pack(_fbb);
+  return zkinterface::CreateRoot(
+      _fbb,
+      _message_type,
+      _message);
 }
 
 inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type) {
@@ -654,18 +1490,22 @@ inline bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Mess
       return true;
     }
     case Message_Circuit: {
-      auto ptr = reinterpret_cast<const Circuit *>(obj);
+      auto ptr = reinterpret_cast<const zkinterface::Circuit *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Message_R1CSConstraints: {
-      auto ptr = reinterpret_cast<const R1CSConstraints *>(obj);
+    case Message_ConstraintSystem: {
+      auto ptr = reinterpret_cast<const zkinterface::ConstraintSystem *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Message_Witness: {
-      auto ptr = reinterpret_cast<const Witness *>(obj);
+      auto ptr = reinterpret_cast<const zkinterface::Witness *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    default: return false;
+    case Message_Command: {
+      auto ptr = reinterpret_cast<const zkinterface::Command *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    default: return true;
   }
 }
 
@@ -681,12 +1521,111 @@ inline bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffe
   return true;
 }
 
+inline void *MessageUnion::UnPack(const void *obj, Message type, const flatbuffers::resolver_function_t *resolver) {
+  switch (type) {
+    case Message_Circuit: {
+      auto ptr = reinterpret_cast<const zkinterface::Circuit *>(obj);
+      return ptr->UnPack(resolver);
+    }
+    case Message_ConstraintSystem: {
+      auto ptr = reinterpret_cast<const zkinterface::ConstraintSystem *>(obj);
+      return ptr->UnPack(resolver);
+    }
+    case Message_Witness: {
+      auto ptr = reinterpret_cast<const zkinterface::Witness *>(obj);
+      return ptr->UnPack(resolver);
+    }
+    case Message_Command: {
+      auto ptr = reinterpret_cast<const zkinterface::Command *>(obj);
+      return ptr->UnPack(resolver);
+    }
+    default: return nullptr;
+  }
+}
+
+inline flatbuffers::Offset<void> MessageUnion::Pack(flatbuffers::FlatBufferBuilder &_fbb, const flatbuffers::rehasher_function_t *_rehasher) const {
+  switch (type) {
+    case Message_Circuit: {
+      auto ptr = reinterpret_cast<const zkinterface::CircuitT *>(value);
+      return CreateCircuit(_fbb, ptr, _rehasher).Union();
+    }
+    case Message_ConstraintSystem: {
+      auto ptr = reinterpret_cast<const zkinterface::ConstraintSystemT *>(value);
+      return CreateConstraintSystem(_fbb, ptr, _rehasher).Union();
+    }
+    case Message_Witness: {
+      auto ptr = reinterpret_cast<const zkinterface::WitnessT *>(value);
+      return CreateWitness(_fbb, ptr, _rehasher).Union();
+    }
+    case Message_Command: {
+      auto ptr = reinterpret_cast<const zkinterface::CommandT *>(value);
+      return CreateCommand(_fbb, ptr, _rehasher).Union();
+    }
+    default: return 0;
+  }
+}
+
+inline MessageUnion::MessageUnion(const MessageUnion &u) : type(u.type), value(nullptr) {
+  switch (type) {
+    case Message_Circuit: {
+      FLATBUFFERS_ASSERT(false);  // zkinterface::CircuitT not copyable.
+      break;
+    }
+    case Message_ConstraintSystem: {
+      FLATBUFFERS_ASSERT(false);  // zkinterface::ConstraintSystemT not copyable.
+      break;
+    }
+    case Message_Witness: {
+      FLATBUFFERS_ASSERT(false);  // zkinterface::WitnessT not copyable.
+      break;
+    }
+    case Message_Command: {
+      FLATBUFFERS_ASSERT(false);  // zkinterface::CommandT not copyable.
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+inline void MessageUnion::Reset() {
+  switch (type) {
+    case Message_Circuit: {
+      auto ptr = reinterpret_cast<zkinterface::CircuitT *>(value);
+      delete ptr;
+      break;
+    }
+    case Message_ConstraintSystem: {
+      auto ptr = reinterpret_cast<zkinterface::ConstraintSystemT *>(value);
+      delete ptr;
+      break;
+    }
+    case Message_Witness: {
+      auto ptr = reinterpret_cast<zkinterface::WitnessT *>(value);
+      delete ptr;
+      break;
+    }
+    case Message_Command: {
+      auto ptr = reinterpret_cast<zkinterface::CommandT *>(value);
+      delete ptr;
+      break;
+    }
+    default: break;
+  }
+  value = nullptr;
+  type = Message_NONE;
+}
+
 inline const zkinterface::Root *GetRoot(const void *buf) {
   return flatbuffers::GetRoot<zkinterface::Root>(buf);
 }
 
 inline const zkinterface::Root *GetSizePrefixedRoot(const void *buf) {
   return flatbuffers::GetSizePrefixedRoot<zkinterface::Root>(buf);
+}
+
+inline Root *GetMutableRoot(void *buf) {
+  return flatbuffers::GetMutableRoot<Root>(buf);
 }
 
 inline const char *RootIdentifier() {
@@ -722,6 +1661,18 @@ inline void FinishSizePrefixedRootBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
     flatbuffers::Offset<zkinterface::Root> root) {
   fbb.FinishSizePrefixed(root, RootIdentifier());
+}
+
+inline std::unique_ptr<zkinterface::RootT> UnPackRoot(
+    const void *buf,
+    const flatbuffers::resolver_function_t *res = nullptr) {
+  return std::unique_ptr<zkinterface::RootT>(GetRoot(buf)->UnPack(res));
+}
+
+inline std::unique_ptr<zkinterface::RootT> UnPackSizePrefixedRoot(
+    const void *buf,
+    const flatbuffers::resolver_function_t *res = nullptr) {
+  return std::unique_ptr<zkinterface::RootT>(GetSizePrefixedRoot(buf)->UnPack(res));
 }
 
 }  // namespace zkinterface
