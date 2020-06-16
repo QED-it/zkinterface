@@ -20,4 +20,5 @@ Interface definition:
 Rust:
 - *(breaking)* Moved "writing" helpers to the "owned" modules.
 - Added "owned" versions of all message types.
-- Added a tool to convert to JSON.
+- Added a tool to convert to JSON. (`src/bin/zkif_json.rs`)
+- Added a tool to print basic statistics about a circuit. (`src/bin/stats.rs`)
