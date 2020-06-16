@@ -1,20 +1,9 @@
 use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
-use writing::{CircuitOwned, VariablesOwned};
-use zkinterface_generated::zkinterface::{
-    BilinearConstraint,
-    BilinearConstraintArgs,
-    Message,
-    R1CSConstraints,
-    R1CSConstraintsArgs,
-    Root,
-    RootArgs,
-    Variables,
-    VariablesArgs,
-    Witness,
-    WitnessArgs,
-};
+use owned::circuit::CircuitOwned;
+use owned::variables::VariablesOwned;
+use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -29,7 +18,6 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
             values: Some(serialize_small(&[x, y, zz])),
         },
         free_variable_id: 6,
-        r1cs_generation: true,
         field_maximum: None,
     }
 }
@@ -68,13 +56,13 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
     }
 
     let constraints_built = builder.create_vector(&constraints_built);
-    let r1cs = R1CSConstraints::create(&mut builder, &R1CSConstraintsArgs {
+    let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
         constraints: Some(constraints_built),
         info: None,
     });
 
     let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::R1CSConstraints,
+        message_type: Message::ConstraintSystem,
         message: Some(r1cs.as_union_value()),
     });
     builder.finish_size_prefixed(message, None);

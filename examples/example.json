@@ -1,0 +1,135 @@
+{
+  "circuits": [
+    {
+      "connections": {
+        "variable_ids": [
+          1,
+          2,
+          3
+        ],
+        "values": [
+          3,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          25,
+          0,
+          0,
+          0
+        ]
+      },
+      "free_variable_id": 6,
+      "field_maximum": null
+    }
+  ],
+  "constraint_systems": [
+    {
+      "constraints": [
+        {
+          "linear_combination_a": {
+            "variable_ids": [
+              1
+            ],
+            "values": [
+              1
+            ]
+          },
+          "linear_combination_b": {
+            "variable_ids": [
+              1
+            ],
+            "values": [
+              1
+            ]
+          },
+          "linear_combination_c": {
+            "variable_ids": [
+              4
+            ],
+            "values": [
+              1
+            ]
+          }
+        },
+        {
+          "linear_combination_a": {
+            "variable_ids": [
+              2
+            ],
+            "values": [
+              1
+            ]
+          },
+          "linear_combination_b": {
+            "variable_ids": [
+              2
+            ],
+            "values": [
+              1
+            ]
+          },
+          "linear_combination_c": {
+            "variable_ids": [
+              5
+            ],
+            "values": [
+              1
+            ]
+          }
+        },
+        {
+          "linear_combination_a": {
+            "variable_ids": [
+              0
+            ],
+            "values": [
+              1
+            ]
+          },
+          "linear_combination_b": {
+            "variable_ids": [
+              4,
+              5
+            ],
+            "values": [
+              1,
+              1
+            ]
+          },
+          "linear_combination_c": {
+            "variable_ids": [
+              3
+            ],
+            "values": [
+              1
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "witnesses": [
+    {
+      "assigned_variables": {
+        "variable_ids": [
+          4,
+          5
+        ],
+        "values": [
+          9,
+          0,
+          0,
+          0,
+          16,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ]
+}

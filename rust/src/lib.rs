@@ -1,9 +1,11 @@
 pub extern crate flatbuffers;
+pub extern crate serde;
 
+#[allow(unused_imports)]
 pub mod zkinterface_generated;
 
 pub mod reading;
-pub mod writing;
+pub mod owned;
 
 pub mod cpp_gadget;
 

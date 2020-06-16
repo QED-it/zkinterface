@@ -18,18 +18,18 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
     let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
 
-    let assigned = if call.witness_generation() {
-        let bytes = call.connections()?.values()?;
-        let stride = bytes.len() / input_var_ids.len();
+    let assigned = match call.connections()?.values() {
+        Some(bytes) => {
+            let stride = bytes.len() / input_var_ids.len();
 
-        (0..input_var_ids.len()).map(|i|
-            Variable {
-                id: input_var_ids[i],
-                value: &bytes[stride * i..stride * (i + 1)],
-            }
-        ).collect()
-    } else {
-        vec![]
+            (0..input_var_ids.len()).map(|i|
+                Variable {
+                    id: input_var_ids[i],
+                    value: &bytes[stride * i..stride * (i + 1)],
+                }
+            ).collect()
+        }
+        None => vec![],
     };
 
     Some((call, assigned))
@@ -76,11 +76,12 @@ impl fmt::Debug for Messages {
         let mut has_witness = false;
         let mut has_constraints = false;
 
-        for root in self {
+        for root in self.into_iter() {
             match root.message_type() {
                 Circuit => has_circuit = true,
                 Witness => has_witness = true,
-                R1CSConstraints => has_constraints = true,
+                ConstraintSystem => has_constraints = true,
+                Command => {}
                 NONE => {}
             }
         }
@@ -94,7 +95,7 @@ impl fmt::Debug for Messages {
                 }
             }
             if let Some(circuit) = self.last_circuit() {
-                //write!(f, "{:?}\n", super::writing::CircuitOwned::from(circuit))?;
+                //write!(f, "{:?}\n", super::owned::circuit::CircuitOwned::from(circuit))?;
                 write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
             }
         }
@@ -110,7 +111,7 @@ impl fmt::Debug for Messages {
         }
 
         if has_constraints {
-            write!(f, "\nZkInterface {:?}\n", R1CSConstraints)?;
+            write!(f, "\nZkInterface {:?}\n", ConstraintSystem)?;
             for constraint in self.iter_constraints() {
                 write!(f, "{:?}\n", constraint)?;
             }
@@ -328,7 +329,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
             let message = self.messages_iter.next()?;
 
             // Parse the message, skip irrelevant message types, or fail if invalid.
-            let constraints = match message.message_as_r1csconstraints() {
+            let constraints = match message.message_as_constraint_system() {
                 Some(message) => message.constraints().unwrap(),
                 None => continue,
             };
@@ -390,6 +391,23 @@ pub struct Variable<'a> {
 impl<'a> Variable<'a> {
     pub fn has_value(&self) -> bool {
         self.value.len() > 0
+    }
+
+    pub fn is_constant_one(&self) -> bool {
+        if self.id != 0 {
+            return false;
+        }
+        if self.value.len() > 0 {
+            if self.value[0] != 1 {
+                return false;
+            }
+            for v in self.value[1..].iter() {
+                if *v != 0 {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
 

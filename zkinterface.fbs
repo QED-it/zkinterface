@@ -8,8 +8,9 @@ namespace zkinterface;
 
 union Message {
     Circuit,
-    R1CSConstraints,
+    ConstraintSystem,
     Witness,
+    Command,
 }
 
 /// A description of a circuit or sub-circuit.
@@ -23,23 +24,12 @@ table Circuit {
     /// - Or variables to use as output connections from the gadget.
     /// - Variables are allocated by the sender of this message.
     /// - The same structure must be provided for R1CS and witness generations.
-    /// - If `witness_generation=true`, variables must be assigned values.
+    /// - If using `Command.witness_generation`, variables must be assigned values.
     connections             :Variables;
 
     /// A variable ID greater than all IDs allocated by the sender of this message.
     /// The recipient of this message can allocate new IDs >= free_variable_id.
     free_variable_id        :uint64;
-
-    // The fields below are required to call a backend or a gadget,
-    // but optional in the response from a gadget.
-
-    /// Whether a constraint system is being generated.
-    /// Provide constraints in R1CSConstraints messages.
-    r1cs_generation         :bool;
-
-    /// Whether a witness is being generated.
-    /// Provide the witness in `connections.values` and Witness messages.
-    witness_generation      :bool;
 
     /// The largest element of the finite field used by the current system.
     /// A canonical little-endian representation of the field order minus one.
@@ -54,10 +44,10 @@ table Circuit {
     configuration           :[KeyValue];
 }
 
-/// R1CSConstraints represents constraints to be added to the constraint system.
+/// ConstraintSystem represents constraints to be added to the constraint system.
 ///
 /// Multiple such messages are equivalent to the concatenation of `constraints` arrays.
-table R1CSConstraints {
+table ConstraintSystem {
     constraints             :[BilinearConstraint];
 
     /// Optional: Any complementary info that may be useful.
@@ -74,6 +64,30 @@ table R1CSConstraints {
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 table Witness {
     assigned_variables      :Variables;
+}
+
+/// Optional: Command messages can be used to request actions from the receiver. This makes it
+/// possible to write code that works in different environments. Commands and parameters
+/// can be passed over the same byte stream as other messages; if so Command must be the first
+/// message. This reduces the need for environment-specific methods (it can replace CLI --flags, etc).
+table Command {
+    /// For gadget flows.
+    /// Request the generation of a constraint system (or part thereof).
+    /// If true, this must be followed by a Circuit.
+    /// The response must be another Circuit message with a greater `free_variable_id`
+    /// followed by one or more ConstraintSystem messages.
+    r1cs_generation         :bool;
+
+    /// For gadget flows.
+    /// Request the generation of a witness (or part thereof).
+    /// If true, this must be followed by a Circuit, and the `connections`
+    /// variables must contain input values.
+    /// The response must be another Circuit message, with a greater `free_variable_id`,
+    /// with output values in `connections` variables, followed by one or more `Witness` messages.
+    witness_generation      :bool;
+
+    /// Optional: Any complementary parameter that may be useful.
+    parameters              :[KeyValue];
 }
 
 
