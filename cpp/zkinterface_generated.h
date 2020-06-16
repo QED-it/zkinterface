@@ -218,36 +218,6 @@ inline bool operator!=(const MessageUnion &lhs, const MessageUnion &rhs) {
 bool VerifyMessage(flatbuffers::Verifier &verifier, const void *obj, Message type);
 bool VerifyMessageVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
-enum ConstraintType {
-  ConstraintType_R1CS = 0,
-  ConstraintType_arithmetic = 1,
-  ConstraintType_MIN = ConstraintType_R1CS,
-  ConstraintType_MAX = ConstraintType_arithmetic
-};
-
-inline const ConstraintType (&EnumValuesConstraintType())[2] {
-  static const ConstraintType values[] = {
-    ConstraintType_R1CS,
-    ConstraintType_arithmetic
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesConstraintType() {
-  static const char * const names[3] = {
-    "R1CS",
-    "arithmetic",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameConstraintType(ConstraintType e) {
-  if (flatbuffers::IsOutRange(e, ConstraintType_R1CS, ConstraintType_arithmetic)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesConstraintType()[index];
-}
-
 struct CircuitT : public flatbuffers::NativeTable {
   typedef Circuit TableType;
   std::unique_ptr<zkinterface::VariablesT> connections;
@@ -405,17 +375,14 @@ flatbuffers::Offset<Circuit> CreateCircuit(flatbuffers::FlatBufferBuilder &_fbb,
 struct ConstraintSystemT : public flatbuffers::NativeTable {
   typedef ConstraintSystem TableType;
   std::vector<std::unique_ptr<zkinterface::BilinearConstraintT>> constraints;
-  zkinterface::ConstraintType constraint_type;
   std::vector<std::unique_ptr<zkinterface::KeyValueT>> info;
-  ConstraintSystemT()
-      : constraint_type(zkinterface::ConstraintType_R1CS) {
+  ConstraintSystemT() {
   }
 };
 
 inline bool operator==(const ConstraintSystemT &lhs, const ConstraintSystemT &rhs) {
   return
       (lhs.constraints == rhs.constraints) &&
-      (lhs.constraint_type == rhs.constraint_type) &&
       (lhs.info == rhs.info);
 }
 
@@ -432,23 +399,13 @@ struct ConstraintSystem FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ConstraintSystemBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CONSTRAINTS = 4,
-    VT_CONSTRAINT_TYPE = 6,
-    VT_INFO = 8
+    VT_INFO = 6
   };
   const flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *constraints() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *>(VT_CONSTRAINTS);
   }
   flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *mutable_constraints() {
     return GetPointer<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *>(VT_CONSTRAINTS);
-  }
-  /// Whether this is an R1CS or fan-in-2 arithmetic circuit.
-  /// A special case is a boolean circuit with XOR and AND gates,
-  /// then constraint_type == arithmetic and circuit.field_maximum == 1.
-  zkinterface::ConstraintType constraint_type() const {
-    return static_cast<zkinterface::ConstraintType>(GetField<int8_t>(VT_CONSTRAINT_TYPE, 0));
-  }
-  bool mutate_constraint_type(zkinterface::ConstraintType _constraint_type) {
-    return SetField<int8_t>(VT_CONSTRAINT_TYPE, static_cast<int8_t>(_constraint_type), 0);
   }
   /// Optional: Any complementary info that may be useful.
   ///
@@ -465,7 +422,6 @@ struct ConstraintSystem FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_CONSTRAINTS) &&
            verifier.VerifyVector(constraints()) &&
            verifier.VerifyVectorOfTables(constraints()) &&
-           VerifyField<int8_t>(verifier, VT_CONSTRAINT_TYPE) &&
            VerifyOffset(verifier, VT_INFO) &&
            verifier.VerifyVector(info()) &&
            verifier.VerifyVectorOfTables(info()) &&
@@ -482,9 +438,6 @@ struct ConstraintSystemBuilder {
   flatbuffers::uoffset_t start_;
   void add_constraints(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>>> constraints) {
     fbb_.AddOffset(ConstraintSystem::VT_CONSTRAINTS, constraints);
-  }
-  void add_constraint_type(zkinterface::ConstraintType constraint_type) {
-    fbb_.AddElement<int8_t>(ConstraintSystem::VT_CONSTRAINT_TYPE, static_cast<int8_t>(constraint_type), 0);
   }
   void add_info(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info) {
     fbb_.AddOffset(ConstraintSystem::VT_INFO, info);
@@ -504,26 +457,22 @@ struct ConstraintSystemBuilder {
 inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystem(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::BilinearConstraint>>> constraints = 0,
-    zkinterface::ConstraintType constraint_type = zkinterface::ConstraintType_R1CS,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<zkinterface::KeyValue>>> info = 0) {
   ConstraintSystemBuilder builder_(_fbb);
   builder_.add_info(info);
   builder_.add_constraints(constraints);
-  builder_.add_constraint_type(constraint_type);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystemDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<flatbuffers::Offset<zkinterface::BilinearConstraint>> *constraints = nullptr,
-    zkinterface::ConstraintType constraint_type = zkinterface::ConstraintType_R1CS,
     const std::vector<flatbuffers::Offset<zkinterface::KeyValue>> *info = nullptr) {
   auto constraints__ = constraints ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::BilinearConstraint>>(*constraints) : 0;
   auto info__ = info ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>>(*info) : 0;
   return zkinterface::CreateConstraintSystem(
       _fbb,
       constraints__,
-      constraint_type,
       info__);
 }
 
@@ -1276,7 +1225,6 @@ inline void ConstraintSystem::UnPackTo(ConstraintSystemT *_o, const flatbuffers:
   (void)_o;
   (void)_resolver;
   { auto _e = constraints(); if (_e) { _o->constraints.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->constraints[_i] = std::unique_ptr<zkinterface::BilinearConstraintT>(_e->Get(_i)->UnPack(_resolver)); } } }
-  { auto _e = constraint_type(); _o->constraint_type = _e; }
   { auto _e = info(); if (_e) { _o->info.resize(_e->size()); for (flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->info[_i] = std::unique_ptr<zkinterface::KeyValueT>(_e->Get(_i)->UnPack(_resolver)); } } }
 }
 
@@ -1289,12 +1237,10 @@ inline flatbuffers::Offset<ConstraintSystem> CreateConstraintSystem(flatbuffers:
   (void)_o;
   struct _VectorArgs { flatbuffers::FlatBufferBuilder *__fbb; const ConstraintSystemT* __o; const flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _constraints = _o->constraints.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::BilinearConstraint>> (_o->constraints.size(), [](size_t i, _VectorArgs *__va) { return CreateBilinearConstraint(*__va->__fbb, __va->__o->constraints[i].get(), __va->__rehasher); }, &_va ) : 0;
-  auto _constraint_type = _o->constraint_type;
   auto _info = _o->info.size() ? _fbb.CreateVector<flatbuffers::Offset<zkinterface::KeyValue>> (_o->info.size(), [](size_t i, _VectorArgs *__va) { return CreateKeyValue(*__va->__fbb, __va->__o->info[i].get(), __va->__rehasher); }, &_va ) : 0;
   return zkinterface::CreateConstraintSystem(
       _fbb,
       _constraints,
-      _constraint_type,
       _info);
 }
 
