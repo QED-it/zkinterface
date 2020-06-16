@@ -149,3 +149,25 @@ bool sha256_gadget_call(
 
     return true;
 }
+
+/*
+FlatBufferBuilder serialize_error(string error)
+{
+    FlatBufferBuilder builder;
+    auto ser_error = builder.CreateString(error);
+    auto response = CreateGadgetReturn(builder, 0, 0, ser_error);
+    builder.FinishSizePrefixed(CreateRoot(builder, Message_GadgetReturn, response.Union()));
+    return builder;
+}
+
+bool return_error(gadget_callback_t return_callback, void *return_context, string error)
+{
+    if (return_callback != nullptr)
+    {
+        FlatBufferBuilder builder = serialize_error(error);
+        return_callback(return_context, builder.GetBufferPointer());
+        // Releasing builder...
+    }
+    return false;
+}
+*/

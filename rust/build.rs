@@ -7,7 +7,7 @@ fn main() {
         // Latest flatc version: 1.12.0
         match Command::new("flatc").args(&[
             "--rust",
-            "--cpp",
+            "--cpp", "--gen-object-api", "--gen-mutable", "--gen-compare",
             "--js",
             "-o", "src/",
             "../zkinterface.fbs",
