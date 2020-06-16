@@ -22,7 +22,7 @@ namespace zkinterface_libsnark {
         import_zkif(protoboard<FieldT> &pb, const std::string &annotation_prefix) :
                 gadget<FieldT>(pb, annotation_prefix) {}
 
-        protoboard<FieldT>* get_pb() { return &pb; }
+        protoboard<FieldT> *get_pb() { return &pb; }
 
         void load(vector<char> &buf) {
             buffer = buf;
@@ -33,9 +33,9 @@ namespace zkinterface_libsnark {
             return root->message_as_Circuit();
         }
 
-        const R1CSConstraints *get_constraints() {
-            auto root = find_message(buffer, Message_R1CSConstraints);
-            return root->message_as_R1CSConstraints();
+        const ConstraintSystem *get_constraints() {
+            auto root = find_message(buffer, Message_ConstraintSystem);
+            return root->message_as_ConstraintSystem();
         }
 
         const Witness *get_witness() {

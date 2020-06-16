@@ -7,37 +7,6 @@
 
 namespace zkinterface_libsnark {
 
-// ==== Reading helpers ====
-
-    uoffset_t read_size_prefix(void *buffer) {
-        uoffset_t message_length = *reinterpret_cast<uoffset_t *>(buffer);
-        return sizeof(uoffset_t) + message_length;
-    }
-
-    const Root *find_message(vector<char> &buffer, Message type) {
-        auto offset = 0;
-
-        while (offset + sizeof(uoffset_t) * 2 <= buffer.size()) {
-            auto current = buffer.data() + offset;
-
-            auto size = read_size_prefix(current);
-            if (offset + size > buffer.size()) {
-                throw "invalid offset";
-            }
-
-            auto root = GetSizePrefixedRoot(current);
-
-            if (root->message_type() == type) {
-                return root; // Found.
-            }
-
-            offset += size;
-        }
-
-        throw MessageNotFoundException();
-    }
-
-
 // ==== Element conversion helpers ====
 
     // Bytes to Bigint. Little-Endian.
@@ -79,6 +48,7 @@ namespace zkinterface_libsnark {
     }
 
     // Bytes to elements.
+    // `from_bytes` can be null if `element_size` is 0.
     vector<FieldT> le_into_elements(const uint8_t *from_bytes, size_t num_elements, size_t element_size) {
         vector<FieldT> to_elements(num_elements);
         for (size_t i = 0; i < num_elements; ++i) {
@@ -91,6 +61,9 @@ namespace zkinterface_libsnark {
 
     // FlatBuffers bytes into elements.
     vector<FieldT> deserialize_elements(const flatbuffers::Vector<uint8_t> *from_bytes, size_t num_elements) {
+        if (from_bytes == nullptr) {
+            return le_into_elements(nullptr, num_elements, 0);
+        }
         size_t element_size = from_bytes->size() / num_elements;
         return le_into_elements(from_bytes->data(), num_elements, element_size);
     }
@@ -174,22 +147,21 @@ namespace zkinterface_libsnark {
                     make_lc(lib_constraint->c.terms)));
         }
 
-        auto r1csConstraints = CreateR1CSConstraints(builder, builder.CreateVector(fb_constraints));
+        auto constraint_system = CreateConstraintSystem(builder, builder.CreateVector(fb_constraints));
 
-        auto root = CreateRoot(builder, Message_R1CSConstraints, r1csConstraints.Union());
+        auto root = CreateRoot(builder, Message_ConstraintSystem, constraint_system.Union());
         builder.FinishSizePrefixed(root);
         return builder;
     }
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            size_t num_outputs,
             const protoboard<FieldT> &pb) {
         FlatBufferBuilder builder;
 
         size_t all_vars = pb.num_variables();
-        size_t shared_vars = circuit->connections()->variable_ids()->size() + num_outputs;
-        size_t local_vars = all_vars - shared_vars;
+        size_t input_vars = circuit->connections()->variable_ids()->size();
+        size_t local_vars = all_vars - input_vars;
 
         vector<uint64_t> variable_ids(local_vars);
         vector<uint8_t> elements(fieldt_size * local_vars);
@@ -199,7 +171,7 @@ namespace zkinterface_libsnark {
         for (size_t index = 0; index < local_vars; ++index) {
             variable_ids[index] = free_id + index;
             into_le(
-                    pb.val(1 + shared_vars + index).as_bigint(),
+                    pb.val(1 + input_vars + index).as_bigint(),
                     elements.data() + fieldt_size * index,
                     fieldt_size);
         }
