@@ -7,7 +7,7 @@ use std::error::Error;
 
 // Example:
 //
-//     cargo run --bin print < example.zkif
+//     cargo run --bin print < ../examples/example.zkif
 //
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut messages = Messages::new(1);

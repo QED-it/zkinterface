@@ -7,7 +7,7 @@ use std::error::Error;
 
 // Example:
 //
-//     cargo run --bin example > example.zkif
+//     cargo run --bin example > ../examples/example.zkif
 //
 pub fn main() -> Result<(), Box<dyn Error>> {
 
