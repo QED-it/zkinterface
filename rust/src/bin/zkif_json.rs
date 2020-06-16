@@ -9,7 +9,7 @@ use zkinterface::{owned::message::MessagesOwned, reading::Messages};
 
 // Example:
 //
-//     cargo run --bin zkif_json < example.zkif
+//     cargo run --bin zkif_json < ../examples/example.zkif
 //
 pub fn main() -> Result<(), Box<dyn Error>> {
     let pretty = true;
