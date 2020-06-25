@@ -1,0 +1,15 @@
+[package]
+name = "libsnark-rust"
+version = "0.1.0"
+authors = ["aurel <aurel@qed-it.com>"]
+edition = "2018"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#zkinterface = "1.1.1"
+zkinterface = { path = "../../rust" }
+
+[build-dependencies]
+cmake = "0.1.44"

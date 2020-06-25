@@ -5,6 +5,7 @@
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/gadgetlib1/protoboard.hpp>
 #include "zkinterface_generated.h"
+#include "zkinterface.h"
 #include "zkinterface_utils.hpp"
 #include "libsnark_integration.hpp"
 
@@ -14,7 +15,7 @@ namespace gadgetlib_example {
     using namespace zkinterface_utils;
 
 
-    bool call_gadget_example(
+    bool call_gadget(
             char *call_msg,
 
             gadget_callback_t constraints_callback,

@@ -5,6 +5,7 @@
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/gadgetlib1/protoboard.hpp>
 #include "zkinterface_generated.h"
+#include "zkinterface.h"
 #include "zkinterface_utils.hpp"
 #include "libsnark_integration.hpp"
 

@@ -9,7 +9,6 @@
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"
 
-#include "zkinterface.h"
 #include "zkinterface_generated.h"
 #include "zkinterface_utils.hpp"
 

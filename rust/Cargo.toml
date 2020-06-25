@@ -1,6 +1,6 @@
 [package]
 name = "zkinterface"
-version = "1.1.1"
+version = "1.1.2"
 authors = ["Aurélien Nicolas <aurel@qed-it.com>"]
 license = "MIT"
 build = "build.rs"
@@ -14,8 +14,6 @@ keywords = ["zero-knowledge", "zkproof", "cryptography"]
 [features]
 # Whether to regenerate code from zkinterface.fbs. Requires the Flatbuffers compiler.
 fbs = []
-# Whether to compile, include, and test C++ code. Requires cmake.
-cpp = []
 
 [dependencies]
 flatbuffers = "0.5.0"
@@ -24,4 +22,3 @@ serde_json = "1.0.53"
 
 [build-dependencies]
 regex = "1"
-cmake = "0.1"

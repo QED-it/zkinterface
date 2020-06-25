@@ -2,14 +2,18 @@
 // @author Aurélien Nicolas <aurel@qed-it.com>
 // @date 2019
 
-use reading::Messages;
-use std::error::Error;
 use std::slice;
-use owned::circuit::CircuitOwned;
+use std::error::Error;
+use zkinterface::{
+    reading::Messages,
+    owned::circuit::CircuitOwned,
+    owned::command::CommandOwned,
+};
 
+#[link(name = "zkif_gadgetlib", kind = "static")]
 #[allow(improper_ctypes)]
 extern "C" {
-    fn call_gadget(
+    fn gadgetlib_call_gadget(
         call_msg: *const u8,
         constraints_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
         constraints_context: *mut Messages,
@@ -19,6 +23,18 @@ extern "C" {
         return_context: *mut Messages,
     ) -> bool;
 }
+
+/// Collect the stream of any messages into the context.
+extern "C"
+fn receive_message_callback(
+    context_ptr: *mut Messages,
+    message_ptr: *const u8,
+) -> bool {
+    let (context, buf) = from_c(context_ptr, message_ptr);
+
+    context.push_message(Vec::from(buf)).is_ok()
+}
+
 
 // Read a size prefix (4 bytes, little-endian).
 fn read_size_prefix(ptr: *const u8) -> u32 {
@@ -39,47 +55,36 @@ fn from_c<'a, CTX>(
     (context, buf)
 }
 
-/// Collect the stream of any messages into the context.
-extern "C"
-fn callback_c(
-    context_ptr: *mut Messages,
-    message_ptr: *const u8,
-) -> bool {
-    let (context, buf) = from_c(context_ptr, message_ptr);
-
-    context.push_message(Vec::from(buf)).is_ok()
-}
-
-pub fn call_gadget_wrapper(circuit: &CircuitOwned) -> Result<Messages, Box<dyn Error>> {
+pub fn call_gadget_wrapper(circuit: &CircuitOwned, command: &CommandOwned) -> Result<Messages, Box<dyn Error>> {
     let mut message_buf = vec![];
     circuit.write(&mut message_buf)?;
+    command.write(&mut message_buf)?;
 
-    let mut context = Messages::new(circuit.free_variable_id);
+    let mut output_context = Messages::new(circuit.free_variable_id);
     let ok = unsafe {
-        call_gadget(
+        gadgetlib_call_gadget(
             message_buf.as_ptr(),
-            callback_c,
-            &mut context as *mut Messages,
-            callback_c,
-            &mut context as *mut Messages,
-            callback_c,
-            &mut context as *mut Messages,
+            receive_message_callback,
+            &mut output_context as *mut Messages,
+            receive_message_callback,
+            &mut output_context as *mut Messages,
+            receive_message_callback,
+            &mut output_context as *mut Messages,
         )
     };
 
     match ok {
-        true => Ok(context),
+        true => Ok(output_context),
         false => Err("call_gadget failed".into()),
     }
 }
 
 
 #[test]
-#[cfg(feature = "cpp")]
 fn test_cpp_gadget() {
-    use owned::variables::VariablesOwned;
+    use zkinterface::owned::variables::VariablesOwned;
 
-    let mut call = CircuitOwned {
+    let mut subcircuit = CircuitOwned {
         connections: VariablesOwned {
             variable_ids: vec![100, 101], // Some input variables.
             values: None,
@@ -88,10 +93,10 @@ fn test_cpp_gadget() {
         field_maximum: None,
     };
 
-    println!("==== R1CS generation ====");
-    // TODO: Should send a Command with constraints_generation: true.
 
-    let r1cs_response = call_gadget_wrapper(&call).unwrap();
+    println!("==== R1CS generation ====");
+    let command = CommandOwned { constraints_generation: true, witness_generation: false };
+    let r1cs_response = call_gadget_wrapper(&subcircuit, &command).unwrap();
 
     println!("R1CS: Rust received {} messages including {} gadget return.",
              r1cs_response.messages.len(),
@@ -111,11 +116,11 @@ fn test_cpp_gadget() {
 
 
     println!("==== Witness generation ====");
-    // TODO: Should send a Command with witness_generation: true.
+    // Specify input values.
+    subcircuit.connections.values = Some(vec![4, 5, 6, 14, 15, 16 as u8]);
 
-    call.connections.values = Some(vec![4, 5, 6, 14, 15, 16 as u8]);
-
-    let witness_response = call_gadget_wrapper(&call).unwrap();
+    let command = CommandOwned { constraints_generation: false, witness_generation: true };
+    let witness_response = call_gadget_wrapper(&subcircuit, &command).unwrap();
 
     println!("Assignment: Rust received {} messages including {} gadget return.",
              witness_response.messages.len(),

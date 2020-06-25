@@ -2,7 +2,7 @@
 
 namespace gadgetlib_example {
 
-    bool call_gadget_example(
+    bool call_gadget(
             char *call_msg,
 
             gadget_callback_t constraints_callback,
