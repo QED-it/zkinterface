@@ -115,12 +115,12 @@ fn test_cpp_gadget() {
 
     let free_variable_id_after = r1cs_response.last_circuit().unwrap().free_variable_id();
     println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
-    assert!(free_variable_id_after == 104 + 40);
+    assert!(free_variable_id_after == 104 + 36);
 
 
     println!("==== Witness generation ====");
     // Specify input values.
-    subcircuit.connections.values = Some(vec![4, 5, 6, 14, 15, 16 as u8]);
+    subcircuit.connections.values = Some(vec![11, 12, 9, 14 as u8]);
 
     let command = CommandOwned { constraints_generation: false, witness_generation: true };
     let witness_response = call_gadget_wrapper(&subcircuit, &command).unwrap();
@@ -137,23 +137,22 @@ fn test_cpp_gadget() {
 
         println!("Assignment: Got witness:");
         for var in assignment.iter() {
-            println!("{} = {:?}", var.id, var.value);
+            println!("{:?}", var);
         }
 
-        assert_eq!(assignment.len(), 40);
-        assert_eq!(assignment[0].value.len(), 3);
-        assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
-        assert_eq!(assignment[1].id, 103 + 1); // Second "
-        assert_eq!(assignment[0].value, &[10, 11, 12]); // First element.
-        assert_eq!(assignment[1].value, &[8, 7, 6]);    // Second element
+        assert_eq!(assignment.len(), 36);
+        assert_eq!(assignment[0].id, 104 + 0); // First gadget-allocated variable.
+        assert_eq!(assignment[0].value.len(), 32);
+        assert_eq!(assignment[1].id, 104 + 1); // Second "
+        assert_eq!(assignment[1].value.len(), 32);
 
         let free_variable_id_after2 = witness_response.last_circuit().unwrap().free_variable_id();
         println!("Assignment: Free variable id after the call: {}", free_variable_id_after2);
-        assert!(free_variable_id_after2 == 102 + 1 + 2);
         assert!(free_variable_id_after2 == free_variable_id_after);
 
         let out_vars = witness_response.connection_variables().unwrap();
-        println!("{:?}", out_vars);
+        println!("Output variables: {:?}", out_vars);
+        assert_eq!(out_vars.len(), 2);
     }
     println!();
 }
