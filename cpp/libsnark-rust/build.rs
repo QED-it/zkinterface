@@ -8,10 +8,10 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", dst.display());
     //println!("cargo:rustc-link-lib=static=zkif_gadgetlib");
     // Dependencies.
-    //println!("cargo:rustc-link-search=native={}", "../libsnark/depends/libff/libff/");
-    //println!("cargo:rustc-link-lib=ff");
-    //println!("cargo:rustc-link-search=native={}", "/usr/local/lib/");
-    //println!("cargo:rustc-link-lib=gmp");
+    println!("cargo:rustc-link-search=native={}", "../libsnark/depends/libff/libff/");
+    println!("cargo:rustc-link-lib=ff");
+    println!("cargo:rustc-link-search=native={}", "/usr/local/lib/");
+    println!("cargo:rustc-link-lib=gmp");
     //println!("cargo:rustc-link-search=native={}", "../libsnark/libsnark/");
     //println!("cargo:rustc-link-lib=snark");
 

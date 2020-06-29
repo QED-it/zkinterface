@@ -1,6 +1,8 @@
+#include "libsnark_converters.hpp"
+#include "gadgetlib.h"
+
 #include <iostream>
 #include <fstream>
-#include "gadgetlib_alu.hpp"
 
 using namespace std;
 using namespace flatbuffers;
@@ -68,8 +70,6 @@ bool callback_write_to_file(void *context, unsigned char *message) {
 }
 
 void run(string action, string zkif_out_prefix) {
-    zkinterface_libsnark::CurveT::init_public_params();
-
     vector<char> buffer;
     make_input_circuit(buffer);
     make_command(buffer, action);
@@ -78,7 +78,7 @@ void run(string action, string zkif_out_prefix) {
     string witness_name = zkif_out_prefix + "_witness.zkif";
     string return_name = zkif_out_prefix + "_return.zkif";
 
-    gadgetlib_alu::call_gadget(
+    gadgetlib_call_gadget(
             buffer.data(),
             callback_write_to_file, &constraints_name,
             callback_write_to_file, &witness_name,

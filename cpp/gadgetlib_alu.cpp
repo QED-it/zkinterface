@@ -1,9 +1,12 @@
 #include "gadgetlib_alu.hpp"
-#include "libsnark_integration.hpp"
+#include "libsnark_converters.hpp"
 #include <libsnark/gadgetlib1/gadgets/cpu_checkers/tinyram/components/alu_arithmetic.hpp>
 
 namespace gadgetlib_alu {
-    using namespace zkinterface_libsnark;
+    using namespace zkinterface;
+    using namespace zkinterface_utils;
+    using namespace libsnark_converters;
+    using namespace std;
 
     typedef pb_variable<FieldT> Variable;
     typedef word_variable_gadget<FieldT> Word;
@@ -25,9 +28,6 @@ namespace gadgetlib_alu {
     ) {
         const Circuit *circuit = find_message(call_msg, Message_Circuit)->message_as_Circuit();
         const Command *command = find_message(call_msg, Message_Command)->message_as_Command();
-
-        string function_name = find_config_text(circuit, "function", "");
-        cout << "Function: " << function_name << endl;
 
         // Setup.
         tinyram_architecture_params tinyram_params(8, 4);

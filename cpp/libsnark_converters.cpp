@@ -3,9 +3,10 @@
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2018
 
-#include "libsnark_integration.hpp"
+#include "libsnark_converters.hpp"
 
-namespace zkinterface_libsnark {
+namespace libsnark_converters {
+    using namespace zkinterface_utils;
 
 // ==== Element conversion helpers ====
 
@@ -231,4 +232,4 @@ namespace zkinterface_libsnark {
         }
     }
 
-} // namespace zkinterface_libsnark
+} // namespace libsnark_converters

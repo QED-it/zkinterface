@@ -3,8 +3,8 @@
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2020
 
-#ifndef ZKINTERFACE_ZKINTERFACE_UTILS_HPP
-#define ZKINTERFACE_ZKINTERFACE_UTILS_HPP
+#ifndef ZKIF_ZKINTERFACE_UTILS_HPP
+#define ZKIF_ZKINTERFACE_UTILS_HPP
 
 #include "zkinterface_generated.h"
 
@@ -43,4 +43,4 @@ namespace zkinterface_utils {
     };
 
 }
-#endif //ZKINTERFACE_ZKINTERFACE_UTILS_HPP
+#endif //ZKIF_ZKINTERFACE_UTILS_HPP

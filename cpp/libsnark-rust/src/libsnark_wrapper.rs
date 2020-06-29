@@ -86,10 +86,10 @@ fn test_cpp_gadget() {
 
     let mut subcircuit = CircuitOwned {
         connections: VariablesOwned {
-            variable_ids: vec![100, 101], // Some input variables.
+            variable_ids: vec![100, 101, 102, 103], // Some input variables.
             values: None,
         },
-        free_variable_id: 102,
+        free_variable_id: 104,
         field_maximum: None,
     };
 
@@ -112,7 +112,7 @@ fn test_cpp_gadget() {
 
     let free_variable_id_after = r1cs_response.last_circuit().unwrap().free_variable_id();
     println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
-    assert!(free_variable_id_after == 102 + 1 + 2);
+    assert!(free_variable_id_after == 104 + 40);
 
 
     println!("==== Witness generation ====");
@@ -137,7 +137,7 @@ fn test_cpp_gadget() {
             println!("{} = {:?}", var.id, var.value);
         }
 
-        assert_eq!(assignment.len(), 2);
+        assert_eq!(assignment.len(), 40);
         assert_eq!(assignment[0].value.len(), 3);
         assert_eq!(assignment[0].id, 103 + 0); // First gadget-allocated variable.
         assert_eq!(assignment[1].id, 103 + 1); // Second "

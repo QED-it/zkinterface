@@ -1,18 +1,13 @@
-#ifndef ZKIF_GADGETLIB_MULT_H_
-#define ZKIF_GADGETLIB_MULT_H_
+#ifndef ZKIF_GADGETLIB_ALU_HPP
+#define ZKIF_GADGETLIB_ALU_HPP
+
+#include "gadgetlib.h"
 
 #include <iostream>
 #include <libsnark/gadgetlib1/gadget.hpp>
 #include <libsnark/gadgetlib1/protoboard.hpp>
-#include "zkinterface_generated.h"
-#include "zkinterface.h"
-#include "zkinterface_utils.hpp"
-#include "libsnark_integration.hpp"
 
 namespace gadgetlib_alu {
-    using namespace std;
-    using namespace zkinterface;
-    using namespace zkinterface_utils;
 
     bool call_gadget(
             char *call_msg,
@@ -29,4 +24,4 @@ namespace gadgetlib_alu {
 
 } // namespace gadgetlib_alu
 
-#endif // ZKIF_GADGETLIB_MULT_H_
+#endif // ZKIF_GADGETLIB_ALU_HPP

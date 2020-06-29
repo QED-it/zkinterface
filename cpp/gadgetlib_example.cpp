@@ -1,6 +1,9 @@
 #include "gadgetlib_example.hpp"
+#include "libsnark_converters.hpp"
 
 namespace gadgetlib_example {
+    using namespace zkinterface_utils;
+    using namespace std;
 
     bool call_gadget(
             char *call_msg,

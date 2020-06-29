@@ -1,16 +1,16 @@
-// ZoKrates plugin interface.
+// zkInterface - libsnark converters and helpers.
 //
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2018
 
-#ifndef ZKIF_LIBSNARK_INTEGRATION_H_
-#define ZKIF_LIBSNARK_INTEGRATION_H_
+#ifndef ZKIF_LIBSNARK_CONVERTERS_HPP
+#define ZKIF_LIBSNARK_CONVERTERS_HPP
+
+#include "zkinterface_utils.hpp"
 
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"
 
-#include "zkinterface_generated.h"
-#include "zkinterface_utils.hpp"
 
 using namespace zkinterface;
 using flatbuffers::FlatBufferBuilder;
@@ -23,28 +23,12 @@ using libff::alt_bn128_r_limbs;
 using libff::bigint;
 using libff::bit_vector;
 
-namespace zkinterface_libsnark {
-    using namespace zkinterface_utils;
+namespace libsnark_converters {
 
     typedef libff::default_ec_pp CurveT;
     typedef libff::Fr<CurveT> FieldT;
     const size_t fieldt_size = 32;
     const mp_size_t r_limbs = alt_bn128_r_limbs;
-
-// ==== Gadget ====
-
-    class standard_libsnark_gadget {
-    public:
-        virtual protoboard<FieldT> &borrow_protoboard();
-
-        virtual size_t num_inputs();
-
-        virtual size_t num_outputs();
-
-        virtual void r1cs_generation_constraints();
-
-        virtual vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements);
-    };
 
 
 // ==== Element conversion helpers ====
@@ -102,6 +86,6 @@ namespace zkinterface_libsnark {
             const Variables *variables
     );
 
-} // namespace zkinterface_libsnark
+} // namespace libsnark_converters
 
-#endif // ZKIF_LIBSNARK_INTEGRATION_H_
+#endif // ZKIF_LIBSNARK_CONVERTERS_HPP

@@ -1,5 +1,5 @@
-#ifndef ZKINTERFACE_H
-#define ZKINTERFACE_H
+#ifndef ZKIF_GADGETLIB_H
+#define ZKIF_GADGETLIB_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,4 +51,4 @@ bool gadgetlib_call_gadget(
 #ifdef __cplusplus
 } // extern "C"
 #endif
-#endif //ZKINTERFACE_H
+#endif //ZKIF_GADGETLIB_H
