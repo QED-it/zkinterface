@@ -12,7 +12,8 @@ namespace gadgetlib_example {
     using namespace zkinterface;
 
     bool call_gadget(
-            char *call_msg,
+            char *circuit_msg,
+            char *command_msg,
 
             gadget_callback_t constraints_callback,
             void *constraints_context,

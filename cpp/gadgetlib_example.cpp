@@ -6,7 +6,8 @@ namespace gadgetlib_example {
     using namespace std;
 
     bool call_gadget(
-            char *call_msg,
+            char *circuit_msg,
+            char *command_msg,
 
             gadget_callback_t constraints_callback,
             void *constraints_context,
@@ -17,8 +18,8 @@ namespace gadgetlib_example {
             gadget_callback_t return_callback,
             void *return_context
     ) {
-        const Circuit *circuit = find_message(call_msg, Message_Circuit)->message_as_Circuit();
-        const Command *command = find_message(call_msg, Message_Command)->message_as_Command();
+        const Circuit *circuit = read_circuit(circuit_msg);
+        const Command *command = read_command(command_msg);
 
         if (command->constraints_generation()) {
             bool ok = make_constraints(circuit,

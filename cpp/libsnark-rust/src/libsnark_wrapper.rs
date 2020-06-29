@@ -14,7 +14,8 @@ use zkinterface::{
 #[allow(improper_ctypes)]
 extern "C" {
     fn gadgetlib_call_gadget(
-        call_msg: *const u8,
+        circuit_msg: *const u8,
+        command_msg: *const u8,
         constraints_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
         constraints_context: *mut Messages,
         witness_callback: extern fn(context_ptr: *mut Messages, message: *const u8) -> bool,
@@ -56,14 +57,16 @@ fn from_c<'a, CTX>(
 }
 
 pub fn call_gadget_wrapper(circuit: &CircuitOwned, command: &CommandOwned) -> Result<Messages, Box<dyn Error>> {
-    let mut message_buf = vec![];
-    circuit.write(&mut message_buf)?;
-    command.write(&mut message_buf)?;
+    let mut circuit_buf = vec![];
+    circuit.write(&mut circuit_buf)?;
+    let mut command_buf = vec![];
+    command.write(&mut command_buf)?;
 
     let mut output_context = Messages::new(circuit.free_variable_id);
     let ok = unsafe {
         gadgetlib_call_gadget(
-            message_buf.as_ptr(),
+            circuit_buf.as_ptr(),
+            command_buf.as_ptr(),
             receive_message_callback,
             &mut output_context as *mut Messages,
             receive_message_callback,

@@ -18,6 +18,14 @@ namespace zkinterface_utils {
 
     uoffset_t read_size_prefix(void *buffer);
 
+    const Circuit* read_circuit(char *buffer);
+
+    const ConstraintSystem* read_constraint_system(char *buffer);
+
+    const Witness* read_witness(char *buffer);
+
+    const Command* read_command(char *buffer);
+
     // Find the first message of the requested type in a buffer.
     const Root *find_message(char *buffer, Message type);
 

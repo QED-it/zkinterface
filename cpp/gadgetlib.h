@@ -35,7 +35,8 @@ typedef bool (*gadget_callback_t)(
     is responsible for managing the pointed objects after the function returns.
 */
 bool gadgetlib_call_gadget(
-        char *call_msg,
+        char *circuit_msg,
+        char *command_msg,
 
         gadget_callback_t constraints_callback,
         void *constraints_context,
