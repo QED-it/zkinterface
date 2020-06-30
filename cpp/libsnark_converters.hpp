@@ -1,21 +1,21 @@
-// ZoKrates plugin interface.
+// zkInterface - libsnark converters and helpers.
 //
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2018
 
-#ifndef ZKIF_LIBSNARK_INTEGRATION_H_
-#define ZKIF_LIBSNARK_INTEGRATION_H_
+#ifndef ZKIF_LIBSNARK_CONVERTERS_HPP
+#define ZKIF_LIBSNARK_CONVERTERS_HPP
+
+#include "zkinterface_utils.hpp"
 
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libff/common/default_types/ec_pp.hpp"
 
-#include "zkinterface.h"
-#include "zkinterface_generated.h"
-#include "zkinterface_utils.hpp"
 
 using namespace zkinterface;
 using flatbuffers::FlatBufferBuilder;
 using flatbuffers::uoffset_t;
+using flatbuffers::Vector;
 
 using std::string;
 using std::vector;
@@ -24,29 +24,16 @@ using libff::alt_bn128_r_limbs;
 using libff::bigint;
 using libff::bit_vector;
 
-namespace zkinterface_libsnark {
-    using namespace zkinterface_utils;
+namespace libsnark_converters {
 
     typedef libff::default_ec_pp CurveT;
     typedef libff::Fr<CurveT> FieldT;
     const size_t fieldt_size = 32;
     const mp_size_t r_limbs = alt_bn128_r_limbs;
 
-// ==== Gadget ====
-
-    class standard_libsnark_gadget {
-    public:
-        virtual protoboard<FieldT> &borrow_protoboard();
-
-        virtual size_t num_inputs();
-
-        virtual size_t num_outputs();
-
-        virtual void r1cs_generation_constraints();
-
-        virtual vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements);
-    };
-
+    typedef protoboard<FieldT> Protoboard;
+    typedef pb_variable<FieldT> PbVariable;
+    typedef pb_variable_array<FieldT> PbArray;
 
 // ==== Element conversion helpers ====
 
@@ -75,16 +62,26 @@ namespace zkinterface_libsnark {
 
 // ==== Helpers to report the content of a protoboard ====
 
-    // Convert protoboard index to standard variable ID.
-    uint64_t convert_variable_id(const Circuit *circuit, uint64_t index);
+    class VarIdConverter {
+    public:
+        const flatbuffers::Vector<uint64_t>* input_ids;
+        size_t input_count;
+        uint64_t first_local_id;
+
+        VarIdConverter(const Circuit* circuit);
+        uint64_t get_variable_id(const PbVariable &pb_var);
+        uint64_t get_local_id(size_t local_index);
+        PbVariable get_local_variable(size_t local_index);
+        uint64_t free_id_after_protoboard(const Protoboard &pb);
+    };
 
     FlatBufferBuilder serialize_protoboard_constraints(
             const Circuit *circuit,
-            const protoboard<FieldT> &pb);
+            const Protoboard &pb);
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            const protoboard<FieldT> &pb);
+            const Protoboard &pb);
 
 
 // ==== Helpers to write into a protoboard ====
@@ -99,10 +96,10 @@ namespace zkinterface_libsnark {
 
     // Write variable assignments into a protoboard.
     void copy_variables_into_protoboard(
-            protoboard<FieldT> &pb,
+            Protoboard &pb,
             const Variables *variables
     );
 
-} // namespace zkinterface_libsnark
+} // namespace libsnark_converters
 
-#endif // ZKIF_LIBSNARK_INTEGRATION_H_
+#endif // ZKIF_LIBSNARK_CONVERTERS_HPP

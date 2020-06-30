@@ -14,6 +14,22 @@ namespace zkinterface_utils {
         return sizeof(uoffset_t) + message_length;
     }
 
+    const Circuit* read_circuit(char *buffer) {
+        return GetSizePrefixedRoot(buffer)->message_as_Circuit();
+    }
+
+    const ConstraintSystem* read_constraint_system(char *buffer) {
+        return GetSizePrefixedRoot(buffer)->message_as_ConstraintSystem();
+    }
+
+    const Witness* read_witness(char *buffer) {
+        return GetSizePrefixedRoot(buffer)->message_as_Witness();
+    }
+
+    const Command* read_command(char *buffer) {
+        return GetSizePrefixedRoot(buffer)->message_as_Command();
+    }
+
     const Root *find_message(char *buffer, uoffset_t buffer_size, Message type) {
         auto offset = 0;
 

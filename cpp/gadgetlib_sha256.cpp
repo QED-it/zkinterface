@@ -4,14 +4,28 @@
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_components.hpp"
 #include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
 
-#include "zkinterface.h"
+#include "gadgetlib.h"
+#include "libsnark_converters.hpp"
 #include "zkinterface_generated.h"
-#include "libsnark_integration.hpp"
 
 using std::vector;
 using namespace libsnark;
 using namespace libff;
 using namespace zkinterface_libsnark;
+
+
+class standard_libsnark_gadget {
+public:
+  virtual protoboard<FieldT> &borrow_protoboard();
+
+  virtual size_t num_inputs();
+
+  virtual size_t num_outputs();
+
+  virtual void r1cs_generation_constraints();
+
+  virtual vector<FieldT> r1cs_generation_witness(const vector<FieldT> &in_elements);
+};
 
 
 class sha256_gadget : standard_libsnark_gadget {

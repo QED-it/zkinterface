@@ -1,10 +1,5 @@
-cpp/cmake-build-debug/
-cpp/cmake-build-release/
-cpp/CMakeFiles/
-cpp/Makefile
-cpp/CMakeCache.txt
-cpp/cmake_install.cmake
 target/
+build/
 libsnark
 *.a
 local/

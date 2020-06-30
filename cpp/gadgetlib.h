@@ -1,5 +1,5 @@
-#ifndef ZKINTERFACE_H
-#define ZKINTERFACE_H
+#ifndef ZKIF_GADGETLIB_H
+#define ZKIF_GADGETLIB_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,8 +34,9 @@ typedef bool (*gadget_callback_t)(
     only valid for the duration of this function call. The caller of a function
     is responsible for managing the pointed objects after the function returns.
 */
-bool call_gadget(
-        unsigned char *call_msg,
+bool gadgetlib_call_gadget(
+        char *circuit_msg,
+        char *command_msg,
 
         gadget_callback_t constraints_callback,
         void *constraints_context,
@@ -51,4 +52,4 @@ bool call_gadget(
 #ifdef __cplusplus
 } // extern "C"
 #endif
-#endif //ZKINTERFACE_H
+#endif //ZKIF_GADGETLIB_H

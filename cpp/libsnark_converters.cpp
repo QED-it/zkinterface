@@ -3,9 +3,10 @@
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2018
 
-#include "libsnark_integration.hpp"
+#include "libsnark_converters.hpp"
 
-namespace zkinterface_libsnark {
+namespace libsnark_converters {
+    using namespace zkinterface_utils;
 
 // ==== Element conversion helpers ====
 
@@ -84,35 +85,48 @@ namespace zkinterface_libsnark {
 
 // ==== Helpers to report the content of a protoboard ====
 
-    // Convert protoboard index to standard variable ID.
-    uint64_t convert_variable_id(const Circuit *circuit, uint64_t index) {
-        // Constant one?
-        if (index == 0)
-            return 0;
-        index -= 1;
-
-        // An input?
-        auto in_ids = circuit->connections()->variable_ids();
-        if (index < in_ids->size()) {
-            return in_ids->Get(index);
-        }
-        index -= in_ids->size();
-
-        // An output?
-        //auto out_ids = circuit->outgoing_variable_ids();
-        //if (index < out_ids->size()) {
-        //    return out_ids->Get(index);
-        //}
-        //index -= out_ids->size();
-
-        // A local variable.
-        auto free_id = circuit->free_variable_id();
-        return free_id + index;
+    VarIdConverter::VarIdConverter(const Circuit* circuit) {
+      input_ids = circuit->connections()->variable_ids();
+      input_count = input_ids->size();
+      first_local_id = circuit->free_variable_id();
     }
+
+    uint64_t VarIdConverter::get_variable_id(const PbVariable &pb_var) {
+      size_t pb_index = pb_var.index;
+
+      // Constant one?
+      if (pb_index == 0)
+        return 0;
+
+      // An input?
+      size_t input_index = pb_index - 1;
+      if (input_index < input_count)
+        return input_ids->Get(input_index);
+
+      // A local variable.
+      size_t local_index = input_index - input_count;
+      return first_local_id + local_index;
+    }
+
+    uint64_t VarIdConverter::get_local_id(size_t local_index) {
+      return first_local_id + local_index;
+    }
+
+    PbVariable VarIdConverter::get_local_variable(size_t local_index) {
+      return 1 + input_count + local_index;
+    }
+
+    uint64_t VarIdConverter::free_id_after_protoboard(const Protoboard &pb) {
+      size_t new_variables = pb.num_variables() - input_count;
+      return first_local_id + new_variables;
+    }
+
 
     FlatBufferBuilder serialize_protoboard_constraints(
             const Circuit *circuit,
-            const protoboard<FieldT> &pb) {
+            const Protoboard &pb) {
+
+        VarIdConverter id_converter(circuit);
         FlatBufferBuilder builder;
 
         // Closure: add a row of a matrix
@@ -121,7 +135,7 @@ namespace zkinterface_libsnark {
             vector<uint8_t> coeffs(fieldt_size * terms.size());
 
             for (size_t i = 0; i < terms.size(); i++) {
-                variable_ids[i] = convert_variable_id(circuit, terms[i].index);
+                variable_ids[i] = id_converter.get_variable_id(terms[i].index);
                 into_le(
                         terms[i].coeff.as_bigint(),
                         coeffs.data() + fieldt_size * i,
@@ -156,23 +170,24 @@ namespace zkinterface_libsnark {
 
     FlatBufferBuilder serialize_protoboard_local_assignment(
             const Circuit *circuit,
-            const protoboard<FieldT> &pb) {
+            const Protoboard &pb) {
+
+        VarIdConverter id_converter(circuit);
         FlatBufferBuilder builder;
 
-        size_t all_vars = pb.num_variables();
-        size_t input_vars = circuit->connections()->variable_ids()->size();
-        size_t local_vars = all_vars - input_vars;
+        size_t input_count = id_converter.input_count;
+        size_t new_count = pb.num_variables() - input_count;
 
-        vector<uint64_t> variable_ids(local_vars);
-        vector<uint8_t> elements(fieldt_size * local_vars);
+        vector<uint64_t> variable_ids(new_count);
+        vector<uint8_t> elements(fieldt_size * new_count);
 
-        uint64_t free_id = circuit->free_variable_id();
+        for (size_t i = 0; i < new_count; ++i) {
+            variable_ids[i] = id_converter.get_local_id(i);
+            auto pb_var = id_converter.get_local_variable(i);
 
-        for (size_t index = 0; index < local_vars; ++index) {
-            variable_ids[index] = free_id + index;
             into_le(
-                    pb.val(1 + input_vars + index).as_bigint(),
-                    elements.data() + fieldt_size * index,
+                    pb.val(pb_var).as_bigint(),
+                    elements.data() + fieldt_size * i,
                     fieldt_size);
         }
 
@@ -217,7 +232,7 @@ namespace zkinterface_libsnark {
 
     // Write variable assignments into a protoboard.
     void copy_variables_into_protoboard(
-            protoboard<FieldT> &pb,
+            Protoboard &pb,
             const Variables *variables
     ) {
         auto variable_ids = variables->variable_ids();
@@ -231,4 +246,4 @@ namespace zkinterface_libsnark {
         }
     }
 
-} // namespace zkinterface_libsnark
+} // namespace libsnark_converters

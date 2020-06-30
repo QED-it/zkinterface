@@ -1,12 +1,14 @@
+#include "libsnark_importer.hpp"
+
+#include <chrono>
 #include <fstream>
 #include <iterator>
-#include <chrono>
 #include <libff/common/default_types/ec_pp.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_gg_ppzksnark/r1cs_gg_ppzksnark.hpp>
-#include "libsnark_zkif_import.cpp"
 
 using namespace std;
-using namespace zkinterface_libsnark;
+using namespace libsnark_converters;
+using namespace libsnark_importer;
 
 vector<char> read_file(string zkifPath) {
     ifstream zkifFile(zkifPath, ios::binary);

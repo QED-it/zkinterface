@@ -3,8 +3,8 @@
 // @author Aurélien Nicolas <info@nau.re> for QED-it.com
 // @date 2020
 
-#ifndef ZKINTERFACE_ZKINTERFACE_UTILS_HPP
-#define ZKINTERFACE_ZKINTERFACE_UTILS_HPP
+#ifndef ZKIF_ZKINTERFACE_UTILS_HPP
+#define ZKIF_ZKINTERFACE_UTILS_HPP
 
 #include "zkinterface_generated.h"
 
@@ -17,6 +17,14 @@ namespace zkinterface_utils {
 // ==== Reading helpers ====
 
     uoffset_t read_size_prefix(void *buffer);
+
+    const Circuit* read_circuit(char *buffer);
+
+    const ConstraintSystem* read_constraint_system(char *buffer);
+
+    const Witness* read_witness(char *buffer);
+
+    const Command* read_command(char *buffer);
 
     // Find the first message of the requested type in a buffer.
     const Root *find_message(char *buffer, Message type);
@@ -43,4 +51,4 @@ namespace zkinterface_utils {
     };
 
 }
-#endif //ZKINTERFACE_ZKINTERFACE_UTILS_HPP
+#endif //ZKIF_ZKINTERFACE_UTILS_HPP
