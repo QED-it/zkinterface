@@ -30,6 +30,11 @@ namespace zkinterface_utils {
         return GetSizePrefixedRoot(buffer)->message_as_Command();
     }
 
+    vector<char>::iterator next_message(vector<char>::iterator it) {
+        uoffset_t size = read_size_prefix(&(*it));
+        return it + size;
+    }
+
     const Root *find_message(char *buffer, uoffset_t buffer_size, Message type) {
         auto offset = 0;
 

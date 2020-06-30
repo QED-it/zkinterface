@@ -26,6 +26,8 @@ namespace zkinterface_utils {
 
     const Command* read_command(char *buffer);
 
+    vector<char>::iterator next_message(vector<char>::iterator it);
+
     // Find the first message of the requested type in a buffer.
     const Root *find_message(char *buffer, Message type);
 

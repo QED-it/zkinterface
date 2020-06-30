@@ -1,10 +1,19 @@
-use owned::variables::VariablesOwned;
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
+use std::io;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::Witness;
+use zkinterface_generated::zkinterface::{
+    Witness,
+    WitnessArgs,
+    Message,
+    Root,
+    RootArgs,
+};
+use owned::variables::VariablesOwned;
+
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WitnessOwned {
-    assigned_variables: VariablesOwned,
+    pub assigned_variables: VariablesOwned,
 }
 
 impl<'a> From<Witness<'a>> for WitnessOwned {
@@ -13,5 +22,33 @@ impl<'a> From<Witness<'a>> for WitnessOwned {
         WitnessOwned {
             assigned_variables: VariablesOwned::from(witness_ref.assigned_variables().unwrap()),
         }
+    }
+}
+
+impl WitnessOwned {
+    /// Add this structure into a Flatbuffers message builder.
+    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        &'args self,
+        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
+    ) -> WIPOffset<Root<'bldr>>
+    {
+        let assigned_variables = Some(self.assigned_variables.build(builder));
+
+        let call = Witness::create(builder, &WitnessArgs {
+            assigned_variables,
+        });
+
+        Root::create(builder, &RootArgs {
+            message_type: Message::Witness,
+            message: Some(call.as_union_value()),
+        })
+    }
+
+    /// Write this structure as a Flatbuffers message.
+    pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+        let mut builder = FlatBufferBuilder::new();
+        let message = self.build(&mut builder);
+        builder.finish_size_prefixed(message, None);
+        writer.write_all(builder.finished_data())
     }
 }

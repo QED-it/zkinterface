@@ -8,9 +8,9 @@ use zkinterface_generated::zkinterface::Message;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MessagesOwned {
-    circuits: Vec<CircuitOwned>,
-    constraint_systems: Vec<ConstraintSystemOwned>,
-    witnesses: Vec<WitnessOwned>,
+    pub circuits: Vec<CircuitOwned>,
+    pub constraint_systems: Vec<ConstraintSystemOwned>,
+    pub witnesses: Vec<WitnessOwned>,
 }
 
 impl From<&Messages> for MessagesOwned {

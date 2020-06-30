@@ -145,6 +145,16 @@ impl Messages {
         Ok(())
     }
 
+    pub fn first_circuit(&self) -> Option<Circuit> {
+        for message in self {
+            match message.message_as_circuit() {
+                Some(ret) => return Some(ret),
+                None => continue,
+            };
+        }
+        None
+    }
+
     pub fn last_circuit(&self) -> Option<Circuit> {
         let returns = self.circuits();
         if returns.len() > 0 {
