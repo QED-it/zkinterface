@@ -1,16 +1,18 @@
 [package]
-name = "libsnark-rust"
-version = "0.1.0"
+name = "zkinterface-libsnark"
+version = "1.1.2"
+description = "Wrapper for libsnark / gadgetlib through zkInterface"
+homepage = "https://github.com/QED-it/zkinterface"
+repository = "https://github.com/QED-it/zkinterface/tree/master/cpp/libsnark-rust"
 authors = ["aurel <aurel@qed-it.com>"]
+license = "MIT"
 edition = "2018"
 build = "build.rs"
 links = "zkif_gadgetlib"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-#zkinterface = "1.1.1"
-zkinterface = { path = "../../rust" }
+zkinterface = "1.1.2"
+#zkinterface = { path = "../../rust" }
 
 [build-dependencies]
 cmake = "0.1.44"

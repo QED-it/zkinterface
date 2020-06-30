@@ -1,1 +1,1 @@
-mod libsnark_wrapper;
+pub mod gadgetlib;

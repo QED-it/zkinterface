@@ -1,3 +1,20 @@
+# Version v1.1.2, 2020-06, libsnark and gadgetlib for Rust
+
+Rust:
+- Support for `Command` messages.
+- Remove C++ integration from the `zkinterface` crate.
+- Introduce a dedicated `zkinterface-libsnark` crate.
+- CMake integration in `build.rs`.
+- C++ libsnark wrapper. See `gadgetlib_call_gadget()`.
+- A test as an example. See `test_cpp_gadget()`.
+
+C++:
+- Organize built artifacts: `zkif_gadgetlib` library, headers, dependencies, CLI wrappers.
+- Clean up and organize code.
+- Fix and clarify the translation between libsnark variables and zkInterface IDs. See class `VarIdConverter`.
+- Demonstrate a working gadget: a TinyRAM ALU operation.
+
+
 # Version v1.1.1, 2020-06, libsnark and gadgetlib
 
 Interface definition:

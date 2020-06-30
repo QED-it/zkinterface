@@ -55,7 +55,7 @@ fn from_c<'a, CTX>(
     (context, buf)
 }
 
-pub fn call_gadget_wrapper(circuit: &CircuitOwned, command: &CommandOwned) -> Result<Messages, Box<dyn Error>> {
+pub fn call_gadget(circuit: &CircuitOwned, command: &CommandOwned) -> Result<Messages, Box<dyn Error>> {
     let mut circuit_buf = vec![];
     circuit.write(&mut circuit_buf)?;
     let mut command_buf = vec![];
@@ -98,7 +98,7 @@ fn test_cpp_gadget() {
 
     println!("==== R1CS generation ====");
     let command = CommandOwned { constraints_generation: true, witness_generation: false };
-    let r1cs_response = call_gadget_wrapper(&subcircuit, &command).unwrap();
+    let r1cs_response = call_gadget(&subcircuit, &command).unwrap();
 
     println!("R1CS: Rust received {} messages including {} gadget return.",
              r1cs_response.messages.len(),
@@ -122,7 +122,7 @@ fn test_cpp_gadget() {
     subcircuit.connections.values = Some(vec![11, 12, 9, 14 as u8]);
 
     let command = CommandOwned { constraints_generation: false, witness_generation: true };
-    let witness_response = call_gadget_wrapper(&subcircuit, &command).unwrap();
+    let witness_response = call_gadget(&subcircuit, &command).unwrap();
 
     println!("Assignment: Rust received {} messages including {} gadget return.",
              witness_response.messages.len(),
