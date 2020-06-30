@@ -10,7 +10,6 @@ use zkinterface::{
     owned::command::CommandOwned,
 };
 
-#[link(name = "zkif_gadgetlib", kind = "static")]
 #[allow(improper_ctypes)]
 extern "C" {
     fn gadgetlib_call_gadget(

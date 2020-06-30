@@ -8,7 +8,7 @@
 
 using namespace std;
 using namespace libsnark_converters;
-using namespace zkinterface_libsnark_importer;
+using namespace libsnark_importer;
 
 vector<char> read_file(string zkifPath) {
     ifstream zkifFile(zkifPath, ios::binary);

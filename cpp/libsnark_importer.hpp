@@ -11,18 +11,18 @@
 #include "libsnark/gadgetlib1/protoboard.hpp"
 
 
-namespace zkinterface_libsnark_importer {
+namespace libsnark_importer {
     using namespace zkinterface;
-    using libsnark_converters::FieldT;
+    using namespace libsnark_converters;
     using std::string;
 
     class import_zkif : public gadget<FieldT> {
        vector<char> buffer;
 
     public:
-        import_zkif(protoboard<FieldT> &pb, const string &annotation_prefix);
+        import_zkif(Protoboard &pb, const string &annotation_prefix);
 
-        protoboard<FieldT> *get_pb();
+        Protoboard *get_pb();
 
         void load(vector<char> &buf);
 
@@ -39,6 +39,6 @@ namespace zkinterface_libsnark_importer {
         void generate_witness();
     };
 
-} // namespace zkinterface_libsnark_importer
+} // namespace libsnark_importer
 
 #endif // ZKIF_LIBSNARK_IMPORTER_HPP

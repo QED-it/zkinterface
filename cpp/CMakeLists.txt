@@ -22,6 +22,7 @@ add_library(zkif_gadgetlib STATIC gadgetlib.cpp zkinterface_utils.cpp libsnark_c
 target_link_libraries(zkif_gadgetlib ff gmp)
 # Configuration from libsnark/libsnark/CMakeFiles/snark.dir/flags.make
 target_compile_definitions(zkif_gadgetlib PUBLIC -DBINARY_OUTPUT -DCURVE_ALT_BN128 -DMONTGOMERY_OUTPUT -DNO_PROCPS -DUSE_ASM)
+set_target_properties(zkif_gadgetlib PROPERTIES POSITION_INDEPENDENT_CODE on)
 
 # Frontend gadget CLI.
 add_executable(zkif_gadget gadget_cli.cpp)
@@ -32,5 +33,5 @@ add_executable(zkif_snark snark_cli.cpp libsnark_importer.cpp)
 target_link_libraries(zkif_snark zkif_gadgetlib)
 
 install(TARGETS zkif_gadgetlib DESTINATION .)
-install(FILES gadgetlib.h zkinterface_generated.h libsnark_converters.hpp ../LICENSE DESTINATION .)
+install(FILES gadgetlib.h zkinterface_generated.h zkinterface_utils.hpp libsnark_converters.hpp libsnark_importer.hpp ../LICENSE DESTINATION .)
 install(DIRECTORY flatbuffers DESTINATION .)

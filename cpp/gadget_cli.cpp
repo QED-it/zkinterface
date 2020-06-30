@@ -1,5 +1,5 @@
 #include "gadgetlib.h"
-#include "libsnark_converters.hpp"
+#include "zkinterface_utils.hpp"
 
 #include <fstream>
 #include <iostream>

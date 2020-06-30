@@ -7,18 +7,15 @@
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
 
-using namespace zkinterface;
-using flatbuffers::uoffset_t;
 
-namespace zkinterface_libsnark_importer {
+namespace libsnark_importer {
 using namespace zkinterface_utils;
-using namespace libsnark_converters;
 
-import_zkif::import_zkif(protoboard<FieldT> &pb,
-                         const std::string &annotation_prefix)
+import_zkif::import_zkif(Protoboard &pb,
+                         const string &annotation_prefix)
     : gadget<libsnark_converters::FieldT>(pb, annotation_prefix) {}
 
-protoboard<FieldT> *import_zkif::get_pb() { return &pb; }
+Protoboard *import_zkif::get_pb() { return &pb; }
 
 void import_zkif::load(vector<char> &buf) { buffer = buf; }
 
@@ -73,4 +70,4 @@ void import_zkif::generate_witness() {
   copy_variables_into_protoboard(pb, witness);
 }
 
-} // namespace zkinterface_libsnark_importer
+} // namespace libsnark_importer
