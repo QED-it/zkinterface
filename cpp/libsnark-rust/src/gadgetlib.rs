@@ -55,28 +55,31 @@ fn from_c<'a, CTX>(
     (context, buf)
 }
 
-pub fn call_gadget(circuit: &CircuitOwned, command: &CommandOwned) -> Result<Messages, Box<dyn Error>> {
+pub fn call_gadget(circuit: &CircuitOwned, command: &CommandOwned) -> Result<(Messages, Messages, Messages), Box<dyn Error>> {
     let mut circuit_buf = vec![];
     circuit.write(&mut circuit_buf)?;
     let mut command_buf = vec![];
     command.write(&mut command_buf)?;
 
-    let mut output_context = Messages::new(circuit.free_variable_id);
+    let mut constraints_context = Messages::new(circuit.free_variable_id);
+    let mut witness_context = Messages::new(circuit.free_variable_id);
+    let mut return_context = Messages::new(circuit.free_variable_id);
+
     let ok = unsafe {
         gadgetlib_call_gadget(
             circuit_buf.as_ptr(),
             command_buf.as_ptr(),
             receive_message_callback,
-            &mut output_context as *mut Messages,
+            &mut constraints_context as *mut Messages,
             receive_message_callback,
-            &mut output_context as *mut Messages,
+            &mut witness_context as *mut Messages,
             receive_message_callback,
-            &mut output_context as *mut Messages,
+            &mut return_context as *mut Messages,
         )
     };
 
     match ok {
-        true => Ok(output_context),
+        true => Ok((constraints_context, witness_context, return_context)),
         false => Err("call_gadget failed".into()),
     }
 }
@@ -95,44 +98,46 @@ fn test_cpp_gadget() {
         field_maximum: None,
     };
 
+    {
+        println!("==== R1CS generation ====");
+        let command = CommandOwned { constraints_generation: true, witness_generation: false };
+        let (constraints, witness, response) = call_gadget(&subcircuit, &command).unwrap();
 
-    println!("==== R1CS generation ====");
-    let command = CommandOwned { constraints_generation: true, witness_generation: false };
-    let r1cs_response = call_gadget(&subcircuit, &command).unwrap();
+        println!("R1CS: Rust received {} messages including {} gadget return.",
+                 constraints.messages.len(),
+                 constraints.circuits().len());
 
-    println!("R1CS: Rust received {} messages including {} gadget return.",
-             r1cs_response.messages.len(),
-             r1cs_response.circuits().len());
+        assert!(constraints.messages.len() == 1);
+        assert!(witness.messages.len() == 0);
+        assert!(response.circuits().len() == 1);
 
-    assert!(r1cs_response.messages.len() == 2);
-    assert!(r1cs_response.circuits().len() == 1);
+        println!("R1CS: Got constraints:");
+        for c in constraints.iter_constraints() {
+            println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
+        }
 
-    println!("R1CS: Got constraints:");
-    for c in r1cs_response.iter_constraints() {
-        println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
+        let free_variable_id_after = response.last_circuit().unwrap().free_variable_id();
+        println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
+        assert!(free_variable_id_after == 104 + 36);
     }
 
-    let free_variable_id_after = r1cs_response.last_circuit().unwrap().free_variable_id();
-    println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
-    assert!(free_variable_id_after == 104 + 36);
-
-
-    println!("==== Witness generation ====");
-    // Specify input values.
-    subcircuit.connections.values = Some(vec![11, 12, 9, 14 as u8]);
-
-    let command = CommandOwned { constraints_generation: false, witness_generation: true };
-    let witness_response = call_gadget(&subcircuit, &command).unwrap();
-
-    println!("Assignment: Rust received {} messages including {} gadget return.",
-             witness_response.messages.len(),
-             witness_response.circuits().len());
-
-    assert!(witness_response.messages.len() == 2);
-    assert!(witness_response.circuits().len() == 1);
-
     {
-        let assignment: Vec<_> = witness_response.iter_witness().collect();
+        println!("==== Witness generation ====");
+        // Specify input values.
+        subcircuit.connections.values = Some(vec![11, 12, 9, 14 as u8]);
+
+        let command = CommandOwned { constraints_generation: false, witness_generation: true };
+        let (constraints, witness, response) = call_gadget(&subcircuit, &command).unwrap();
+
+        println!("Assignment: Rust received {} messages including {} gadget return.",
+                 witness.messages.len(),
+                 witness.circuits().len());
+
+        assert!(constraints.messages.len() == 0);
+        assert!(witness.messages.len() == 1);
+        assert!(response.circuits().len() == 1);
+
+        let assignment: Vec<_> = witness.iter_witness().collect();
 
         println!("Assignment: Got witness:");
         for var in assignment.iter() {
@@ -145,13 +150,12 @@ fn test_cpp_gadget() {
         assert_eq!(assignment[1].id, 104 + 1); // Second "
         assert_eq!(assignment[1].value.len(), 32);
 
-        let free_variable_id_after2 = witness_response.last_circuit().unwrap().free_variable_id();
-        println!("Assignment: Free variable id after the call: {}", free_variable_id_after2);
-        assert!(free_variable_id_after2 == free_variable_id_after);
+        let free_variable_id_after = response.last_circuit().unwrap().free_variable_id();
+        println!("Assignment: Free variable id after the call: {}", free_variable_id_after);
+        assert!(free_variable_id_after == 104 + 36);
 
-        let out_vars = witness_response.connection_variables().unwrap();
+        let out_vars = response.connection_variables().unwrap();
         println!("Output variables: {:?}", out_vars);
         assert_eq!(out_vars.len(), 2);
     }
-    println!();
 }
