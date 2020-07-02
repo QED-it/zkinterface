@@ -4,15 +4,15 @@
 
 use std::slice;
 use zkinterface::{
-    reading::Messages,
+    reading::{Messages, read_circuit},
     owned::circuit::CircuitOwned,
     owned::command::CommandOwned,
     owned::keyvalue::KeyValueOwned,
     Result,
+    statement::GadgetCallbacks,
 };
 use std::os::raw::c_void;
 use std::io::Write;
-use zkinterface::reading::read_circuit;
 
 
 #[allow(improper_ctypes)]
@@ -103,11 +103,6 @@ pub fn call_gadget_cb<CB: GadgetCallbacks>(
     }
 }
 
-pub trait GadgetCallbacks {
-    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()>;
-    fn receive_witness(&mut self, msg: &[u8]) -> Result<()>;
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()>;
-}
 
 extern "C"
 fn constraints_callback<CB: GadgetCallbacks>(
