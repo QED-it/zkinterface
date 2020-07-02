@@ -7,6 +7,7 @@ use zkinterface::owned::{
     circuit::CircuitOwned,
     command::CommandOwned,
     witness::WitnessOwned,
+    keyvalue::KeyValueOwned,
 };
 use zkinterface::reading::Messages;
 use super::gadgetlib::call_gadget;
@@ -81,6 +82,13 @@ fn test_statement() {
             connections: initial_witness.assigned_variables.clone(),
             free_variable_id: initial_witness.assigned_variables.variable_ids.len() as u64 + 1,
             field_maximum: None,
+            configuration: Some(vec![
+                KeyValueOwned {
+                    key: "function".to_string(),
+                    text: Some("tinyram.and".to_string()),
+                    data: None,
+                    number: 0,
+                }]),
         };
         let command = CommandOwned { constraints_generation: true, witness_generation: true };
         b.call_gadget(&gadget_call, &command).unwrap()
@@ -93,6 +101,13 @@ fn test_statement() {
         },
         free_variable_id: gadget_res.last_circuit().unwrap().free_variable_id(),
         field_maximum: None,
+        configuration: Some(vec![
+            KeyValueOwned {
+                key: "function".to_string(),
+                text: Some("main.test_statement".to_string()),
+                data: None,
+                number: 0,
+            }]),
     };
     b.write_main(&statement);
 

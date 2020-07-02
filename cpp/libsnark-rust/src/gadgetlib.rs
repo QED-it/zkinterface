@@ -8,6 +8,7 @@ use zkinterface::{
     reading::Messages,
     owned::circuit::CircuitOwned,
     owned::command::CommandOwned,
+    owned::keyvalue::KeyValueOwned,
 };
 
 #[allow(improper_ctypes)]
@@ -96,6 +97,13 @@ fn test_cpp_gadget() {
         },
         free_variable_id: 104,
         field_maximum: None,
+        configuration: Some(vec![
+            KeyValueOwned {
+                key: "function".to_string(),
+                text: Some("tinyram.and".to_string()),
+                data: None,
+                number: 0,
+            }]),
     };
 
     {
