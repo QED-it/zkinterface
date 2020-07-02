@@ -131,10 +131,10 @@ fn test_circuit_owned() {
     };
 
     let mut buffer = vec![];
-    circuit.write(&mut buffer);
+    circuit.write(&mut buffer).unwrap();
 
     let mut messages = crate::reading::Messages::new(1);
-    messages.push_message(buffer);
+    messages.push_message(buffer).unwrap();
     let circuit_ref = messages.first_circuit().unwrap();
 
     let circuit2 = CircuitOwned::from(circuit_ref);

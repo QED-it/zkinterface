@@ -44,7 +44,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let mut stats = Stats::new();
 
-    let circuit = messages.last_circuit().unwrap();
+    let circuit = messages.last_circuit().ok_or("no circuit")?;
     stats.num_public_inputs = circuit.connections().unwrap().variable_ids().unwrap().len() as u64;
     stats.num_private_variables = circuit.free_variable_id() - stats.num_public_inputs - 1;
 

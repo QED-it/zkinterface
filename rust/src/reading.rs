@@ -6,6 +6,8 @@ use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::error::Error;
+
 use zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
@@ -13,6 +15,9 @@ use zkinterface_generated::zkinterface::{
     Root,
     Variables,
 };
+
+pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
@@ -131,18 +136,17 @@ impl Messages {
         }
     }
 
-    pub fn push_message(&mut self, buf: Vec<u8>) -> Result<(), String> {
+    pub fn push_message(&mut self, buf: Vec<u8>) -> Result<()> {
         self.messages.push(buf);
         Ok(())
     }
 
-    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), String> {
-        let mut file = File::open(&path).unwrap();
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+        let mut file = File::open(&path)?;
         let mut buf = Vec::new();
-        file.read_to_end(&mut buf).unwrap();
+        file.read_to_end(&mut buf)?;
         println!("loaded {:?} ({} bytes)", path.as_ref(), buf.len());
-        self.push_message(buf).unwrap();
-        Ok(())
+        self.push_message(buf)
     }
 
     pub fn first_circuit(&self) -> Option<Circuit> {
