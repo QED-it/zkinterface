@@ -11,8 +11,9 @@ use zkinterface::owned::{
     witness::WitnessOwned,
     keyvalue::KeyValueOwned,
 };
-use zkinterface::reading::Messages;
-use super::gadgetlib::call_gadget;
+use zkinterface::reading::{Messages, read_circuit};
+use crate::gadgetlib::{call_gadget, call_gadget_cb, GadgetCallbacks};
+
 
 pub struct StatementBuilder {
     pub out_path: String,
@@ -79,6 +80,25 @@ impl StatementBuilder {
     }
 }
 
+impl GadgetCallbacks for StatementBuilder {
+    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
+        Ok(self.constraints_file.write_all(msg)?)
+    }
+
+    fn receive_witness(&mut self, msg: &[u8]) -> Result<()> {
+        Ok(self.witness_file.write_all(msg)?)
+    }
+
+    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+        assert!(self.free_variable_id <= response.free_variable_id);
+        self.free_variable_id = response.free_variable_id;
+
+        request.write(&mut self.gadgets_file)?;
+        response.write(&mut self.gadgets_file)?;
+        Ok(())
+    }
+}
+
 
 #[test]
 fn test_statement() -> Result<()> {
@@ -110,7 +130,8 @@ fn test_statement() -> Result<()> {
                     }]),
             };
             let command = CommandOwned { constraints_generation: true, witness_generation: proving };
-            b.call_gadget(&gadget_call, &command)?
+            //b.call_gadget(&gadget_call, &command)?
+            call_gadget_cb(b, &gadget_call, &command)?
         };
 
         let statement = CircuitOwned {

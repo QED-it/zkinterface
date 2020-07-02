@@ -16,6 +16,10 @@ use crate::zkinterface_generated::zkinterface::{
 };
 use crate::Result;
 
+pub fn read_circuit(msg: &[u8]) -> Result<Circuit> {
+    get_size_prefixed_root_as_root(msg)
+        .message_as_circuit().ok_or("not a Circuit message".into())
+}
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
     let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
