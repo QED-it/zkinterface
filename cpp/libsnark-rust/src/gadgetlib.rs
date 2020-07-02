@@ -62,9 +62,9 @@ pub fn call_gadget(circuit: &CircuitOwned, command: &CommandOwned) -> Result<(Me
     let mut command_buf = vec![];
     command.write(&mut command_buf)?;
 
-    let mut constraints_context = Messages::new(circuit.free_variable_id);
-    let mut witness_context = Messages::new(circuit.free_variable_id);
-    let mut return_context = Messages::new(circuit.free_variable_id);
+    let mut constraints_context = Messages::new_filtered(circuit.free_variable_id);
+    let mut witness_context = Messages::new_filtered(circuit.free_variable_id);
+    let mut return_context = Messages::new_filtered(circuit.free_variable_id);
 
     let ok = unsafe {
         gadgetlib_call_gadget(

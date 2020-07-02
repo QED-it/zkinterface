@@ -125,9 +125,17 @@ impl fmt::Debug for Messages {
 }
 
 impl Messages {
+    pub fn new() -> Messages {
+        Messages {
+            messages: vec![],
+            first_id: 1,
+        }
+    }
+
+    /// Collect messages. Methods will filter out irrelevant variables.
     /// first_id: The first variable ID to consider in received messages.
     /// Variables with lower IDs are ignored.
-    pub fn new(first_id: u64) -> Messages {
+    pub fn new_filtered(first_id: u64) -> Messages {
         Messages {
             messages: vec![],
             first_id,

@@ -36,7 +36,7 @@ impl Stats {
 pub fn main() -> Result<(), Box<dyn Error>> {
     let pretty = true;
 
-    let mut messages = Messages::new(1);
+    let mut messages = Messages::new();
 
     let mut buffer = vec![];
     stdin().read_to_end(&mut buffer)?;

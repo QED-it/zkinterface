@@ -155,7 +155,7 @@ fn test_statement() -> Result<()> {
     }
 
     fn read_circuit(path: &str) -> CircuitOwned {
-        let mut messages = Messages::new(1);
+        let mut messages = Messages::new();
         messages.read_file(path).unwrap();
         CircuitOwned::from(messages.first_circuit().unwrap())
     }

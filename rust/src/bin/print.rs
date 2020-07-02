@@ -10,7 +10,7 @@ use std::error::Error;
 //     cargo run --bin print < ../examples/example.zkif
 //
 pub fn main() -> Result<(), Box<dyn Error>> {
-    let mut messages = Messages::new(1);
+    let mut messages = Messages::new();
 
     let mut buffer = vec![];
     stdin().read_to_end(&mut buffer)?;

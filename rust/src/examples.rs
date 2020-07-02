@@ -122,7 +122,7 @@ fn test_examples() {
     write_example_constraints(&mut buf).unwrap();
     write_example_witness(&mut buf).unwrap();
 
-    let mut msg = Messages::new(1);
+    let mut msg = Messages::new();
     msg.push_message(buf).unwrap();
     assert_eq!(msg.into_iter().count(), 3);
     assert_eq!(msg.circuits().len(), 1);

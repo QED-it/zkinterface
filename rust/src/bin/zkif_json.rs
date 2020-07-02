@@ -14,7 +14,7 @@ use zkinterface::{owned::message::MessagesOwned, reading::Messages};
 pub fn main() -> Result<(), Box<dyn Error>> {
     let pretty = true;
 
-    let mut messages_raw = Messages::new(1);
+    let mut messages_raw = Messages::new();
 
     let mut buffer = vec![];
     stdin().read_to_end(&mut buffer)?;
