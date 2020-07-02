@@ -1,6 +1,6 @@
-use owned::variables::VariablesOwned;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::ConstraintSystem;
+use crate::zkinterface_generated::zkinterface::ConstraintSystem;
+use super::variables::VariablesOwned;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {

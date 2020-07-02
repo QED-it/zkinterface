@@ -1,9 +1,9 @@
 use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
-use owned::circuit::CircuitOwned;
-use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+use crate::owned::circuit::CircuitOwned;
+use crate::owned::variables::VariablesOwned;
+use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -115,7 +115,7 @@ pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
 
 #[test]
 fn test_examples() {
-    use reading::Messages;
+    use crate::reading::Messages;
 
     let mut buf = Vec::<u8>::new();
     example_circuit().write(&mut buf).unwrap();

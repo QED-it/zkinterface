@@ -3,7 +3,7 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Command,
     CommandArgs,
     Message,

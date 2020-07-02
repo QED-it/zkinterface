@@ -8,3 +8,9 @@ pub mod reading;
 pub mod owned;
 
 pub mod examples;
+
+
+// Common definitions.
+use std::error::Error;
+
+pub type Result<T> = std::result::Result<T, Box<dyn Error>>;

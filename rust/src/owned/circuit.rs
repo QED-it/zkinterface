@@ -3,15 +3,15 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
     Message,
     Root,
     RootArgs,
 };
-use owned::variables::VariablesOwned;
-use owned::keyvalue::KeyValueOwned;
+use super::variables::VariablesOwned;
+use super::keyvalue::KeyValueOwned;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]

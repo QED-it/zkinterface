@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset, Vector, ForwardsUOffset};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     KeyValue,
     KeyValueArgs,
 };

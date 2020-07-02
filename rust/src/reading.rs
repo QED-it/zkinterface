@@ -6,17 +6,15 @@ use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::error::Error;
 
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     BilinearConstraint,
     Circuit,
     get_size_prefixed_root_as_root,
     Root,
     Variables,
 };
-
-pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
+use crate::Result;
 
 
 pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
@@ -75,7 +73,7 @@ pub struct Messages {
 
 impl fmt::Debug for Messages {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use zkinterface_generated::zkinterface::Message::*;
+        use crate::zkinterface_generated::zkinterface::Message::*;
 
         let mut has_circuit = false;
         let mut has_witness = false;

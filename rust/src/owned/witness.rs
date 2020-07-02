@@ -1,14 +1,14 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Witness,
     WitnessArgs,
     Message,
     Root,
     RootArgs,
 };
-use owned::variables::VariablesOwned;
+use super::variables::VariablesOwned;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
