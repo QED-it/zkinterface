@@ -118,23 +118,27 @@ namespace gadgetlib_alu {
 
         // Gadget output.
         {
+            FlatBufferBuilder builder;
             VarIdConverter converter(circuit);
 
             vector<uint64_t> output_ids({
                 converter.get_variable_id(destval),
                 converter.get_variable_id(flag),
             });
-            auto output_values = elements_into_le({
-                pb.val(destval),
-                pb.val(flag),
-            });
 
-            FlatBufferBuilder builder;
+            Offset<Vector<unsigned char>> output_values;
+            if (command->witness_generation()) {
+                output_values = builder.CreateVector(
+                    elements_into_le({
+                            pb.val(destval),
+                            pb.val(flag),
+                        }));
+            }
 
             auto connections = CreateVariables(
                     builder,
                     builder.CreateVector(output_ids),
-                    builder.CreateVector(output_values));
+                    output_values);
 
             auto response = CreateCircuit(
                     builder,
