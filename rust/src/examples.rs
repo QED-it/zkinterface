@@ -118,7 +118,7 @@ fn test_examples() {
     use crate::reading::Messages;
 
     let mut buf = Vec::<u8>::new();
-    example_circuit().write(&mut buf).unwrap();
+    example_circuit().write_into(&mut buf).unwrap();
     write_example_constraints(&mut buf).unwrap();
     write_example_witness(&mut buf).unwrap();
 

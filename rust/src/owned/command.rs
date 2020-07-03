@@ -10,6 +10,7 @@ use crate::zkinterface_generated::zkinterface::{
     Root,
     RootArgs,
 };
+use crate::Result;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -49,10 +50,11 @@ impl CommandOwned {
     }
 
     /// Write this structure as a Flatbuffers message.
-    pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);
-        writer.write_all(builder.finished_data())
+        writer.write_all(builder.finished_data())?;
+        Ok(())
     }
 }

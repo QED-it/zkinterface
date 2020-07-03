@@ -21,6 +21,38 @@ pub trait GadgetCallbacks {
 impl GadgetCallbacks for () {}
 
 
+pub struct StatementBuilder<S: Store> {
+    pub vars: VariableManager,
+    pub store: S,
+}
+
+impl<S: Store> StatementBuilder<S> {
+    pub fn new(store: S) -> StatementBuilder<S> {
+        StatementBuilder {
+            vars: VariableManager::new(),
+            store,
+        }
+    }
+}
+
+impl<S: Store> GadgetCallbacks for StatementBuilder<S> {
+    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
+        self.vars.receive_constraints(msg)?;
+        self.store.receive_constraints(msg)
+    }
+
+    fn receive_witness(&mut self, msg: &[u8]) -> Result<()> {
+        self.vars.receive_witness(msg)?;
+        self.store.receive_witness(msg)
+    }
+
+    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+        self.vars.receive_response(request, response)?;
+        self.store.receive_response(request, response)
+    }
+}
+
+
 pub struct VariableManager {
     pub free_variable_id: u64,
 }
@@ -77,13 +109,13 @@ impl FileStore {
 
 impl Store for FileStore {
     fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
-        Ok(witness.write(&mut self.witness_file)?)
+        witness.write_into(&mut self.witness_file)
     }
 
     fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
         let main_path = format!("{}main.zkif", self.out_path);
         let mut file = File::create(&main_path)?;
-        Ok(statement.write(&mut file)?)
+        statement.write_into(&mut file)
     }
 }
 
@@ -97,40 +129,8 @@ impl GadgetCallbacks for FileStore {
     }
 
     fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
-        request.write(&mut self.gadgets_file)?;
-        response.write(&mut self.gadgets_file)?;
+        request.write_into(&mut self.gadgets_file)?;
+        response.write_into(&mut self.gadgets_file)?;
         Ok(())
-    }
-}
-
-
-pub struct StatementBuilder<S: Store> {
-    pub vars: VariableManager,
-    pub store: S,
-}
-
-impl<S: Store> StatementBuilder<S> {
-    pub fn new(store: S) -> StatementBuilder<S> {
-        StatementBuilder {
-            vars: VariableManager::new(),
-            store,
-        }
-    }
-}
-
-impl<S: Store> GadgetCallbacks for StatementBuilder<S> {
-    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
-        self.vars.receive_constraints(msg)?;
-        self.store.receive_constraints(msg)
-    }
-
-    fn receive_witness(&mut self, msg: &[u8]) -> Result<()> {
-        self.vars.receive_witness(msg)?;
-        self.store.receive_witness(msg)
-    }
-
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
-        self.vars.receive_response(request, response)?;
-        self.store.receive_response(request, response)
     }
 }

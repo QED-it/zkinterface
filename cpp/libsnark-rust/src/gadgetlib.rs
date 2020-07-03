@@ -32,9 +32,9 @@ extern "C" {
 
 pub fn call_gadget(circuit: &CircuitOwned, command: &CommandOwned) -> Result<(Messages, Messages, Messages)> {
     let mut circuit_buf = vec![];
-    circuit.write(&mut circuit_buf)?;
+    circuit.write_into(&mut circuit_buf)?;
     let mut command_buf = vec![];
-    command.write(&mut command_buf)?;
+    command.write_into(&mut command_buf)?;
 
     let mut constraints_context = Messages::new_filtered(circuit.free_variable_id);
     let mut witness_context = Messages::new_filtered(circuit.free_variable_id);
@@ -75,9 +75,9 @@ pub fn call_gadget_cb<CB: GadgetCallbacks>(
     cb: &mut CB, circuit: &CircuitOwned, command: &CommandOwned,
 ) -> Result<CircuitOwned> {
     let mut circuit_buf = vec![];
-    circuit.write(&mut circuit_buf)?;
+    circuit.write_into(&mut circuit_buf)?;
     let mut command_buf = vec![];
-    command.write(&mut command_buf)?;
+    command.write_into(&mut command_buf)?;
 
     let mut response: Option<CircuitOwned> = None;
 
