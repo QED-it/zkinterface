@@ -32,27 +32,34 @@ fn test_statement() -> Result<()> {
             b.store.push_witness(&WitnessOwned { assigned_variables: some_vars.clone() })?;
         }
 
-        let gadget_res = {
-            let gadget_call = CircuitOwned {
-                connections: some_vars.clone(),
-                free_variable_id: b.vars.free_variable_id,
-                field_maximum: None,
-                configuration: Some(vec![
-                    KeyValueOwned {
-                        key: "function".to_string(),
-                        text: Some("tinyram.and".to_string()),
-                        data: None,
-                        number: 0,
-                    }]),
-            };
-            let command = CommandOwned { constraints_generation: true, witness_generation: proving };
-            call_gadget_cb(b, &gadget_call, &command)?
+        let gadget_call = CircuitOwned {
+            connections: some_vars.clone(),
+            free_variable_id: b.vars.free_variable_id,
+            field_maximum: None,
+            configuration: Some(vec![
+                KeyValueOwned {
+                    key: "function".to_string(),
+                    text: Some("tinyram.and".to_string()),
+                    data: None,
+                    number: 0,
+                }]),
         };
+        let command = CommandOwned { constraints_generation: !proving, witness_generation: proving };
+        call_gadget_cb(b, &gadget_call, &command)?;
+
+        Ok(())
+    }
+
+    {
+        let out_path = "local/test_statement_public_";
+        let store = FileStore::new(out_path, true, false, true)?;
+        let mut b = StatementBuilder::new(store);
+        main(&mut b, false)?;
 
         let statement = CircuitOwned {
             connections: VariablesOwned {
                 variable_ids: vec![],
-                values: if proving { Some(vec![]) } else { None },
+                values: Some(vec![]),
             },
             free_variable_id: b.vars.free_variable_id,
             field_maximum: None,
@@ -64,19 +71,15 @@ fn test_statement() -> Result<()> {
                     number: 0,
                 }]),
         };
-        b.store.push_main(&statement)
-    }
+        b.store.push_main(&statement)?;
 
-    {
-        let out_path = "local/test_statement_verifier_";
-        let mut b = StatementBuilder::new(FileStore::new(out_path)?);
-        main(&mut b, false)?;
         println!("Writen {}*.zkif", out_path);
     }
 
     {
-        let out_path = "local/test_statement_prover_";
-        let mut b = StatementBuilder::new(FileStore::new(out_path)?);
+        let out_path = "local/test_statement_private_";
+        let store = FileStore::new(out_path, false, true, true)?;
+        let mut b = StatementBuilder::new(store);
         main(&mut b, true)?;
         println!("Writen {}*.zkif", out_path);
     }
@@ -96,18 +99,12 @@ fn test_statement() -> Result<()> {
         CircuitOwned::from(messages.first_circuit().unwrap())
     }
 
-    let prover_constraints = read_raw("local/test_statement_prover_constraints.zkif");
-    let verifier_constraints = read_raw("local/test_statement_verifier_constraints.zkif");
-    assert_eq!(prover_constraints, verifier_constraints);
-
-    let mut prover_main = read_circuit("local/test_statement_prover_main.zkif");
-    let verifier_main = read_circuit("local/test_statement_verifier_main.zkif");
-    println!("Prover main {:?}", prover_main);
-
-    // The difference between prover_main and verifier_main is that the prover may have input values.
-    assert_eq!(prover_main.connections.values, Some(vec![]));
-    prover_main.connections.values = None;
-    assert_eq!(prover_main, verifier_main);
+    let public_constraints = read_raw("local/test_statement_public_constraints.zkif");
+    assert!(public_constraints.len() > 0);
+    let private_witness = read_raw("local/test_statement_private_witness.zkif");
+    assert!(private_witness.len() > 0);
+    let public_main = read_circuit("local/test_statement_public_main.zkif");
+    println!("Main {:?}", public_main);
 
     Ok(())
 }

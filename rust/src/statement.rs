@@ -91,46 +91,61 @@ pub trait Store: GadgetCallbacks {
 
 pub struct FileStore {
     pub out_path: String,
-    pub constraints_file: File,
-    pub witness_file: File,
-    pub gadgets_file: File,
+    pub constraints_file: Option<File>,
+    pub witness_file: Option<File>,
+    pub gadgets_file: Option<File>,
 }
 
 impl FileStore {
-    pub fn new(out_path: &str) -> Result<FileStore> {
+    pub fn new(out_path: &str, constraints: bool, witness: bool, gadgets_log: bool) -> Result<FileStore> {
         Ok(FileStore {
             out_path: out_path.to_string(),
-            constraints_file: File::create(format!("{}constraints.zkif", out_path))?,
-            witness_file: File::create(format!("{}witness.zkif", out_path))?,
-            gadgets_file: File::create(format!("{}gadgets_log.zkif", out_path))?,
+            constraints_file: if constraints {
+                Some(File::create(format!("{}constraints.zkif", out_path))?)
+            } else { None },
+            witness_file: if witness {
+                Some(File::create(format!("{}witness.zkif", out_path))?)
+            } else { None },
+            gadgets_file: if gadgets_log {
+                Some(File::create(format!("{}gadgets_log.zkif", out_path))?)
+            } else { None },
         })
     }
 }
 
 impl Store for FileStore {
     fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
-        witness.write_into(&mut self.witness_file)
+        if let Some(ref file) = self.witness_file {
+            witness.write_into(file)
+        } else { Ok(()) }
     }
 
     fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
         let main_path = format!("{}main.zkif", self.out_path);
-        let mut file = File::create(&main_path)?;
-        statement.write_into(&mut file)
+        statement.write_into(File::create(&main_path)?)
     }
 }
 
 impl GadgetCallbacks for FileStore {
     fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
-        Ok(self.constraints_file.write_all(msg)?)
+        if let Some(ref mut file) = self.constraints_file {
+            file.write_all(msg)?;
+        }
+        Ok(())
     }
 
     fn receive_witness(&mut self, msg: &[u8]) -> Result<()> {
-        Ok(self.witness_file.write_all(msg)?)
+        if let Some(ref mut file) = self.witness_file {
+            file.write_all(msg)?;
+        }
+        Ok(())
     }
 
     fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
-        request.write_into(&mut self.gadgets_file)?;
-        response.write_into(&mut self.gadgets_file)?;
+        if let Some(ref file) = self.gadgets_file {
+            request.write_into(file)?;
+            response.write_into(file)?;
+        }
         Ok(())
     }
 }

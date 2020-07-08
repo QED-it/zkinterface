@@ -10,28 +10,32 @@ using namespace std;
 using namespace libsnark_converters;
 using namespace libsnark_importer;
 
-vector<char> read_file(string zkifPath) {
-    ifstream zkifFile(zkifPath, ios::binary);
-    vector<char> buf((istreambuf_iterator<char>(zkifFile)),
-                     istreambuf_iterator<char>());
+vector<char> read_files(vector<string> zkifPaths) {
+    vector<char> buf;
 
-    if (zkifFile) {
-        cerr << "Read messages from file " << zkifPath << endl;
-    } else {
-        throw "Error: could not open file";
+    for(auto it=zkifPaths.begin();it!=zkifPaths.end();it++){
+        ifstream zkifFile(*it, ios::binary);
+        buf.insert(buf.end(), (istreambuf_iterator<char>(zkifFile)),
+                   istreambuf_iterator<char>());
+
+        if (zkifFile) {
+            cerr << "Read messages from files " << *it << endl;
+        } else {
+            throw "Error: could not open file";
+        }
     }
 
     return buf;
 }
 
-protoboard<FieldT> load_protoboard(string zkifPath, bool with_constraints, bool with_witness) {
+protoboard<FieldT> load_protoboard(vector<string> zkifPaths, bool with_constraints, bool with_witness) {
     CurveT::init_public_params();
     libff::inhibit_profiling_info = true;
 
     protoboard<FieldT> pb;
     import_zkif iz(pb, "import_zkif");
 
-    auto buf = read_file(zkifPath);
+    auto buf = read_files(zkifPaths);
     iz.load(buf);
     iz.allocate_variables();
     if (with_constraints) iz.generate_constraints();
@@ -58,40 +62,42 @@ public:
     }
 };
 
-void run(string action, string zkifPath) {
+void run(string action, vector<string> &zkifPaths) {
+    string name = zkifPaths[0];
+
     if (action == "validate") {
-        auto pb = load_protoboard(zkifPath, true, true);
+        auto pb = load_protoboard(zkifPaths, true, true);
         print_protoboard(pb);
         cerr << "Satisfied: " << (pb.is_satisfied() ? "YES" : "NO") << endl;
 
     } else if (action == "setup") {
-        auto pb = load_protoboard(zkifPath, true, false);
+        auto pb = load_protoboard(zkifPaths, true, false);
 
         auto keypair = r1cs_gg_ppzksnark_generator<CurveT>(pb.get_constraint_system());
 
-        ofstream(zkifPath + ".pk", ios::binary) << keypair.pk;
-        ofstream(zkifPath + ".vk", ios::binary) << keypair.vk;
+        ofstream(name + ".pk", ios::binary) << keypair.pk;
+        ofstream(name + ".vk", ios::binary) << keypair.vk;
 
     } else if (action == "prove") {
-        auto pb = load_protoboard(zkifPath, false, true);
+        auto pb = load_protoboard(zkifPaths, false, true);
 
         r1cs_gg_ppzksnark_proving_key<CurveT> pk;
-        ifstream(zkifPath + ".pk", ios::binary) >> pk;
+        ifstream(name + ".pk", ios::binary) >> pk;
         Benchmark bench;
 
         auto proof = r1cs_gg_ppzksnark_prover<CurveT>(pk, pb.primary_input(), pb.auxiliary_input());
 
         bench.print();
-        ofstream(zkifPath + ".proof", ios::binary) << proof;
+        ofstream(name + ".proof", ios::binary) << proof;
 
     } else if (action == "verify") {
-        auto pb = load_protoboard(zkifPath, false, false);
+        auto pb = load_protoboard(zkifPaths, false, false);
 
         r1cs_gg_ppzksnark_verification_key<CurveT> vk;
-        ifstream(zkifPath + ".vk", ios::binary) >> vk;
+        ifstream(name + ".vk", ios::binary) >> vk;
 
         r1cs_gg_ppzksnark_proof<CurveT> proof;
-        ifstream(zkifPath + ".proof", ios::binary) >> proof;
+        ifstream(name + ".proof", ios::binary) >> proof;
         Benchmark bench;
 
         auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(vk, pb.primary_input(), proof);
@@ -118,8 +124,13 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
+    vector<string> zkifPaths;
+    for (int i=2; i<argc; i++) {
+        zkifPaths.emplace_back(string(argv[i]));
+    }
+
     try {
-        run(string(argv[1]), string(argv[2]));
+        run(string(argv[1]), zkifPaths);
         return 0;
     } catch (const char *msg) {
         cerr << msg << endl;
