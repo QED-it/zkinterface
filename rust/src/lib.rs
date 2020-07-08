@@ -7,7 +7,7 @@ pub mod zkinterface_generated;
 pub mod reading;
 pub mod owned;
 pub mod statement;
-
+pub mod stats;
 pub mod examples;
 
 
