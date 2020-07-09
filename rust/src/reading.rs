@@ -228,7 +228,7 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
         None => &[], // No values, only variable ids and empty values.
     };
 
-    let stride = values.len() / var_ids.len();
+    let stride = if var_ids.len() == 0 { 0 } else { values.len() / var_ids.len() };
 
     let vars = (0..var_ids.len())
         .filter(|&i| // Ignore variables below first_id, if any.
