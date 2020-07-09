@@ -13,11 +13,94 @@ use zkinterface::owned::{
 };
 use zkinterface::reading::{Messages, read_circuit};
 use zkinterface::statement::{StatementBuilder, GadgetCallbacks, Store, FileStore};
-use crate::gadgetlib::call_gadget_cb;
+use crate::gadgetlib::{call_gadget, call_gadget_cb};
 
 
 #[test]
-fn test_statement() -> Result<()> {
+fn test_libsnark_gadget() {
+    use zkinterface::owned::variables::VariablesOwned;
+
+    let mut subcircuit = CircuitOwned {
+        connections: VariablesOwned {
+            variable_ids: vec![100, 101, 102, 103], // Some input variables.
+            values: None,
+        },
+        free_variable_id: 104,
+        field_maximum: None,
+        configuration: Some(vec![
+            KeyValueOwned {
+                key: "function".to_string(),
+                text: Some("tinyram.and".to_string()),
+                data: None,
+                number: 0,
+            }]),
+    };
+
+    {
+        println!("==== R1CS generation ====");
+        let command = CommandOwned { constraints_generation: true, witness_generation: false };
+        let (constraints, witness, response) = call_gadget(&subcircuit, &command).unwrap();
+
+        println!("R1CS: Rust received {} messages including {} gadget return.",
+                 constraints.messages.len(),
+                 constraints.circuits().len());
+
+        assert!(constraints.messages.len() == 1);
+        assert!(witness.messages.len() == 0);
+        assert!(response.circuits().len() == 1);
+
+        println!("R1CS: Got constraints:");
+        for c in constraints.iter_constraints() {
+            println!("{:?} * {:?} = {:?}", c.a, c.b, c.c);
+        }
+
+        let free_variable_id_after = response.last_circuit().unwrap().free_variable_id();
+        println!("R1CS: Free variable id after the call: {}\n", free_variable_id_after);
+        assert!(free_variable_id_after == 104 + 36);
+    }
+
+    {
+        println!("==== Witness generation ====");
+        // Specify input values.
+        subcircuit.connections.values = Some(vec![11, 12, 9, 14 as u8]);
+
+        let command = CommandOwned { constraints_generation: false, witness_generation: true };
+        let (constraints, witness, response) = call_gadget(&subcircuit, &command).unwrap();
+
+        println!("Assignment: Rust received {} messages including {} gadget return.",
+                 witness.messages.len(),
+                 witness.circuits().len());
+
+        assert!(constraints.messages.len() == 0);
+        assert!(witness.messages.len() == 1);
+        assert!(response.circuits().len() == 1);
+
+        let assignment: Vec<_> = witness.iter_witness().collect();
+
+        println!("Assignment: Got witness:");
+        for var in assignment.iter() {
+            println!("{:?}", var);
+        }
+
+        assert_eq!(assignment.len(), 36);
+        assert_eq!(assignment[0].id, 104 + 0); // First gadget-allocated variable.
+        assert_eq!(assignment[0].value.len(), 32);
+        assert_eq!(assignment[1].id, 104 + 1); // Second "
+        assert_eq!(assignment[1].value.len(), 32);
+
+        let free_variable_id_after = response.last_circuit().unwrap().free_variable_id();
+        println!("Assignment: Free variable id after the call: {}", free_variable_id_after);
+        assert!(free_variable_id_after == 104 + 36);
+
+        let out_vars = response.connection_variables().unwrap();
+        println!("Output variables: {:?}", out_vars);
+        assert_eq!(out_vars.len(), 2);
+    }
+}
+
+
+#[test]
+fn test_libsnark_with_statement_builder() -> Result<()> {
     fn main(b: &mut StatementBuilder<FileStore>, proving: bool) -> Result<()> {
         let some_vars = VariablesOwned {
             variable_ids: b.vars.allocate_many(4),
