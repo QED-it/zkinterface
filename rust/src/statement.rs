@@ -100,20 +100,20 @@ pub struct FileStore {
 }
 
 impl FileStore {
-    pub fn new(working_dir: impl AsRef<Path>, constraints: bool, witness: bool, log_gadgets: bool) -> Result<FileStore> {
+    pub fn new(working_dir: impl AsRef<Path>, constraints: bool, witness: bool, gadgets_log: bool) -> Result<FileStore> {
         let working_dir = working_dir.as_ref();
         create_dir_all(working_dir)?;
 
         Ok(FileStore {
-            main_path: working_dir.join("public_main.zkif"),
+            main_path: working_dir.join("main.zkif"),
             constraints_file: if constraints {
-                Some(File::create(working_dir.join("public_constraints.zkif"))?)
+                Some(File::create(working_dir.join("constraints.zkif"))?)
             } else { None },
             witness_file: if witness {
-                Some(File::create(working_dir.join("private_witness.zkif"))?)
+                Some(File::create(working_dir.join("witness.zkif"))?)
             } else { None },
-            gadgets_file: if log_gadgets {
-                Some(File::create(working_dir.join("log_gadgets.zkif"))?)
+            gadgets_file: if gadgets_log {
+                Some(File::create(working_dir.join("gadgets_log.zkif"))?)
             } else { None },
         })
     }

@@ -151,11 +151,16 @@ impl Messages {
         Ok(())
     }
 
-    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+    pub fn read_from(&mut self, reader: &mut impl Read) -> Result<()> {
+        let mut buffer = vec![];
+        reader.read_to_end(&mut buffer)?;
+        self.push_message(buffer)
+    }
+
+    pub fn read_file(&mut self, path: impl AsRef<Path>) -> Result<()> {
         let mut file = File::open(&path)?;
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;
-        println!("loaded {:?} ({} bytes)", path.as_ref(), buf.len());
         self.push_message(buf)
     }
 
