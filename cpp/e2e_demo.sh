@@ -1,22 +1,25 @@
 #!/bin/sh
-set -e
-
-alias zkif="cargo run --manifest-path ../rust/Cargo.toml"
-zkif explain  < ../examples/example.zkif
-zkif stats    < ../examples/example.zkif
+set -ex
 
 cmake -DCMAKE_INSTALL_PREFIX=dist . && make install
+
+alias zkif="cargo run --manifest-path ../rust/Cargo.toml"
+alias zkif_snark="dist/bin/zkif_snark"
 
 pushd libsnark-rust
 ZKINTERFACE_LIBSNARK_PATH=../dist cargo test
 popd
 
-MAIN=libsnark-rust/local/test_statement_public_main.zkif
-CONS=libsnark-rust/local/test_statement_public_constraints.zkif
-WITN=libsnark-rust/local/test_statement_private_witness.zkif
+DIR=libsnark-rust/local/test_statement
+MAIN=$DIR/main.zkif
+CONS=$DIR/constraints.zkif
+WITN=$DIR/witness.zkif
+NAME=$DIR/snark
 
-dist/bin/zkif_snark validate $MAIN $CONS $WITN
-dist/bin/zkif_snark setup $MAIN $CONS
-dist/bin/zkif_snark prove $MAIN $WITN
-dist/bin/zkif_snark verify $MAIN
+zkif explain $MAIN $CONS $WITN
+
+cat $MAIN $CONS $WITN | zkif_snark validate $NAME
+cat $MAIN $CONS       | zkif_snark setup    $NAME
+cat $MAIN $WITN       | zkif_snark prove    $NAME
+cat $MAIN             | zkif_snark verify   $NAME
 
