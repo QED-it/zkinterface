@@ -133,9 +133,10 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
         Ok(())
     }
 
+    let working_dir = "local/test_statement";
+
     {
-        let out_path = "local/test_statement_public_";
-        let store = FileStore::new(out_path, true, false, true)?;
+        let store = FileStore::new(working_dir, true, false, false)?;
         let mut b = StatementBuilder::new(store);
         main(&mut b, false)?;
 
@@ -155,17 +156,15 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
                 }]),
         };
         b.store.push_main(&statement)?;
-
-        println!("Writen {}*.zkif", out_path);
     }
 
     {
-        let out_path = "local/test_statement_private_";
-        let store = FileStore::new(out_path, false, true, true)?;
+        let store = FileStore::new(working_dir, false, true, true)?;
         let mut b = StatementBuilder::new(store);
         main(&mut b, true)?;
-        println!("Writen {}*.zkif", out_path);
     }
+
+    println!("Writen {}/*.zkif", working_dir);
 
     // Validate the output files.
 
@@ -182,12 +181,12 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
         CircuitOwned::from(messages.first_circuit().unwrap())
     }
 
-    let public_constraints = read_raw("local/test_statement_public_constraints.zkif");
-    assert!(public_constraints.len() > 0);
-    let private_witness = read_raw("local/test_statement_private_witness.zkif");
-    assert!(private_witness.len() > 0);
-    let public_main = read_circuit("local/test_statement_public_main.zkif");
+    let public_main = read_circuit("local/test_statement/public_main.zkif");
     println!("Main {:?}", public_main);
+    let public_constraints = read_raw("local/test_statement/public_constraints.zkif");
+    assert!(public_constraints.len() > 0);
+    let private_witness = read_raw("local/test_statement/private_witness.zkif");
+    assert!(private_witness.len() > 0);
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 use std::io::{Read, Write};
-use std::fs::File;
+use std::fs::{File, create_dir_all};
+use std::path::{Path, PathBuf};
 use std::error::Error;
 
 use crate::Result;
@@ -11,6 +12,7 @@ use crate::owned::{
     keyvalue::KeyValueOwned,
 };
 use crate::reading::{Messages, read_circuit};
+use crate::owned::constraints::ConstraintSystemOwned;
 
 pub trait GadgetCallbacks {
     fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> { Ok(()) }
@@ -85,44 +87,51 @@ impl GadgetCallbacks for VariableManager {
 
 
 pub trait Store: GadgetCallbacks {
-    fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()>;
     fn push_main(&mut self, statement: &CircuitOwned) -> Result<()>;
+    fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()>;
+    fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()>;
 }
 
 pub struct FileStore {
-    pub out_path: String,
+    pub main_path: PathBuf,
     pub constraints_file: Option<File>,
     pub witness_file: Option<File>,
     pub gadgets_file: Option<File>,
 }
 
 impl FileStore {
-    pub fn new(out_path: &str, constraints: bool, witness: bool, gadgets_log: bool) -> Result<FileStore> {
+    pub fn new(working_dir: impl AsRef<Path>, constraints: bool, witness: bool, log_gadgets: bool) -> Result<FileStore> {
+        let working_dir = working_dir.as_ref();
+        create_dir_all(working_dir)?;
+
         Ok(FileStore {
-            out_path: out_path.to_string(),
+            main_path: working_dir.join("public_main.zkif"),
             constraints_file: if constraints {
-                Some(File::create(format!("{}constraints.zkif", out_path))?)
+                Some(File::create(working_dir.join("public_constraints.zkif"))?)
             } else { None },
             witness_file: if witness {
-                Some(File::create(format!("{}witness.zkif", out_path))?)
+                Some(File::create(working_dir.join("private_witness.zkif"))?)
             } else { None },
-            gadgets_file: if gadgets_log {
-                Some(File::create(format!("{}gadgets_log.zkif", out_path))?)
+            gadgets_file: if log_gadgets {
+                Some(File::create(working_dir.join("log_gadgets.zkif"))?)
             } else { None },
         })
     }
 }
 
 impl Store for FileStore {
+    fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
+        statement.write_into(File::create(&self.main_path)?)
+    }
+
+    fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()> {
+        Err("not implemented".into())
+    }
+
     fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
         if let Some(ref file) = self.witness_file {
             witness.write_into(file)
-        } else { Ok(()) }
-    }
-
-    fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
-        let main_path = format!("{}main.zkif", self.out_path);
-        statement.write_into(File::create(&main_path)?)
+        } else { Err("no witness output".into()) }
     }
 }
 
