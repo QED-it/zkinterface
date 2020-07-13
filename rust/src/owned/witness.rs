@@ -1,5 +1,5 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use std::io;
+use std::io::Write;
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{
     Witness,
@@ -46,7 +46,7 @@ impl WitnessOwned {
     }
 
     /// Write this structure as a Flatbuffers message.
-    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<()> {
+    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);

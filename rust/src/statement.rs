@@ -121,7 +121,7 @@ impl FileStore {
 
 impl Store for FileStore {
     fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
-        statement.write_into(File::create(&self.main_path)?)
+        statement.write_into(&mut File::create(&self.main_path)?)
     }
 
     fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()> {
@@ -129,7 +129,7 @@ impl Store for FileStore {
     }
 
     fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
-        if let Some(ref file) = self.witness_file {
+        if let Some(ref mut file) = self.witness_file {
             witness.write_into(file)
         } else { Err("no witness output".into()) }
     }
@@ -151,7 +151,7 @@ impl GadgetCallbacks for FileStore {
     }
 
     fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
-        if let Some(ref file) = self.gadgets_file {
+        if let Some(ref mut file) = self.gadgets_file {
             request.write_into(file)?;
             response.write_into(file)?;
         }

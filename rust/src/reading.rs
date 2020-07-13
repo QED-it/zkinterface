@@ -1,6 +1,6 @@
 //! Helpers to read messages.
 
-use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
+use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT, buffer_has_identifier};
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
@@ -61,11 +61,27 @@ pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
     let mut bufs = vec![];
     loop {
         let size = read_size_prefix(buf);
-        if size == 0 { break; }
+        if size <= SIZE_UOFFSET { break; }
         bufs.push(&buf[..size]);
         buf = &buf[size..];
     }
     bufs
+}
+
+pub fn read_buffer(stream: &mut impl Read) -> Result<Vec<u8>> {
+    let mut buffer = vec![0u8; 4];
+    if stream.read_exact(&mut buffer).is_err() {
+        return Ok(Vec::new()); // End of stream at the correct place.
+    }
+    let size = read_size_prefix(&buffer);
+    eprintln!("Read size: {:?} --> size={}", buffer, size);
+    if size <= SIZE_UOFFSET {
+        return Ok(Vec::new()); // Explicit size 0 as end marker.
+    }
+    buffer.resize(size, 0);
+    stream.read_exact(&mut buffer[4..])?;
+    eprintln!("Read buffer: {:?}", buffer);
+    Ok(buffer)
 }
 
 /// Collect buffers waiting to be read.
@@ -152,9 +168,13 @@ impl Messages {
     }
 
     pub fn read_from(&mut self, reader: &mut impl Read) -> Result<()> {
-        let mut buffer = vec![];
-        reader.read_to_end(&mut buffer)?;
-        self.push_message(buffer)
+        loop {
+            let buffer = read_buffer(reader)?;
+            if buffer.len() == 0 {
+                return Ok(());
+            }
+            self.push_message(buffer);
+        }
     }
 
     pub fn read_file(&mut self, path: impl AsRef<Path>) -> Result<()> {
@@ -300,7 +320,7 @@ impl<'a> Iterator for MessageIterator<'a> {
                 }
             };
 
-            if size == 0 {
+            if size <= SIZE_UOFFSET {
                 // Move to the next buffer.
                 self.bufs = &self.bufs[1..];
                 self.offset = 0;
