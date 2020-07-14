@@ -1,6 +1,8 @@
 use owned::variables::VariablesOwned;
 use serde::{Deserialize, Serialize};
 use zkinterface_generated::zkinterface::ConstraintSystem;
+use std::io;
+use flatbuffers::FlatBufferBuilder;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
@@ -34,3 +36,44 @@ impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
         owned
     }
 }
+// impl ConstraintSystemOwned {
+//     pub fn write_constrains<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
+//         let mut builder = &mut FlatBufferBuilder::new();
+//         let mut constraints_built = vec![];
+//
+//         for (lca, lcb, lcc) in self {
+//             let lca = VariablesOwned {
+//                 variable_ids: lca.0,
+//                 values: Some(lca.1),
+//             }.build(builder);
+//             let lcb = VariablesOwned {
+//                 variable_ids: lcb.0,
+//                 values: Some(lcb.1),
+//             }.build(builder);
+//             let lcc = VariablesOwned {
+//                 variable_ids: lcc.0,
+//                 values: Some(lcc.1),
+//             }.build(builder);
+//
+//             constraints_built.push(BilinearConstraint::create(builder, &BilinearConstraintArgs {
+//                 linear_combination_a: Some(lca),
+//                 linear_combination_b: Some(lcb),
+//                 linear_combination_c: Some(lcc),
+//             }));
+//         }
+//
+//         let constraints_built = builder.create_vector(&constraints_built);
+//         let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
+//             constraints: Some(constraints_built),
+//             info: None,
+//         });
+//
+//         let message = Root::create(&mut builder, &RootArgs {
+//             message_type: Message::ConstraintSystem,
+//             message: Some(r1cs.as_union_value()),
+//         });
+//         builder.finish_size_prefixed(message, None);
+//
+//         writer.write_all(builder.finished_data())
+//     }
+// }

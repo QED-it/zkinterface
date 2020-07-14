@@ -4,6 +4,7 @@ use std::mem::size_of;
 use owned::circuit::CircuitOwned;
 use owned::variables::VariablesOwned;
 use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+use owned::constraints::{ConstraintSystemOwned, BilinearConstraintOwned};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -31,22 +32,49 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ];
 
-    let mut builder = &mut FlatBufferBuilder::new();
-    let mut constraints_built = vec![];
+    let constraints_owned = from_vec(constraints);
+
+    write(&mut writer, constraints_owned)
+}
+
+fn from_vec(constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>) -> ConstraintSystemOwned {
+    // create ConstraintSystemOwned
+    let mut constraints_owned = ConstraintSystemOwned {
+        constraints: vec![]
+    };
 
     for (lca, lcb, lcc) in constraints {
         let lca = VariablesOwned {
             variable_ids: lca.0,
             values: Some(lca.1),
-        }.build(builder);
+        };
         let lcb = VariablesOwned {
             variable_ids: lcb.0,
             values: Some(lcb.1),
-        }.build(builder);
+        };
         let lcc = VariablesOwned {
             variable_ids: lcc.0,
             values: Some(lcc.1),
-        }.build(builder);
+        };
+
+        constraints_owned.constraints.push(BilinearConstraintOwned {
+            linear_combination_a: lca,
+            linear_combination_b: lcb,
+            linear_combination_c: lcc,
+        });
+    }
+    constraints_owned
+}
+
+fn write<W: io::Write>(writer: &mut W, constraints_owned: ConstraintSystemOwned) -> io::Result<()> {
+// pack as flat buffer
+    let mut builder = &mut FlatBufferBuilder::new();
+    let mut constraints_built = vec![];
+
+    for bilinear_constraints in constraints_owned.constraints {
+        let lca = bilinear_constraints.linear_combination_a.build(builder);
+        let lcb = bilinear_constraints.linear_combination_b.build(builder);
+        let lcc = bilinear_constraints.linear_combination_c.build(builder);
 
         constraints_built.push(BilinearConstraint::create(builder, &BilinearConstraintArgs {
             linear_combination_a: Some(lca),
@@ -69,6 +97,8 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
 
     writer.write_all(builder.finished_data())
 }
+
+
 
 
 pub fn write_example_witness<W: io::Write>(writer: W) -> io::Result<()> {
