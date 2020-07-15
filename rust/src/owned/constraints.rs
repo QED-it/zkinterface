@@ -43,14 +43,14 @@ impl From<Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>> 
     ///
     /// # Examples
     /// ```
-    /// let vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+    ///  let vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
     ///         // (A ids values)  *  (B ids values)  =  (C ids values)
     ///         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
     ///         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
     ///         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ///     ];
     ///
-    ///     let constraints = ConstraintSystemOwned::from(vec);
+    ///  let constraints = ConstraintSystemOwned::from(vec);
     ///```
 
     fn from(constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>) -> ConstraintSystemOwned {
@@ -83,7 +83,6 @@ impl From<Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>> 
 }
 
 impl ConstraintSystemOwned {
-
     /// Writes the constraint system into the provided buffer
     ///
     ///
