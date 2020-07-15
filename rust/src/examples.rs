@@ -3,8 +3,8 @@ use std::io;
 use std::mem::size_of;
 use owned::circuit::CircuitOwned;
 use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
-use owned::constraints::{ConstraintSystemOwned, BilinearConstraintOwned};
+use zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+use owned::constraints::ConstraintSystemOwned;
 
 
 pub fn example_circuit() -> CircuitOwned {

@@ -3,7 +3,7 @@ use std::io;
 use flatbuffers::FlatBufferBuilder;
 use serde::{Deserialize, Serialize};
 use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
