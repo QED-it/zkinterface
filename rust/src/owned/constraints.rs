@@ -39,6 +39,20 @@ impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
 }
 
 impl From<Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>> for ConstraintSystemOwned{
+    /// Creates a `ConstraintSystemOwned` from an R1CS vector
+    ///
+    /// # Examples
+    /// ```
+    /// let vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+    ///         // (A ids values)  *  (B ids values)  =  (C ids values)
+    ///         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
+    ///         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
+    ///         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
+    ///     ];
+    ///
+    ///     let constraints = ConstraintSystemOwned::from(vec);
+    ///```
+
     fn from(constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>) -> ConstraintSystemOwned {
         let mut constraints_owned = ConstraintSystemOwned {
             constraints: vec![]
@@ -69,6 +83,16 @@ impl From<Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>> 
 }
 
 impl ConstraintSystemOwned {
+
+    /// Writes the constraint system into the provided buffer
+    ///
+    ///
+    ///  # Examples
+    /// ```
+    ///  let mut buf = Vec::<u8>::new();
+    ///  constraints_owned.write(&mut buf).unwrap();
+    /// ```
+
     pub fn write<W: io::Write>(self, writer: &mut W) -> io::Result<()> {
         let mut builder = &mut FlatBufferBuilder::new();
         let mut constraints_built = vec![];
