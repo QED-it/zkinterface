@@ -173,7 +173,7 @@ impl Messages {
             if buffer.len() == 0 {
                 return Ok(());
             }
-            self.push_message(buffer);
+            self.push_message(buffer)?;
         }
     }
 

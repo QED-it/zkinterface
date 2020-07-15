@@ -33,9 +33,6 @@ static bool endsWith(const std::string &str, const std::string &suffix) {
 }
 
 protoboard<FieldT> load_protoboard(bool with_constraints, bool with_witness) {
-    CurveT::init_public_params();
-    libff::inhibit_profiling_info = true;
-
     // Read stdin.
     std::istreambuf_iterator<char> begin(std::cin), end;
     vector<char> buf(begin, end);
@@ -58,17 +55,22 @@ void print_protoboard(protoboard<FieldT> &pb) {
 class Benchmark {
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 public:
-    void print() {
+    void print(string action) {
         auto dur = chrono::steady_clock::now() - begin;
         cerr << "ZKPROOF_BENCHMARK: {"
-             << "\"iterations\":1, "
-             << "\"microseconds\":"
+             << R"("system": "libsnark", )"
+             << R"("action": ")" << action << "\", "
+             << R"("iterations": 1, )"
+             << R"("microseconds": )"
              << chrono::duration_cast<chrono::microseconds>(dur).count()
              << "}" << endl;
     }
 };
 
 void run(string action, string prefix) {
+    CurveT::init_public_params();
+    libff::inhibit_profiling_info = true;
+
     if (action == "validate") {
         auto pb = load_protoboard(true, true);
         print_protoboard(pb);
@@ -91,7 +93,7 @@ void run(string action, string prefix) {
 
         auto proof = r1cs_gg_ppzksnark_prover<CurveT>(pk, pb.primary_input(), pb.auxiliary_input());
 
-        bench.print();
+        bench.print(action);
         ofstream(prefix + "libsnark-proof", ios::binary) << proof;
 
     } else if (action == "verify") {
@@ -106,7 +108,7 @@ void run(string action, string prefix) {
 
         auto ok = r1cs_gg_ppzksnark_verifier_strong_IC(vk, pb.primary_input(), proof);
 
-        bench.print();
+        bench.print(action);
         cout << endl << "Proof verified: " << (ok ? "YES" : "NO") << endl;
     }
 }
@@ -125,13 +127,15 @@ static const char USAGE[] =
 )";
 
 int main(int argc, const char **argv) {
-    if (argc < 3) {
+    if (argc < 2) {
         cerr << USAGE << endl;
         return 1;
     }
 
+    string prefix = (argc == 2) ? "" : argv[2];
+
     try {
-        run(string(argv[1]), string(argv[2]));
+        run(string(argv[1]), prefix);
         return 0;
     } catch (const char *msg) {
         cerr << msg << endl;

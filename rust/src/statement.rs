@@ -102,7 +102,7 @@ pub struct FileStore {
 impl FileStore {
     pub fn new(working_dir: impl AsRef<Path>, constraints: bool, witness: bool, gadgets_log: bool) -> Result<FileStore> {
         let working_dir = working_dir.as_ref();
-        create_dir_all(working_dir)?;
+        create_dir_all(working_dir.join("logs"))?;
 
         Ok(FileStore {
             main_path: working_dir.join("main.zkif"),
@@ -113,7 +113,7 @@ impl FileStore {
                 Some(File::create(working_dir.join("witness.zkif"))?)
             } else { None },
             gadgets_file: if gadgets_log {
-                Some(File::create(working_dir.join("gadgets_log.zkif"))?)
+                Some(File::create(working_dir.join("logs").join("gadgets.zkif"))?)
             } else { None },
         })
     }
