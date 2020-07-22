@@ -38,40 +38,39 @@ impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
     }
 }
 
-impl From<Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>> for ConstraintSystemOwned{
+impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> for ConstraintSystemOwned {
     /// Creates a `ConstraintSystemOwned` from an R1CS vector
     ///
     /// # Examples
     /// ```
-    ///  let vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+    ///  constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
     ///         // (A ids values)  *  (B ids values)  =  (C ids values)
     ///         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
     ///         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
     ///         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
-    ///     ];
+    ///  ];
     ///
     ///  let constraints = ConstraintSystemOwned::from(vec);
     ///```
 
-    fn from(constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))>) -> ConstraintSystemOwned {
+    fn from(constraints: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]) -> ConstraintSystemOwned {
         let mut constraints_owned = ConstraintSystemOwned {
             constraints: vec![]
         };
 
         for (lca, lcb, lcc) in constraints {
             let lca = VariablesOwned {
-                variable_ids: lca.0,
-                values: Some(lca.1),
+                variable_ids: lca.0.clone(),
+                values: Some(lca.1.clone()),
             };
             let lcb = VariablesOwned {
-                variable_ids: lcb.0,
-                values: Some(lcb.1),
+                variable_ids: lcb.0.clone(),
+                values: Some(lcb.1.clone()),
             };
             let lcc = VariablesOwned {
-                variable_ids: lcc.0,
-                values: Some(lcc.1),
+                variable_ids: lcc.0.clone(),
+                values: Some(lcc.1.clone()),
             };
-
             constraints_owned.constraints.push(BilinearConstraintOwned {
                 linear_combination_a: lca,
                 linear_combination_b: lcb,

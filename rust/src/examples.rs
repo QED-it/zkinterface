@@ -25,7 +25,7 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
 
 
 pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> {
-    let constraints_vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+    let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
