@@ -82,7 +82,7 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
 }
 
 impl ConstraintSystemOwned {
-    /// Writes the constraint system into the provided buffer
+    /// Writes the constraint system into the provided buffer.
     ///
     ///
     ///  # Examples
@@ -92,15 +92,15 @@ impl ConstraintSystemOwned {
     /// ```
 
     pub fn write<W: io::Write>(self, writer: &mut W) -> io::Result<()> {
-        let mut builder = &mut FlatBufferBuilder::new();
+        let mut builder = FlatBufferBuilder::new();
         let mut constraints_built = vec![];
 
         for bilinear_constraints in self.constraints {
-            let lca = bilinear_constraints.linear_combination_a.build(builder);
-            let lcb = bilinear_constraints.linear_combination_b.build(builder);
-            let lcc = bilinear_constraints.linear_combination_c.build(builder);
+            let lca = bilinear_constraints.linear_combination_a.build(&mut builder);
+            let lcb = bilinear_constraints.linear_combination_b.build(&mut builder);
+            let lcc = bilinear_constraints.linear_combination_c.build(&mut builder);
 
-            constraints_built.push(BilinearConstraint::create(builder, &BilinearConstraintArgs {
+            constraints_built.push(BilinearConstraint::create(&mut builder, &BilinearConstraintArgs {
                 linear_combination_a: Some(lca),
                 linear_combination_b: Some(lcb),
                 linear_combination_c: Some(lcc),
