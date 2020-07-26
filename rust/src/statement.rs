@@ -3,13 +3,12 @@ use std::fs::{File, create_dir_all};
 use std::path::{Path, PathBuf};
 
 use crate::Result;
-use crate::{VariablesOwned, CircuitOwned, CommandOwned, ConstraintSystemOwned, WitnessOwned, KeyValueOwned};
-use crate::reading::{Messages, read_circuit};
+use crate::{CircuitOwned, ConstraintSystemOwned, WitnessOwned};
 
 pub trait GadgetCallbacks {
-    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> { Ok(()) }
-    fn receive_witness(&mut self, msg: &[u8]) -> Result<()> { Ok(()) }
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> { Ok(()) }
+    fn receive_constraints(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
+    fn receive_witness(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
+    fn receive_response(&mut self, _request: &CircuitOwned, _response: &CircuitOwned) -> Result<()> { Ok(()) }
 }
 
 impl GadgetCallbacks for () {}
@@ -68,7 +67,7 @@ impl VariableManager {
 }
 
 impl GadgetCallbacks for VariableManager {
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+    fn receive_response(&mut self, _request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
         if self.free_variable_id > response.free_variable_id {
             return Err("free_variable_id returned from the gadget must be higher than the current one.".into());
         }
@@ -116,7 +115,7 @@ impl Store for FileStore {
         statement.write_into(&mut File::create(&self.main_path)?)
     }
 
-    fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()> {
+    fn push_constraints(&mut self, _: &ConstraintSystemOwned) -> Result<()> {
         Err("not implemented".into())
     }
 

@@ -42,14 +42,14 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
     ///
     /// # Examples
     /// ```
-    ///  let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
-    ///         // (A ids values)  *  (B ids values)  =  (C ids values)
-    ///         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
-    ///         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
-    ///         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
-    ///  ];
+    /// let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
+    ///     // (A ids values)  *  (B ids values)  =  (C ids values)
+    ///     ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
+    ///     ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
+    ///     ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
+    /// ];
     ///
-    ///  let constraints = zkinterface::ConstraintSystemOwned::from(constraints_vec);
+    /// let constraints = zkinterface::ConstraintSystemOwned::from(constraints_vec);
     ///```
 
     fn from(constraints: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]) -> ConstraintSystemOwned {
@@ -84,10 +84,11 @@ impl ConstraintSystemOwned {
     /// Writes the constraint system into the provided buffer.
     ///
     ///
-    ///  # Examples
+    /// # Examples
     /// ```
-    ///  let mut buf = Vec::<u8>::new();
-    ///  constraints_owned.write(&mut buf).unwrap();
+    /// let mut buf = Vec::<u8>::new();
+    /// let constraints_owned = zkinterface::ConstraintSystemOwned::from(&[][..]);
+    /// constraints_owned.write(&mut buf).unwrap();
     /// ```
 
     pub fn write<W: io::Write>(self, writer: &mut W) -> io::Result<()> {
