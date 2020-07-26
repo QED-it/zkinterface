@@ -2,7 +2,7 @@ use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
 
-use crate::{CircuitOwned, ConstraintSystemOwned, VariablesOwned};
+use crate::{Result, CircuitOwned, ConstraintSystemOwned, VariablesOwned};
 use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
@@ -24,7 +24,7 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
 }
 
 
-pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> {
+pub fn write_example_constraints<W: io::Write>(mut writer: W) -> Result<()> {
     let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
@@ -34,14 +34,14 @@ pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> 
 
     let constraints_owned: ConstraintSystemOwned = constraints_vec.into();
 
-    constraints_owned.write(&mut writer)
+    constraints_owned.write_into(&mut writer)
 }
 
-pub fn write_example_witness<W: io::Write>(writer: W) -> io::Result<()> {
+pub fn write_example_witness<W: io::Write>(writer: W) -> Result<()> {
     write_example_witness_inputs(writer, 3, 4)
 }
 
-pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32) -> io::Result<()> {
+pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32) -> Result<()> {
     let ids = [4, 5 as u64]; // xx, yy
     let values = serialize_small(&[
         x * x, // var_4 = xx = x^2
@@ -65,7 +65,8 @@ pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32)
     });
     builder.finish_size_prefixed(message, None);
 
-    writer.write_all(builder.finished_data())
+    writer.write_all(builder.finished_data())?;
+    Ok(())
 }
 
 pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {

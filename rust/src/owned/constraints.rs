@@ -1,7 +1,7 @@
-use std::io;
+use std::io::Write;
 use flatbuffers::FlatBufferBuilder;
 use serde::{Deserialize, Serialize};
-use crate::VariablesOwned;
+use crate::{Result, VariablesOwned};
 use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -81,21 +81,21 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
 }
 
 impl ConstraintSystemOwned {
-    /// Writes the constraint system into the provided buffer.
+    /// Writes the constraint system as a Flatbuffers message into the provided buffer.
     ///
     ///
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
     /// let constraints_owned = zkinterface::ConstraintSystemOwned::from(&[][..]);
-    /// constraints_owned.write(&mut buf).unwrap();
+    /// constraints_owned.write_into(&mut buf).unwrap();
     /// ```
 
-    pub fn write<W: io::Write>(self, writer: &mut W) -> io::Result<()> {
+    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let mut constraints_built = vec![];
 
-        for bilinear_constraints in self.constraints {
+        for bilinear_constraints in &self.constraints {
             let lca = bilinear_constraints.linear_combination_a.build(&mut builder);
             let lcb = bilinear_constraints.linear_combination_b.build(&mut builder);
             let lcc = bilinear_constraints.linear_combination_c.build(&mut builder);
@@ -119,7 +119,8 @@ impl ConstraintSystemOwned {
         });
         builder.finish_size_prefixed(message, None);
 
-        writer.write_all(builder.finished_data())
+        writer.write_all(builder.finished_data())?;
+        Ok(())
     }
 }
 
