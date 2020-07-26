@@ -7,12 +7,10 @@
 #include "libsnark/gadgetlib1/gadget.hpp"
 #include "libsnark/gadgetlib1/protoboard.hpp"
 
-
 namespace libsnark_importer {
 using namespace zkinterface_utils;
 
-import_zkif::import_zkif(Protoboard &pb,
-                         const string &annotation_prefix)
+import_zkif::import_zkif(Protoboard &pb, const string &annotation_prefix)
     : gadget<libsnark_converters::FieldT>(pb, annotation_prefix) {}
 
 Protoboard *import_zkif::get_pb() { return &pb; }
@@ -24,19 +22,9 @@ const Circuit *import_zkif::get_circuit() {
   return root->message_as_Circuit();
 }
 
-const ConstraintSystem *import_zkif::get_constraints() {
-  auto root = find_message(buffer, Message_ConstraintSystem);
-  return root->message_as_ConstraintSystem();
-}
-
-const Witness *import_zkif::get_witness() {
-  auto root = find_message(buffer, Message_Witness);
-  return root->message_as_Witness();
-}
-
 void import_zkif::allocate_variables() {
   auto circuit = get_circuit();
-  auto n_vars = circuit->free_variable_id();
+  auto n_vars = circuit->free_variable_id() - 1;
   pb_variable_array<FieldT> pb_vars;
   pb_vars.allocate(pb, n_vars, FMT(annotation_prefix, "private variables"));
   auto variable_ids = circuit->connections()->variable_ids();
@@ -44,7 +32,7 @@ void import_zkif::allocate_variables() {
   pb.set_input_sizes(num_variables);
 
   // Validate the connection IDs.
-  for (auto i = 0; i < variable_ids->size(); ++i) {
+  for (auto i = 0; i < num_variables; ++i) {
     if (variable_ids->Get(i) != 1 + i) {
       throw "Circuit connections must use contiguous IDs starting at 1.";
     }
@@ -58,16 +46,27 @@ void import_zkif::allocate_variables() {
 }
 
 void import_zkif::generate_constraints() {
-  auto constraints = get_constraints()->constraints();
-  for (auto i = constraints->begin(); i < constraints->end(); ++i) {
-    pb.add_r1cs_constraint(deserialize_constraint(*i),
-                           FMT(annotation_prefix, " constraint"));
+  for (auto it = buffer.begin(); it < buffer.end(); it = next_message(it)) {
+    auto cs = read_constraint_system(&(*it));
+
+    if (cs != nullptr) {
+      auto constraints = cs->constraints();
+      for (auto con = constraints->begin(); con < constraints->end(); con++) {
+        pb.add_r1cs_constraint(deserialize_constraint(*con),
+                               FMT(annotation_prefix, " constraint"));
+      }
+    }
   }
 }
 
 void import_zkif::generate_witness() {
-  auto witness = get_witness()->assigned_variables();
-  copy_variables_into_protoboard(pb, witness);
+  for (auto it = buffer.begin(); it < buffer.end(); it = next_message(it)) {
+    auto witness = read_witness(&(*it));
+
+    if (witness != nullptr) {
+      copy_variables_into_protoboard(pb, witness->assigned_variables());
+    }
+  }
 }
 
 } // namespace libsnark_importer

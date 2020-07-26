@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Variables,
     VariablesArgs,
 };
-use reading::Variable;
+use crate::reading::Variable;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct VariablesOwned {

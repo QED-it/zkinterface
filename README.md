@@ -81,15 +81,9 @@ In the `rust` directory, run unit tests:
 The following commands will generate and print a file containing the messages Circuit, R1CSConstraints, and Witness for a toy circuit in `rust/src/examples.rs`:
 
 ```
-cargo run --bin example > example.zkif
-cargo run --bin print   < example.zkif
+cargo run example  > example.zkif
+cargo run explain  < example.zkif
 ```
-
-This command will generate and compile Rust and C++ code, and run a test of both sides communicating through the standard interface:
-
-`cargo test --features cpp`
-
-<!-- TODO: Clarify what this tests -->
 
 ### Generated code
 

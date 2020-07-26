@@ -1,9 +1,9 @@
 use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
-use owned::circuit::CircuitOwned;
-use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, Message, ConstraintSystem, ConstraintSystemArgs, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+
+use crate::{Result, CircuitOwned, ConstraintSystemOwned, VariablesOwned};
+use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -19,63 +19,29 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
         },
         free_variable_id: 6,
         field_maximum: None,
+        configuration: None,
     }
 }
 
 
-pub fn write_example_constraints<W: io::Write>(mut writer: W) -> io::Result<()> {
-    let constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+pub fn write_example_constraints<W: io::Write>(mut writer: W) -> Result<()> {
+    let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ];
 
-    let mut builder = &mut FlatBufferBuilder::new();
-    let mut constraints_built = vec![];
+    let constraints_owned: ConstraintSystemOwned = constraints_vec.into();
 
-    for (lca, lcb, lcc) in constraints {
-        let lca = VariablesOwned {
-            variable_ids: lca.0,
-            values: Some(lca.1),
-        }.build(builder);
-        let lcb = VariablesOwned {
-            variable_ids: lcb.0,
-            values: Some(lcb.1),
-        }.build(builder);
-        let lcc = VariablesOwned {
-            variable_ids: lcc.0,
-            values: Some(lcc.1),
-        }.build(builder);
-
-        constraints_built.push(BilinearConstraint::create(builder, &BilinearConstraintArgs {
-            linear_combination_a: Some(lca),
-            linear_combination_b: Some(lcb),
-            linear_combination_c: Some(lcc),
-        }));
-    }
-
-    let constraints_built = builder.create_vector(&constraints_built);
-    let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
-        constraints: Some(constraints_built),
-        info: None,
-    });
-
-    let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::ConstraintSystem,
-        message: Some(r1cs.as_union_value()),
-    });
-    builder.finish_size_prefixed(message, None);
-
-    writer.write_all(builder.finished_data())
+    constraints_owned.write_into(&mut writer)
 }
 
-
-pub fn write_example_witness<W: io::Write>(writer: W) -> io::Result<()> {
+pub fn write_example_witness<W: io::Write>(writer: W) -> Result<()> {
     write_example_witness_inputs(writer, 3, 4)
 }
 
-pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32) -> io::Result<()> {
+pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32) -> Result<()> {
     let ids = [4, 5 as u64]; // xx, yy
     let values = serialize_small(&[
         x * x, // var_4 = xx = x^2
@@ -99,7 +65,8 @@ pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32)
     });
     builder.finish_size_prefixed(message, None);
 
-    writer.write_all(builder.finished_data())
+    writer.write_all(builder.finished_data())?;
+    Ok(())
 }
 
 pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
@@ -114,14 +81,14 @@ pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
 
 #[test]
 fn test_examples() {
-    use reading::Messages;
+    use crate::reading::Messages;
 
     let mut buf = Vec::<u8>::new();
-    example_circuit().write(&mut buf).unwrap();
+    example_circuit().write_into(&mut buf).unwrap();
     write_example_constraints(&mut buf).unwrap();
     write_example_witness(&mut buf).unwrap();
 
-    let mut msg = Messages::new(1);
+    let mut msg = Messages::new();
     msg.push_message(buf).unwrap();
     assert_eq!(msg.into_iter().count(), 3);
     assert_eq!(msg.circuits().len(), 1);

@@ -62,7 +62,7 @@ namespace libsnark_converters {
 
     // FlatBuffers bytes into elements.
     vector<FieldT> deserialize_elements(const flatbuffers::Vector<uint8_t> *from_bytes, size_t num_elements) {
-        if (from_bytes == nullptr) {
+        if (from_bytes == nullptr || from_bytes->size() == 0) {
             return le_into_elements(nullptr, num_elements, 0);
         }
         size_t element_size = from_bytes->size() / num_elements;

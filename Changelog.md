@@ -1,3 +1,29 @@
+# Version v1.1.3, 2020-07, Rust/C++/libSNARK end-to-end integration
+
+Rust:
+- *(breaking)* Expanded `*Owned` structures (`KeyValueOwned`, rename `write_into`, serialization of `ConstraintSystemOwned`).
+- *(breaking)* Generic code improvements (Rust 2018, common `Result`, naming, modules re-exports).
+- Consolidated all tools into one CLI called `zkif`.
+- Available commands:
+    - JSON converters (`json` and `pretty`).
+    - Human-readable decoder called `explain`.
+    - Example circuit generator.
+    - Statistics for cost estimation (`stats`).
+    - Support for byte streams to pipe with other CLIs (`cat` command and special `-` filename meaning stdin/stdout).
+- Established a convention for easy file-based usage. The tools accept a workspace directory where `.zkif` files are organized.
+- Structures to construct ZK statements. See `statement.rs / StatementBuilder`.
+- A trait `GadgetCallbacks` and basic implementations to interact with gadgets (e.g. libSNARK below).
+- Fixed a bug on empty variables array.
+
+libsnark-rust:
+- Support zero-copy mode using the generic `GadgetCallbacks` trait.
+- Tests with a TinyRAM gadget and `StatementBuilder`.
+
+C++:
+- Support for multiple messages of each type.
+- Simplify the `zkif_snark` CLI and work well with the workspace and pipe modes of the `zkif` CLI.
+
+
 # Version v1.1.2, 2020-06, libsnark and gadgetlib for Rust
 
 Rust:
