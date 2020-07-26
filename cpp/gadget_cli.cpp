@@ -68,14 +68,14 @@ void run(string action, string zkif_out_prefix) {
   vector<char> command_msg;
   make_command(command_msg, action);
 
-  string constraints_name = zkif_out_prefix + "_constraints.zkif";
-  string witness_name = zkif_out_prefix + "_witness.zkif";
-  string return_name = zkif_out_prefix + "_return.zkif";
+  string constraints_name = zkif_out_prefix + "constraints.zkif";
+  string witness_name = zkif_out_prefix + "witness.zkif";
+  string response_name = zkif_out_prefix + "response.zkif";
 
   gadgetlib_call_gadget(circuit_msg.data(), command_msg.data(),
                         callback_write_to_file, &constraints_name,
                         callback_write_to_file, &witness_name,
-                        callback_write_to_file, &return_name);
+                        callback_write_to_file, &response_name);
 }
 
 static const char USAGE[] =
@@ -88,13 +88,15 @@ static const char USAGE[] =
 
 int main(int argc, const char **argv) {
 
-  if (argc < 3) {
+  if (argc < 2) {
     cerr << USAGE << endl;
     return 1;
   }
 
+  string out_prefix = (argc > 2) ? string(argv[2]) : "";
+
   try {
-    run(string(argv[1]), string(argv[2]));
+    run(string(argv[1]), out_prefix);
     return 0;
   } catch (const char *msg) {
     cerr << msg << endl;

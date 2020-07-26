@@ -1,15 +1,16 @@
 //! Helpers to write messages.
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use std::io;
+use std::io::Write;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Command,
     CommandArgs,
     Message,
     Root,
     RootArgs,
 };
+use crate::Result;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -49,10 +50,11 @@ impl CommandOwned {
     }
 
     /// Write this structure as a Flatbuffers message.
-    pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);
-        writer.write_all(builder.finished_data())
+        writer.write_all(builder.finished_data())?;
+        Ok(())
     }
 }

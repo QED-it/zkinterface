@@ -1,16 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use owned::circuit::CircuitOwned;
-use owned::constraints::ConstraintSystemOwned;
-use owned::witness::WitnessOwned;
-use reading::Messages;
-use zkinterface_generated::zkinterface::Message;
+use crate::reading::Messages;
+use crate::zkinterface_generated::zkinterface::Message;
+use super::circuit::CircuitOwned;
+use super::constraints::ConstraintSystemOwned;
+use super::witness::WitnessOwned;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MessagesOwned {
-    circuits: Vec<CircuitOwned>,
-    constraint_systems: Vec<ConstraintSystemOwned>,
-    witnesses: Vec<WitnessOwned>,
+    pub circuits: Vec<CircuitOwned>,
+    pub constraint_systems: Vec<ConstraintSystemOwned>,
+    pub witnesses: Vec<WitnessOwned>,
 }
 
 impl From<&Messages> for MessagesOwned {

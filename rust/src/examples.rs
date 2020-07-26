@@ -1,10 +1,9 @@
 use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
-use owned::circuit::CircuitOwned;
-use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
-use owned::constraints::ConstraintSystemOwned;
+
+use crate::{CircuitOwned, ConstraintSystemOwned, VariablesOwned};
+use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
 pub fn example_circuit() -> CircuitOwned {
@@ -20,6 +19,7 @@ pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
         },
         free_variable_id: 6,
         field_maximum: None,
+        configuration: None,
     }
 }
 
@@ -80,14 +80,14 @@ pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
 
 #[test]
 fn test_examples() {
-    use reading::Messages;
+    use crate::reading::Messages;
 
     let mut buf = Vec::<u8>::new();
-    example_circuit().write(&mut buf).unwrap();
+    example_circuit().write_into(&mut buf).unwrap();
     write_example_constraints(&mut buf).unwrap();
     write_example_witness(&mut buf).unwrap();
 
-    let mut msg = Messages::new(1);
+    let mut msg = Messages::new();
     msg.push_message(buf).unwrap();
     assert_eq!(msg.into_iter().count(), 3);
     assert_eq!(msg.circuits().len(), 1);

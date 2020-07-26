@@ -1,16 +1,18 @@
 //! Helpers to write messages.
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use std::io;
+use std::io::Write;
 use serde::{Deserialize, Serialize};
-use zkinterface_generated::zkinterface::{
+use crate::zkinterface_generated::zkinterface::{
     Circuit,
     CircuitArgs,
     Message,
     Root,
     RootArgs,
 };
-use owned::variables::VariablesOwned;
+use super::variables::VariablesOwned;
+use super::keyvalue::KeyValueOwned;
+use crate::Result;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -21,7 +23,7 @@ pub struct CircuitOwned {
 
     pub field_maximum: Option<Vec<u8>>,
 
-    //pub configuration: Option<Vec<(String, &'a [u8])>>,
+    pub configuration: Option<Vec<KeyValueOwned>>,
 }
 
 impl<'a> From<Circuit<'a>> for CircuitOwned {
@@ -30,7 +32,8 @@ impl<'a> From<Circuit<'a>> for CircuitOwned {
         CircuitOwned {
             connections: VariablesOwned::from(circuit_ref.connections().unwrap()),
             free_variable_id: circuit_ref.free_variable_id(),
-            field_maximum: None,
+            field_maximum: circuit_ref.field_maximum().map(Vec::from),
+            configuration: KeyValueOwned::from_vector(circuit_ref.configuration()),
         }
     }
 }
@@ -47,6 +50,7 @@ impl CircuitOwned {
             },
             free_variable_id: first_local_id,
             field_maximum: None,
+            configuration: None,
         }
     }
 
@@ -62,6 +66,7 @@ impl CircuitOwned {
             },
             free_variable_id: first_local_id + num_locals,
             field_maximum: None,
+            configuration: None,
         }
     }
 
@@ -73,14 +78,17 @@ impl CircuitOwned {
     {
         let connections = Some(self.connections.build(builder));
 
-        let field_maximum = self.field_maximum.as_ref().map(|s|
-            builder.create_vector(s));
+        let field_maximum = self.field_maximum.as_ref().map(|val|
+            builder.create_vector(val));
+
+        let configuration = self.configuration.as_ref().map(|conf|
+            KeyValueOwned::build_vector(conf, builder));
 
         let call = Circuit::create(builder, &CircuitArgs {
             connections,
             free_variable_id: self.free_variable_id,
             field_maximum,
-            configuration: None,
+            configuration,
         });
 
         Root::create(builder, &RootArgs {
@@ -90,10 +98,47 @@ impl CircuitOwned {
     }
 
     /// Write this structure as a Flatbuffers message.
-    pub fn write<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
         builder.finish_size_prefixed(message, None);
-        writer.write_all(builder.finished_data())
+        writer.write_all(builder.finished_data())?;
+        Ok(())
     }
+}
+
+#[test]
+fn test_circuit_owned() {
+    let circuit = CircuitOwned {
+        connections: VariablesOwned {
+            variable_ids: (1..3).collect(),
+            values: Some(vec![6, 7]),
+        },
+        free_variable_id: 3,
+        field_maximum: Some(vec![8]),
+        configuration: Some(vec![
+            KeyValueOwned {
+                key: "an attribute".to_string(),
+                text: Some("a value".to_string()),
+                data: None,
+                number: 0,
+            },
+            KeyValueOwned {
+                key: "another".to_string(),
+                data: Some(vec![11]),
+                text: None,
+                number: 0,
+            }
+        ]),
+    };
+
+    let mut buffer = vec![];
+    circuit.write_into(&mut buffer).unwrap();
+
+    let mut messages = crate::reading::Messages::new();
+    messages.push_message(buffer).unwrap();
+    let circuit_ref = messages.first_circuit().unwrap();
+
+    let circuit2 = CircuitOwned::from(circuit_ref);
+    assert_eq!(circuit2, circuit);
 }

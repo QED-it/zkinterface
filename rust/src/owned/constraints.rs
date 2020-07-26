@@ -1,9 +1,8 @@
 use std::io;
-
 use flatbuffers::FlatBufferBuilder;
 use serde::{Deserialize, Serialize};
-use owned::variables::VariablesOwned;
-use zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
+use crate::VariablesOwned;
+use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
@@ -43,14 +42,14 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
     ///
     /// # Examples
     /// ```
-    ///  constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
+    ///  let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
     ///         // (A ids values)  *  (B ids values)  =  (C ids values)
     ///         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
     ///         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
     ///         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ///  ];
     ///
-    ///  let constraints = ConstraintSystemOwned::from(vec);
+    ///  let constraints = zkinterface::ConstraintSystemOwned::from(constraints_vec);
     ///```
 
     fn from(constraints: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]) -> ConstraintSystemOwned {
