@@ -1,8 +1,6 @@
 extern crate serde;
 extern crate serde_json;
 
-use std::error::Error;
-use std::io::{stdin, Read};
 use serde::{Deserialize, Serialize};
 
 use crate::reading::Messages;

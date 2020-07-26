@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 use zkinterface::{
     reading::Messages,
-    owned::message::MessagesOwned,
+    MessagesOwned,
     stats::Stats,
     Result,
 };
@@ -146,7 +146,7 @@ pub fn main_cat(args: &[&str]) -> Result<()> {
     for path in list_files(args)? {
         let mut file = File::open(&path)?;
         let mut stdout = stdout();
-        copy(&mut file, &mut stdout);
+        copy(&mut file, &mut stdout)?;
     }
     Ok(())
 }
@@ -176,14 +176,14 @@ pub fn main_stats(messages: &Messages) -> Result<()> {
 }
 
 
-pub fn main_fake_prove(messages: &Messages) -> Result<()> {
+pub fn main_fake_prove(_: &Messages) -> Result<()> {
     let mut file = File::create("fake_proof")?;
     write!(file, "I hereby promess that I saw a witness that satisfies the constraint system.")?;
     eprintln!("Fake proof written to file `fake_proof`.");
     Ok(())
 }
 
-pub fn main_fake_verify(messages: &Messages) -> Result<()> {
+pub fn main_fake_verify(_: &Messages) -> Result<()> {
     let mut file = File::open("fake_proof")?;
     let mut proof = String::new();
     file.read_to_string(&mut proof)?;

@@ -1,6 +1,6 @@
 //! Helpers to read messages.
 
-use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT, buffer_has_identifier};
+use flatbuffers::{read_scalar_at, SIZE_UOFFSET, UOffsetT};
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
