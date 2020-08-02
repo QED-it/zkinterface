@@ -46,6 +46,8 @@ __Backends:__
 
 See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) used to build the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
+See the `ecosystem/` folder for a collection of instructions to install and connect multiple systems.
+
 <!-- ## How to use it
 
 *TODO: Discuss how different stakeholders will use this (frontend authors, backend authors, gadget authors, integrators) and what they should do.* -->
