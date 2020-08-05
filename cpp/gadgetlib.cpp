@@ -23,10 +23,6 @@ bool gadgetlib_call_gadget(char *circuit_msg, char *command_msg,
     CurveT::init_public_params();
   }
 
-  const Circuit *circuit = read_circuit(circuit_msg);
-  string function_name = find_config_text(circuit, "function", "");
-  cout << "Function: " << function_name << endl;
-
   return gadgetlib_alu::call_gadget(
       circuit_msg, command_msg, constraints_callback, constraints_context,
       witness_callback, witness_context, return_callback, return_context);
