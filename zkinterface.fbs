@@ -11,6 +11,7 @@ union Message {
     ConstraintSystem,
     Witness,
     Command,
+    GatesSystem,
 }
 
 /// A description of a circuit or sub-circuit.
@@ -55,6 +56,13 @@ table ConstraintSystem {
     /// Example: human-readable descriptions.
     /// Example: custom hints to an optimizer or analyzer.
     info                    :[KeyValue];
+}
+
+/// GatesSystem represents constraints as a circuit of gates.
+///
+/// Multiple such messages are equivalent to the concatenation of `gates` arrays.
+table GatesSystem {
+    gates                   :[Gate];
 }
 
 /// Witness represents an assignment of values to variables.
@@ -151,6 +159,56 @@ table KeyValue {
     data                    :[ubyte];
     text                    :string;
     number                  :int64;
+}
+
+
+// ==== Gate types ====
+
+table GateAssertZero {
+    input_id    :uint64;
+}
+
+table GateAddConst {
+    input_id    :uint64;
+    constant    :[ubyte];
+    output_id   :uint64;
+}
+
+table GateMultConst {
+    input_id    :uint64;
+    constant    :[ubyte];
+    output_id   :uint64;
+}
+
+table GateAdd2 {
+    left_id     :uint64;
+    right_id    :uint64;
+    output_id   :uint64;
+}
+
+table GateMult2 {
+    left_id     :uint64;
+    right_id    :uint64;
+    output_id   :uint64;
+}
+
+table GateGeneric {
+    input_ids   :[uint64];
+    output_ids  :[uint64];
+    kind        :string;
+    data        :[ubyte];
+}
+
+union GateSet {
+    GateAssertZero,
+    GateAddConst,
+    GateMultConst,
+    GateAdd2,
+    GateMult2,
+    GateGeneric,
+}
+table Gate {
+    gate      :GateSet;
 }
 
 
