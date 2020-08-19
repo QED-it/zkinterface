@@ -35,13 +35,15 @@ __Frontends:__
 | [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | R1CS | Yes | No |
 | [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | R1CS | Yes | No |
 | [PySNARK](https://github.com/meilof/pysnark) | R1CS | Yes | No |
+| [Bellman](https://github.com/QED-it/zkinterface-bellman) | R1CS | No | Yes |
 
 __Backends:__
 
-|                                                           | Proving System | Export Circuits | Import Circuits |
-| --------------------------------------------------------- | -------------- | --------------- | --------------- |
-| [Bellman](https://github.com/QED-it/zkinterface-bellman) | Groth16            | No              | Yes             |
-| [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs)| Bulletproofs | No | Yes |
+|                                                           | Proving System |
+| --------------------------------------------------------- | -------------- |
+| [Bellman](https://github.com/QED-it/zkinterface-bellman) | Groth16            |
+| [Dalek](https://github.com/QED-it/bulletproofs/blob/zkinterface/src/r1cs/zkinterface_backend.rs) | Bulletproofs |
+| [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | BCTV14a |
 
 
 See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) used to build the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
