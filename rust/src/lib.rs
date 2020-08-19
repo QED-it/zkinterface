@@ -12,13 +12,13 @@ pub mod examples;
 
 pub use reading::Messages;
 pub use owned::{
-    message::MessagesOwned,
     circuit::CircuitOwned,
     command::CommandOwned,
     constraints::ConstraintSystemOwned,
-    witness::WitnessOwned,
-    variables::VariablesOwned,
     keyvalue::KeyValueOwned,
+    message::MessagesOwned,
+    variables::VariablesOwned,
+    witness::WitnessOwned,
 };
 
 // Common definitions.

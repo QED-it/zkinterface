@@ -27,7 +27,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
 
     let assigned = match call.connections()?.values() {
         Some(bytes) => {
-            let stride = bytes.len() / input_var_ids.len();
+            let stride = get_value_size(input_var_ids, bytes);
 
             (0..input_var_ids.len()).map(|i|
                 Variable {
@@ -82,6 +82,10 @@ pub fn read_buffer(stream: &mut impl Read) -> Result<Vec<u8>> {
     stream.read_exact(&mut buffer[4..])?;
     eprintln!("Read buffer: {:?}", buffer);
     Ok(buffer)
+}
+
+pub fn get_value_size(var_ids: &[u64], values: &[u8]) -> usize {
+    if var_ids.len() == 0 { 0 } else { values.len() / var_ids.len() }
 }
 
 /// Collect buffers waiting to be read.
@@ -253,7 +257,7 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
         None => &[], // No values, only variable ids and empty values.
     };
 
-    let stride = if var_ids.len() == 0 { 0 } else { values.len() / var_ids.len() };
+    let stride = get_value_size(var_ids, values);
 
     let vars = (0..var_ids.len())
         .filter(|&i| // Ignore variables below first_id, if any.
@@ -397,7 +401,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
             let var_ids: &[u64] = lc.variable_ids().unwrap().safe_slice();
             let values: &[u8] = lc.values().unwrap();
 
-            let stride = values.len() / var_ids.len();
+            let stride = get_value_size(var_ids, values);
 
             for i in 0..var_ids.len() {
                 terms.push(Term {
@@ -515,8 +519,7 @@ impl<'a> Iterator for WitnessIterator<'a> {
             self.next_element = 0;
         }
 
-        let stride = self.values.len() / self.var_ids.len();
-        //if stride == 0 { panic!("Empty values data."); }
+        let stride = get_value_size(self.var_ids, self.values);
 
         let i = self.next_element;
         self.next_element += 1;

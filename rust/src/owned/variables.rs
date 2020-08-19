@@ -5,9 +5,9 @@ use crate::zkinterface_generated::zkinterface::{
     Variables,
     VariablesArgs,
 };
-use crate::reading::Variable;
+use crate::reading::{Variable, get_value_size};
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct VariablesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,
@@ -37,10 +37,9 @@ impl VariablesOwned {
             None => &[], // No values, only variable ids and empty values.
         };
 
-        let n_vars = self.variable_ids.len();
-        let stride = values.len() / n_vars;
+        let stride = get_value_size(&self.variable_ids, values);
 
-        (0..n_vars)
+        (0..self.variable_ids.len())
             .map(|var_i|
                 Variable {
                     id: self.variable_ids[var_i],

@@ -7,6 +7,7 @@
 ### Usage
     zkif help
 
+
 ## Dalek Bulletproofs
 ### Install
     git clone https://github.com/QED-it/bulletproofs.git
@@ -18,6 +19,23 @@
 
 ### Verify
     zkif example - | zkif_bulletproofs verify
+
+
+## Bellman
+### Install
+    git clone https://github.com/QED-it/zkinterface-bellman.git
+    cd zkinterface-bellman
+    cargo install --path .
+
+### Validate / Print
+    zkif example - | zkif_bellman print
+
+### Prove
+    zkif example - | zkif_bellman prove
+
+### Verify
+    (todo)
+
 
 ## libSNARK
 ### Install

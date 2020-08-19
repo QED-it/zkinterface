@@ -1,15 +1,15 @@
 use std::io::Write;
-use flatbuffers::FlatBufferBuilder;
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::{Result, VariablesOwned};
 use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
     pub constraints: Vec<BilinearConstraintOwned>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct BilinearConstraintOwned {
     pub linear_combination_a: VariablesOwned,
     pub linear_combination_b: VariablesOwned,
@@ -80,47 +80,63 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
     }
 }
 
+impl BilinearConstraintOwned {
+    /// Add this structure into a Flatbuffers message builder.
+    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        &'args self,
+        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
+    ) -> WIPOffset<BilinearConstraint<'bldr>>
+    {
+        let lca = self.linear_combination_a.build(builder);
+        let lcb = self.linear_combination_b.build(builder);
+        let lcc = self.linear_combination_c.build(builder);
+
+        BilinearConstraint::create(builder, &BilinearConstraintArgs {
+            linear_combination_a: Some(lca),
+            linear_combination_b: Some(lcb),
+            linear_combination_c: Some(lcc),
+        })
+    }
+}
+
 impl ConstraintSystemOwned {
-    /// Writes the constraint system as a Flatbuffers message into the provided buffer.
-    ///
-    ///
-    /// # Examples
-    /// ```
-    /// let mut buf = Vec::<u8>::new();
-    /// let constraints_owned = zkinterface::ConstraintSystemOwned::from(&[][..]);
-    /// constraints_owned.write_into(&mut buf).unwrap();
-    /// ```
-
-    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
-        let mut builder = FlatBufferBuilder::new();
-        let mut constraints_built = vec![];
-
-        for bilinear_constraints in &self.constraints {
-            let lca = bilinear_constraints.linear_combination_a.build(&mut builder);
-            let lcb = bilinear_constraints.linear_combination_b.build(&mut builder);
-            let lcc = bilinear_constraints.linear_combination_c.build(&mut builder);
-
-            constraints_built.push(BilinearConstraint::create(&mut builder, &BilinearConstraintArgs {
-                linear_combination_a: Some(lca),
-                linear_combination_b: Some(lcb),
-                linear_combination_c: Some(lcc),
-            }));
-        }
+    /// Add this structure into a Flatbuffers message builder.
+    pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        &'args self,
+        builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
+    ) -> WIPOffset<Root<'bldr>>
+    {
+        let constraints_built: Vec<_> = self.constraints.iter()
+            .map(|constraint|
+                constraint.build(builder)
+            ).collect();
 
         let constraints_built = builder.create_vector(&constraints_built);
-        let r1cs = ConstraintSystem::create(&mut builder, &ConstraintSystemArgs {
+        let r1cs = ConstraintSystem::create(builder, &ConstraintSystemArgs {
             constraints: Some(constraints_built),
             info: None,
         });
 
-        let message = Root::create(&mut builder, &RootArgs {
+        Root::create(builder, &RootArgs {
             message_type: Message::ConstraintSystem,
             message: Some(r1cs.as_union_value()),
-        });
-        builder.finish_size_prefixed(message, None);
+        })
+    }
 
+    /// Writes this constraint system as a Flatbuffers message into the provided buffer.
+    ///
+    /// # Examples
+    /// ```
+    /// let mut buf = Vec::<u8>::new();
+    /// let constraints = zkinterface::ConstraintSystemOwned::from(&[][..]);
+    /// constraints.write_into(&mut buf).unwrap();
+    /// assert!(buf.len() > 0);
+    /// ```
+    pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
+        let mut builder = FlatBufferBuilder::new();
+        let message = self.build(&mut builder);
+        builder.finish_size_prefixed(message, None);
         writer.write_all(builder.finished_data())?;
         Ok(())
     }
 }
-

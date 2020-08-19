@@ -13,7 +13,7 @@ use crate::zkinterface_generated::zkinterface::{
 use crate::Result;
 
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CommandOwned {
     pub constraints_generation: bool,
     pub witness_generation: bool,
@@ -49,7 +49,15 @@ impl CommandOwned {
         })
     }
 
-    /// Write this structure as a Flatbuffers message.
+    /// Writes this command as a Flatbuffers message into the provided buffer.
+    ///
+    /// # Examples
+    /// ```
+    /// let mut buf = Vec::<u8>::new();
+    /// let command = zkinterface::CommandOwned::default();
+    /// command.write_into(&mut buf).unwrap();
+    /// assert!(buf.len() > 0);
+    /// ```
     pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);

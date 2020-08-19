@@ -15,7 +15,7 @@ use super::keyvalue::KeyValueOwned;
 use crate::Result;
 
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitOwned {
     pub connections: VariablesOwned,
 
@@ -97,7 +97,15 @@ impl CircuitOwned {
         })
     }
 
-    /// Write this structure as a Flatbuffers message.
+    /// Writes this circuit as a Flatbuffers message into the provided buffer.
+    ///
+    /// # Examples
+    /// ```
+    /// let mut buf = Vec::<u8>::new();
+    /// let circuit = zkinterface::CircuitOwned::default();
+    /// circuit.write_into(&mut buf).unwrap();
+    /// assert!(buf.len() > 0);
+    /// ```
     pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
