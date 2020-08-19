@@ -43,6 +43,11 @@ table Circuit {
     /// Example: the depth of a Merkle tree.
     /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
     configuration           :[KeyValue];
+
+    /// The name of the profile used to express this circuit.
+    /// Known profiles are defined in the zkInterface specification.
+    /// Optional, defaults to "R1CS" if omitted.
+    profile_name            :string;
 }
 
 /// ConstraintSystem represents constraints to be added to the constraint system.
