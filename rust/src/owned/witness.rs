@@ -12,7 +12,7 @@ use super::variables::VariablesOwned;
 use crate::Result;
 
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WitnessOwned {
     pub assigned_variables: VariablesOwned,
 }
@@ -45,7 +45,15 @@ impl WitnessOwned {
         })
     }
 
-    /// Write this structure as a Flatbuffers message.
+    /// Writes this witness as a Flatbuffers message into the provided buffer.
+    ///
+    /// # Examples
+    /// ```
+    /// let mut buf = Vec::<u8>::new();
+    /// let witness = zkinterface::WitnessOwned::default();
+    /// witness.write_into(&mut buf).unwrap();
+    /// assert!(buf.len() > 0);
+    /// ```
     pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);

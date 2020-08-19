@@ -7,7 +7,7 @@ use crate::zkinterface_generated::zkinterface::{
 };
 use crate::reading::{Variable, get_value_size};
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct VariablesOwned {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,

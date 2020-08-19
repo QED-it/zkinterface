@@ -1,3 +1,10 @@
+# Version v1.1.4, 2020-08, Rust fixes
+
+Rust:
+- Default trait, build() method, doctests for *Owned structures.
+- Fix all potential divide-by-zero.
+
+
 # Version v1.1.3, 2020-07, Rust/C++/libSNARK end-to-end integration
 
 Rust:

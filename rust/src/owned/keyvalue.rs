@@ -7,7 +7,7 @@ use crate::zkinterface_generated::zkinterface::{
     KeyValueArgs,
 };
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct KeyValueOwned {
     pub key: String,
     // The value goes into one the following:

@@ -6,7 +6,7 @@ use super::circuit::CircuitOwned;
 use super::constraints::ConstraintSystemOwned;
 use super::witness::WitnessOwned;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MessagesOwned {
     pub circuits: Vec<CircuitOwned>,
     pub constraint_systems: Vec<ConstraintSystemOwned>,
