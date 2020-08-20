@@ -169,47 +169,62 @@ table KeyValue {
 
 // ==== Gate types ====
 
+/// A reference to a wire. Every wire is the output of a gate.
+struct Wire {
+    id          :uint64;
+}
+
+// ---- Circuit sources and sinks. ----
+
+table GateConstant {
+    constant    :[ubyte];
+    output      :Wire;
+}
+
+/// A parameter to the circuit shared by provers and verifiers.
+/// Its value must be provided in the `connections` of a `Circuit` message.
+table GateParameter {
+    output      :Wire;
+}
+
+/// A witness wire known only to the prover.
+/// Its value must be provided in `Witness` messages.
+table GateWitness {
+    output      :Wire;
+}
+
 table GateAssertZero {
-    input_id    :uint64;
+    input       :Wire;
 }
 
-table GateAddConst {
-    input_id    :uint64;
-    constant    :[ubyte];
-    output_id   :uint64;
-}
-
-table GateMultConst {
-    input_id    :uint64;
-    constant    :[ubyte];
-    output_id   :uint64;
-}
+// ---- Computations gates ----
 
 table GateAdd2 {
-    left_id     :uint64;
-    right_id    :uint64;
-    output_id   :uint64;
+    left        :Wire;
+    right       :Wire;
+    output      :Wire;
 }
 
-table GateMult2 {
-    left_id     :uint64;
-    right_id    :uint64;
-    output_id   :uint64;
+table GateMul2 {
+    left        :Wire;
+    right       :Wire;
+    output      :Wire;
 }
 
 table GateGeneric {
-    input_ids   :[uint64];
-    output_ids  :[uint64];
+    inputs      :[Wire];
+    outputs     :[Wire];
     kind        :string;
     data        :[ubyte];
 }
 
 union GateSet {
+    GateConstant,
+    GateParameter,
+    GateWitness,
     GateAssertZero,
-    GateAddConst,
-    GateMultConst,
     GateAdd2,
-    GateMult2,
+    GateMul2,
     GateGeneric,
 }
 table Gate {
