@@ -34,6 +34,7 @@ impl From<&Messages> for MessagesOwned {
                         .constraint_systems
                         .push(ConstraintSystemOwned::from(constraints_ref));
                 }
+                Message::GatesSystem => {}
                 Message::Witness => {
                     let witness_ref = msg.message_as_witness().unwrap();
                     owned.witnesses.push(WitnessOwned::from(witness_ref));

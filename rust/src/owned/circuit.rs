@@ -89,6 +89,7 @@ impl CircuitOwned {
             free_variable_id: self.free_variable_id,
             field_maximum,
             configuration,
+            profile_name: None,
         });
 
         Root::create(builder, &RootArgs {
