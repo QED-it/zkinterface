@@ -35,7 +35,7 @@ __Frontends:__
 | [Libsnark](https://github.com/QED-it/zkinterface/tree/master/cpp) | R1CS | Yes | No |
 | [Mir r1cs](https://github.com/mir-protocol/r1cs-zkinterface) | R1CS | Yes | No |
 | [PySNARK](https://github.com/meilof/pysnark) | R1CS | Yes | No |
-| [Bellman](https://github.com/QED-it/zkinterface-bellman) | R1CS | No | Yes |
+| [Bellman](https://github.com/QED-it/zkinterface-bellman) | R1CS | Yes | Yes |
 
 __Backends:__
 
