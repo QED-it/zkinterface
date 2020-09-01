@@ -21,6 +21,10 @@ pub use owned::{
     variables::VariablesOwned,
     witness::WitnessOwned,
 };
+pub use gates::gatesystem::{
+    GatesSystemOwned,
+    GateOwned,
+};
 
 // Common definitions.
 use std::error::Error;
