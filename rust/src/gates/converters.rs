@@ -4,6 +4,7 @@ use crate::reading::Variable;
 use super::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
 use super::builder::{IBuilder, CachingBuilder};
 use crate::gates::profiles::switch_profile;
+use crate::gates::builder::OptimizingBuilder;
 
 
 pub fn r1cs_to_gates(
@@ -11,23 +12,11 @@ pub fn r1cs_to_gates(
     r1cs: &ConstraintSystemOwned,
 ) -> (CircuitHeaderOwned, GateSystemOwned) {
     let mut bb = CachingBuilder::default();
+
+    allocate_r1cs_variables(header, &mut bb);
+
+    let mut bb = OptimizingBuilder::new(bb);
     let b = &mut bb;
-
-    // Allocate the constant one of R1CS.
-    let _one_id = b.gate(Constant(0, vec![1]));
-    assert_eq!(_one_id, 0);
-
-    // Allocate instance variables.
-    for i in &header.connections.variable_ids {
-        let j = b.gate(InstanceVar(0));
-        assert_eq!(*i, j, "Only consecutive instance variable IDs are supported.");
-    }
-
-    // Allocate witness variables.
-    for i in b.free_id()..header.free_variable_id {
-        let j = b.gate(Witness(0));
-        assert_eq!(i, j);
-    }
 
     // Allocate negative one for negation.
     let neg_one = b.gate(Constant(0, vec![255]));
@@ -54,7 +43,25 @@ pub fn r1cs_to_gates(
         profile_name: Some(ARITHMETIC_CIRCUIT.to_string()),
     };
 
-    (header, bb.builder.gate_system)
+    (header, bb.builder.builder.gate_system)
+}
+
+fn allocate_r1cs_variables(header: &CircuitHeaderOwned, b: &mut CachingBuilder) {
+    // Allocate the constant one of R1CS.
+    let _one_id = b.gate(Constant(0, vec![1]));
+    assert_eq!(_one_id, 0);
+
+    // Allocate instance variables.
+    for i in &header.connections.variable_ids {
+        let j = b.gate(InstanceVar(0));
+        assert_eq!(*i, j, "Only consecutive instance variable IDs are supported.");
+    }
+
+    // Allocate witness variables.
+    for i in b.free_id()..header.free_variable_id {
+        let j = b.gate(Witness(0));
+        assert_eq!(i, j);
+    }
 }
 
 

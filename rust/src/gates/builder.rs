@@ -1,5 +1,6 @@
 use crate::{GateOwned, GateSystemOwned};
 use std::collections::HashMap;
+use crate::gates::gates::GateOwned::Constant;
 
 pub trait IBuilder {
     fn alloc(&mut self) -> u64;
@@ -68,6 +69,46 @@ impl IBuilder for CachingBuilder {
             }
         } else {
             self.builder.gate(gate)
+        }
+    }
+}
+
+
+#[derive(Default)]
+pub struct OptimizingBuilder {
+    pub builder: CachingBuilder,
+    zero: u64,
+    one: u64,
+}
+
+impl OptimizingBuilder {
+    pub fn new(mut builder: CachingBuilder) -> OptimizingBuilder {
+        let zero = builder.gate(Constant(0, vec![]));
+        let one = builder.gate(Constant(0, vec![1]));
+        OptimizingBuilder { builder, zero, one }
+    }
+}
+
+impl IBuilder for OptimizingBuilder {
+    fn alloc(&mut self) -> u64 {
+        self.builder.alloc()
+    }
+
+    fn free_id(&self) -> u64 {
+        self.builder.free_id()
+    }
+
+    fn push_gate(&mut self, allocated_gate: GateOwned) {
+        self.builder.push_gate(allocated_gate)
+    }
+
+    fn gate(&mut self, gate: GateOwned) -> u64 {
+        match gate {
+            GateOwned::Add(_, l, r) if l == self.zero => r,
+            GateOwned::Add(_, l, r) if r == self.zero => l,
+            GateOwned::Mul(_, l, r) if l == self.one => r,
+            GateOwned::Mul(_, l, r) if r == self.one => l,
+            _ => self.builder.gate(gate),
         }
     }
 }

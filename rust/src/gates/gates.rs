@@ -112,6 +112,7 @@ impl GateOwned {
             Mul(_, l, r) => Mul(o, l, r),
         }
     }
+
     pub fn cacheable(&self) -> bool {
         match *self {
             InstanceVar(_) | Witness(_) => false,
