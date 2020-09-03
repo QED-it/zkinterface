@@ -34,6 +34,12 @@ impl fmt::Display for CircuitHeaderOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         //self.connections.fmt(f)?;
 
+        if self.connections.values.is_some() {
+            for var in self.connections.get_variables() {
+                f.write_fmt(format_args!("#set_instance_var wire_{} 0x{}\n", var.id, hex::encode(var.value)))?;
+            }
+        }
+
         if self.free_variable_id > 0 {
             f.write_fmt(format_args!("#free_variable_id {}\n", self.free_variable_id))?;
         }
@@ -44,6 +50,10 @@ impl fmt::Display for CircuitHeaderOwned {
 
         for kv in self.configuration.as_ref().unwrap() {
             f.write_fmt(format_args!("#{}\n", kv))?;
+        }
+
+        if let Some(ref p) = self.profile_name {
+            f.write_fmt(format_args!("#profile_name {}\n", p))?;
         }
 
         Ok(())

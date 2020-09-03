@@ -20,22 +20,22 @@ impl fmt::Display for GateOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Constant(output, constant) =>
-                f.write_fmt(format_args!("wire_{:?} = #constant 0x{}", output, hex::encode(constant))),
+                f.write_fmt(format_args!("wire_{:?}\t= #constant 0x{}", output, hex::encode(constant))),
 
             InstanceVar(output) =>
-                f.write_fmt(format_args!("wire_{:?} = #instance", output)),
+                f.write_fmt(format_args!("wire_{:?}\t= #instance_var", output)),
 
             Witness(output) =>
-                f.write_fmt(format_args!("wire_{:?} = #witness", output)),
+                f.write_fmt(format_args!("wire_{:?}\t= #witness", output)),
 
             AssertZero(input) =>
-                f.write_fmt(format_args!("#assert wire_{:?} == 0", input)),
+                f.write_fmt(format_args!("#assert wire_{:?}\t== 0", input)),
 
             Add(output, left, right) =>
-                f.write_fmt(format_args!("wire_{:?} = wire_{:?} + wire_{:?}", output, left, right)),
+                f.write_fmt(format_args!("wire_{:?}\t= wire_{:?}\t+ wire_{:?}", output, left, right)),
 
             Mul(output, left, right) =>
-                f.write_fmt(format_args!("wire_{:?} = wire_{:?} * wire_{:?}", output, left, right)),
+                f.write_fmt(format_args!("wire_{:?}\t= wire_{:?}\t* wire_{:?}", output, left, right)),
         }
     }
 }

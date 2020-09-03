@@ -24,18 +24,18 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOw
     }
 }
 
-
-pub fn write_example_constraints<W: io::Write>(mut writer: W) -> Result<()> {
+pub fn example_constraints() -> ConstraintSystemOwned {
     let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ];
+    ConstraintSystemOwned::from(constraints_vec)
+}
 
-    let constraints_owned: ConstraintSystemOwned = constraints_vec.into();
-
-    constraints_owned.write_into(&mut writer)
+pub fn write_example_constraints<W: io::Write>(mut writer: W) -> Result<()> {
+    example_constraints().write_into(&mut writer)
 }
 
 pub fn write_example_witness<W: io::Write>(writer: W) -> Result<()> {

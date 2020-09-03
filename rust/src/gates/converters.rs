@@ -80,3 +80,14 @@ fn build_term(
     let c = b.gate(Constant(0, term.value.to_vec()));
     b.gate(Mul(0, c, term.id))
 }
+
+#[test]
+fn test_r1cs_to_gates() {
+    let r1cs_header = crate::examples::example_circuit_header();
+    let r1cs_system = crate::examples::example_constraints();
+
+    let (gate_header, gate_system) = r1cs_to_gates(&r1cs_header, &r1cs_system);
+
+    eprintln!("{}", gate_header);
+    eprintln!("{}", gate_system);
+}

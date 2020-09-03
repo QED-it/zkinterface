@@ -8,7 +8,7 @@ use gatesystem::GateSystemOwned;
 use gates::GateOwned::*;
 use std::io::Write;
 use crate::{Result, CircuitHeaderOwned, VariablesOwned};
-use crate::gates::profiles::config_for_profile_arithmetic;
+use crate::gates::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
 
 
 pub fn example_circuit_header() -> CircuitHeaderOwned {
@@ -20,7 +20,7 @@ pub fn example_circuit_header() -> CircuitHeaderOwned {
         free_variable_id: 6,
         field_maximum: Some(vec![101]),
         configuration: Some(config_for_profile_arithmetic()),
-        profile_name: Some("arithmetic_circuit".to_string()),
+        profile_name: Some(ARITHMETIC_CIRCUIT.to_string()),
     }
 }
 
