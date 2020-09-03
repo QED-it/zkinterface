@@ -2,7 +2,7 @@ use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
 
-use crate::{Result, CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned};
+use crate::{Result, CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned, KeyValueOwned as KV};
 use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
@@ -19,7 +19,9 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOw
         },
         free_variable_id: 6,
         field_maximum: None,
-        configuration: None,
+        configuration: Some(vec![
+            KV::from(("name", "example")),
+        ]),
         profile_name: None,
     }
 }

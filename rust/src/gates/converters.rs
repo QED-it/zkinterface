@@ -3,6 +3,7 @@ use GateOwned::*;
 use crate::reading::Variable;
 use super::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
 use super::builder::{IBuilder, CachingBuilder};
+use crate::gates::profiles::switch_profile;
 
 
 pub fn r1cs_to_gates(
@@ -47,7 +48,9 @@ pub fn r1cs_to_gates(
         connections: header.connections.clone(),
         free_variable_id: b.free_id(),
         field_maximum: header.field_maximum.clone(),
-        configuration: Some(config_for_profile_arithmetic()),
+        configuration: Some(switch_profile(
+            &header.configuration,
+            config_for_profile_arithmetic())),
         profile_name: Some(ARITHMETIC_CIRCUIT.to_string()),
     };
 

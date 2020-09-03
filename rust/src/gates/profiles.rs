@@ -12,3 +12,14 @@ pub fn config_for_profile_arithmetic() -> Vec<KV> {
         KV::from(("gate", "mul")),
     ]
 }
+
+pub fn switch_profile(old_config: &Option<Vec<KV>>, mut profile_config: Vec<KV>) -> Vec<KV> {
+    if let Some(old_config) = old_config.as_ref() {
+        for kv in old_config {
+            if kv.key != "gate" {
+                profile_config.push(kv.clone());
+            }
+        }
+    }
+    profile_config
+}
