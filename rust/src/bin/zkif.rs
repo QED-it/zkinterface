@@ -117,7 +117,7 @@ pub fn main_example(args: &[&str]) -> Result<()> {
     let out_dir = if args.len() > 0 { args[0] } else { "." };
 
     if out_dir == "-" {
-        example_circuit().write_into(&mut stdout())?;
+        example_circuit_header().write_into(&mut stdout())?;
         write_example_constraints(stdout())?;
         write_example_witness(stdout())?;
     } else {
@@ -126,7 +126,7 @@ pub fn main_example(args: &[&str]) -> Result<()> {
         let out_dir = Path::new(out_dir);
         create_dir_all(out_dir)?;
 
-        example_circuit().write_into(
+        example_circuit_header().write_into(
             &mut File::create(out_dir.join("main.zkif"))?)?;
 
         write_example_constraints(

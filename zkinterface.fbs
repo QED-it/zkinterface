@@ -7,7 +7,7 @@ namespace zkinterface;
 // ==== Message types that can be exchanged. ====
 
 union Message {
-    Circuit,
+    CircuitHeader,
     ConstraintSystem,
     Witness,
     Command,
@@ -16,7 +16,7 @@ union Message {
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
-table Circuit {
+table CircuitHeader {
 
     /// Variables to use as connections to the sub-circuit.
     ///
@@ -59,7 +59,7 @@ table ConstraintSystem {
 
 /// Witness represents an assignment of values to variables.
 ///
-/// - Does not include variables already given in `Circuit.connections`.
+/// - Does not include variables already given in `CircuitHeader.connections`.
 /// - Does not include the constant one variable.
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 table Witness {
@@ -73,16 +73,16 @@ table Witness {
 table Command {
     /// For gadget flows.
     /// Request the generation of a constraint system (or part thereof).
-    /// If true, this must be followed by a Circuit.
-    /// The response must be another Circuit message with a greater `free_variable_id`
+    /// If true, this must be followed by a CircuitHeader.
+    /// The response must be another CircuitHeader message with a greater `free_variable_id`
     /// followed by one or more ConstraintSystem messages.
     constraints_generation  :bool;
 
     /// For gadget flows.
     /// Request the generation of a witness (or part thereof).
-    /// If true, this must be followed by a Circuit, and the `connections`
+    /// If true, this must be followed by a CircuitHeader, and the `connections`
     /// variables must contain input values.
-    /// The response must be another Circuit message, with a greater `free_variable_id`,
+    /// The response must be another CircuitHeader message, with a greater `free_variable_id`,
     /// with output values in `connections` variables, followed by one or more `Witness` messages.
     witness_generation      :bool;
 
@@ -108,7 +108,7 @@ table BilinearConstraint {
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - In `Circuit.connections`, the IDs indicate which variables are
+/// - In `CircuitHeader.connections`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
 /// - During witness generation, the values form the assignment to the variables.
 /// - In `BilinearConstraint` linear combinations, the values are the coefficients
@@ -123,12 +123,12 @@ table Variables {
 
     /// Optional: values assigned to variables.
     ///
-    /// - Values are finite field elements as defined by `circuit.field_maximum`.
+    /// - Values are finite field elements as defined by `header.field_maximum`.
     /// - Elements are represented in canonical little-endian form.
     /// - Elements appear in the same order as variable_ids.
     /// - Multiple elements are concatenated in a single byte array.
     /// - The element representation may be truncated and its size shorter
-    ///   than `circuit.field_maximum`. Truncated bytes are treated as zeros.
+    ///   than `header.field_maximum`. Truncated bytes are treated as zeros.
     /// - The size of an element representation is determined by:
     ///
     ///     element size = values.length / variable_ids.length

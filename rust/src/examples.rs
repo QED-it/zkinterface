@@ -2,17 +2,17 @@ use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
 use std::io;
 use std::mem::size_of;
 
-use crate::{Result, CircuitOwned, ConstraintSystemOwned, VariablesOwned};
+use crate::{Result, CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned};
 use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
 
 
-pub fn example_circuit() -> CircuitOwned {
-    example_circuit_inputs(3, 4, 25)
+pub fn example_circuit_header() -> CircuitHeaderOwned {
+    example_circuit_header_inputs(3, 4, 25)
 }
 
 /// A test circuit of inputs x,y,zz such that x^2 + y^2 = zz.
-pub fn example_circuit_inputs(x: u32, y: u32, zz: u32) -> CircuitOwned {
-    CircuitOwned {
+pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOwned {
+    CircuitHeaderOwned {
         connections: VariablesOwned {
             variable_ids: vec![1, 2, 3],  // x, y, zz
             values: Some(serialize_small(&[x, y, zz])),
@@ -84,14 +84,14 @@ fn test_examples() {
     use crate::reading::Messages;
 
     let mut buf = Vec::<u8>::new();
-    example_circuit().write_into(&mut buf).unwrap();
+    example_circuit_header().write_into(&mut buf).unwrap();
     write_example_constraints(&mut buf).unwrap();
     write_example_witness(&mut buf).unwrap();
 
     let mut msg = Messages::new();
     msg.push_message(buf).unwrap();
     assert_eq!(msg.into_iter().count(), 3);
-    assert_eq!(msg.circuits().len(), 1);
+    assert_eq!(msg.headers().len(), 1);
     assert_eq!(msg.iter_constraints().count(), 3);
     assert_eq!(msg.iter_witness().count(), 2);
 }

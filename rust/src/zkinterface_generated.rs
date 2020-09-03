@@ -22,7 +22,7 @@ pub mod zkinterface {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Message {
   NONE = 0,
-  Circuit = 1,
+  CircuitHeader = 1,
   ConstraintSystem = 2,
   Witness = 3,
   Command = 4,
@@ -66,7 +66,7 @@ impl flatbuffers::Push for Message {
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_MESSAGE:[Message; 5] = [
   Message::NONE,
-  Message::Circuit,
+  Message::CircuitHeader,
   Message::ConstraintSystem,
   Message::Witness,
   Message::Command
@@ -75,7 +75,7 @@ pub const ENUM_VALUES_MESSAGE:[Message; 5] = [
 #[allow(non_camel_case_types)]
 pub const ENUM_NAMES_MESSAGE:[&'static str; 5] = [
     "NONE",
-    "Circuit",
+    "CircuitHeader",
     "ConstraintSystem",
     "Witness",
     "Command"
@@ -87,18 +87,18 @@ pub fn enum_name_message(e: Message) -> &'static str {
 }
 
 pub struct MessageUnionTableOffset {}
-pub enum CircuitOffset {}
+pub enum CircuitHeaderOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
 /// A description of a circuit or sub-circuit.
 /// This can be a complete circuit ready for proving,
 /// or a part of a circuit being built.
-pub struct Circuit<'a> {
+pub struct CircuitHeader<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for Circuit<'a> {
-    type Inner = Circuit<'a>;
+impl<'a> flatbuffers::Follow<'a> for CircuitHeader<'a> {
+    type Inner = CircuitHeader<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -107,18 +107,18 @@ impl<'a> flatbuffers::Follow<'a> for Circuit<'a> {
     }
 }
 
-impl<'a> Circuit<'a> {
+impl<'a> CircuitHeader<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Circuit {
+        CircuitHeader {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args CircuitArgs<'args>) -> flatbuffers::WIPOffset<Circuit<'bldr>> {
-      let mut builder = CircuitBuilder::new(_fbb);
+        args: &'args CircuitHeaderArgs<'args>) -> flatbuffers::WIPOffset<CircuitHeader<'bldr>> {
+      let mut builder = CircuitHeaderBuilder::new(_fbb);
       builder.add_free_variable_id(args.free_variable_id);
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
@@ -140,20 +140,20 @@ impl<'a> Circuit<'a> {
   /// - If using `Command.witness_generation`, variables must be assigned values.
   #[inline]
   pub fn connections(&self) -> Option<Variables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(Circuit::VT_CONNECTIONS, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(CircuitHeader::VT_CONNECTIONS, None)
   }
   /// A variable ID greater than all IDs allocated by the sender of this message.
   /// The recipient of this message can allocate new IDs >= free_variable_id.
   #[inline]
   pub fn free_variable_id(&self) -> u64 {
-    self._tab.get::<u64>(Circuit::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
+    self._tab.get::<u64>(CircuitHeader::VT_FREE_VARIABLE_ID, Some(0)).unwrap()
   }
   /// The largest element of the finite field used by the current system.
   /// A canonical little-endian representation of the field order minus one.
   /// See `Variables.values` below.
   #[inline]
   pub fn field_maximum(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Circuit::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(CircuitHeader::VT_FIELD_MAXIMUM, None).map(|v| v.safe_slice())
   }
   /// Optional: Any custom parameter that may influence the circuit construction.
   ///
@@ -162,20 +162,20 @@ impl<'a> Circuit<'a> {
   /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
   #[inline]
   pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(Circuit::VT_CONFIGURATION, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(CircuitHeader::VT_CONFIGURATION, None)
   }
 }
 
-pub struct CircuitArgs<'a> {
+pub struct CircuitHeaderArgs<'a> {
     pub connections: Option<flatbuffers::WIPOffset<Variables<'a >>>,
     pub free_variable_id: u64,
     pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
 }
-impl<'a> Default for CircuitArgs<'a> {
+impl<'a> Default for CircuitHeaderArgs<'a> {
     #[inline]
     fn default() -> Self {
-        CircuitArgs {
+        CircuitHeaderArgs {
             connections: None,
             free_variable_id: 0,
             field_maximum: None,
@@ -183,37 +183,37 @@ impl<'a> Default for CircuitArgs<'a> {
         }
     }
 }
-pub struct CircuitBuilder<'a: 'b, 'b> {
+pub struct CircuitHeaderBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> CircuitBuilder<'a, 'b> {
+impl<'a: 'b, 'b> CircuitHeaderBuilder<'a, 'b> {
   #[inline]
   pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Variables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(Circuit::VT_CONNECTIONS, connections);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(CircuitHeader::VT_CONNECTIONS, connections);
   }
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
-    self.fbb_.push_slot::<u64>(Circuit::VT_FREE_VARIABLE_ID, free_variable_id, 0);
+    self.fbb_.push_slot::<u64>(CircuitHeader::VT_FREE_VARIABLE_ID, free_variable_id, 0);
   }
   #[inline]
   pub fn add_field_maximum(&mut self, field_maximum: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_FIELD_MAXIMUM, field_maximum);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CircuitHeader::VT_FIELD_MAXIMUM, field_maximum);
   }
   #[inline]
   pub fn add_configuration(&mut self, configuration: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<KeyValue<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Circuit::VT_CONFIGURATION, configuration);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(CircuitHeader::VT_CONFIGURATION, configuration);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CircuitBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> CircuitHeaderBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    CircuitBuilder {
+    CircuitHeaderBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Circuit<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<CircuitHeader<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -319,7 +319,7 @@ pub enum WitnessOffset {}
 
 /// Witness represents an assignment of values to variables.
 ///
-/// - Does not include variables already given in `Circuit.connections`.
+/// - Does not include variables already given in `CircuitHeader.connections`.
 /// - Does not include the constant one variable.
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 pub struct Witness<'a> {
@@ -440,8 +440,8 @@ impl<'a> Command<'a> {
 
   /// For gadget flows.
   /// Request the generation of a constraint system (or part thereof).
-  /// If true, this must be followed by a Circuit.
-  /// The response must be another Circuit message with a greater `free_variable_id`
+  /// If true, this must be followed by a CircuitHeader.
+  /// The response must be another CircuitHeader message with a greater `free_variable_id`
   /// followed by one or more ConstraintSystem messages.
   #[inline]
   pub fn constraints_generation(&self) -> bool {
@@ -449,9 +449,9 @@ impl<'a> Command<'a> {
   }
   /// For gadget flows.
   /// Request the generation of a witness (or part thereof).
-  /// If true, this must be followed by a Circuit, and the `connections`
+  /// If true, this must be followed by a CircuitHeader, and the `connections`
   /// variables must contain input values.
-  /// The response must be another Circuit message, with a greater `free_variable_id`,
+  /// The response must be another CircuitHeader message, with a greater `free_variable_id`,
   /// with output values in `connections` variables, followed by one or more `Witness` messages.
   #[inline]
   pub fn witness_generation(&self) -> bool {
@@ -623,7 +623,7 @@ pub enum VariablesOffset {}
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - In `Circuit.connections`, the IDs indicate which variables are
+/// - In `CircuitHeader.connections`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
 /// - During witness generation, the values form the assignment to the variables.
 /// - In `BilinearConstraint` linear combinations, the values are the coefficients
@@ -674,12 +674,12 @@ impl<'a> Variables<'a> {
   }
   /// Optional: values assigned to variables.
   ///
-  /// - Values are finite field elements as defined by `circuit.field_maximum`.
+  /// - Values are finite field elements as defined by `header.field_maximum`.
   /// - Elements are represented in canonical little-endian form.
   /// - Elements appear in the same order as variable_ids.
   /// - Multiple elements are concatenated in a single byte array.
   /// - The element representation may be truncated and its size shorter
-  ///   than `circuit.field_maximum`. Truncated bytes are treated as zeros.
+  ///   than `header.field_maximum`. Truncated bytes are treated as zeros.
   /// - The size of an element representation is determined by:
   ///
   ///     element size = values.length / variable_ids.length
@@ -907,9 +907,9 @@ impl<'a> Root<'a> {
   }
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_circuit(&self) -> Option<Circuit<'a>> {
-    if self.message_type() == Message::Circuit {
-      self.message().map(|u| Circuit::init_from_table(u))
+  pub fn message_as_circuit_header(&self) -> Option<CircuitHeader<'a>> {
+    if self.message_type() == Message::CircuitHeader {
+      self.message().map(|u| CircuitHeader::init_from_table(u))
     } else {
       None
     }
