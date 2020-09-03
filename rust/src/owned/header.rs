@@ -13,6 +13,7 @@ use crate::zkinterface_generated::zkinterface::{
 use super::variables::VariablesOwned;
 use super::keyvalue::KeyValueOwned;
 use crate::Result;
+use std::fmt;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -24,6 +25,29 @@ pub struct CircuitHeaderOwned {
     pub field_maximum: Option<Vec<u8>>,
 
     pub configuration: Option<Vec<KeyValueOwned>>,
+
+    pub profile_name: Option<String>,
+}
+
+
+impl fmt::Display for CircuitHeaderOwned {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        //self.connections.fmt(f)?;
+
+        if self.free_variable_id > 0 {
+            f.write_fmt(format_args!("#free_variable_id {}\n", self.free_variable_id))?;
+        }
+
+        if let Some(ref field) = self.field_maximum {
+            f.write_fmt(format_args!("#field_maximum 0x{}\n", hex::encode(field)))?;
+        }
+
+        for kv in self.configuration.as_ref().unwrap() {
+            f.write_fmt(format_args!("#{}\n", kv))?;
+        }
+
+        Ok(())
+    }
 }
 
 impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
@@ -34,6 +58,7 @@ impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
             free_variable_id: header_ref.free_variable_id(),
             field_maximum: header_ref.field_maximum().map(Vec::from),
             configuration: KeyValueOwned::from_vector(header_ref.configuration()),
+            profile_name: header_ref.profile_name().map(|p| p.to_string()),
         }
     }
 }
@@ -51,6 +76,7 @@ impl CircuitHeaderOwned {
             free_variable_id: first_local_id,
             field_maximum: None,
             configuration: None,
+            profile_name: None,
         }
     }
 
@@ -67,6 +93,7 @@ impl CircuitHeaderOwned {
             free_variable_id: first_local_id + num_locals,
             field_maximum: None,
             configuration: None,
+            profile_name: None,
         }
     }
 
@@ -84,12 +111,14 @@ impl CircuitHeaderOwned {
         let configuration = self.configuration.as_ref().map(|conf|
             KeyValueOwned::build_vector(conf, builder));
 
+        let profile_name = self.profile_name.as_ref().map(|p| builder.create_string(p));
+
         let header = CircuitHeader::create(builder, &CircuitHeaderArgs {
             connections,
             free_variable_id: self.free_variable_id,
             field_maximum,
             configuration,
-            profile_name: None,
+            profile_name,
         });
 
         Root::create(builder, &RootArgs {
@@ -139,6 +168,7 @@ fn test_circuit_header_owned() {
                 number: 0,
             }
         ]),
+        profile_name: None,
     };
 
     let mut buffer = vec![];

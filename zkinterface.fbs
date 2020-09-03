@@ -11,7 +11,7 @@ union Message {
     ConstraintSystem,
     Witness,
     Command,
-    GatesSystem,
+    GateSystem,
 }
 
 /// A description of a circuit or sub-circuit.
@@ -63,10 +63,10 @@ table ConstraintSystem {
     info                    :[KeyValue];
 }
 
-/// GatesSystem represents constraints as a circuit of gates.
+/// GateSystem represents constraints as a circuit of gates.
 ///
 /// Multiple such messages are equivalent to the concatenation of `gates` arrays.
-table GatesSystem {
+table GateSystem {
     gates                   :[Gate];
 }
 
@@ -199,13 +199,13 @@ table GateAssertZero {
 
 // ---- Computations gates ----
 
-table GateAdd2 {
+table GateAdd {
     output      :Wire;
     left        :Wire;
     right       :Wire;
 }
 
-table GateMul2 {
+table GateMul {
     output      :Wire;
     left        :Wire;
     right       :Wire;
@@ -223,8 +223,8 @@ union GateSet {
     GateInstanceVar,
     GateWitness,
     GateAssertZero,
-    GateAdd2,
-    GateMul2,
+    GateAdd,
+    GateMul,
     GateGeneric,
 }
 table Gate {

@@ -22,7 +22,7 @@ pub use owned::{
     witness::WitnessOwned,
 };
 pub use gates::{
-    gatesystem::GatesSystemOwned,
+    gatesystem::GateSystemOwned,
     gates::GateOwned,
 };
 

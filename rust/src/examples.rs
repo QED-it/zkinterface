@@ -20,6 +20,7 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOw
         free_variable_id: 6,
         field_maximum: None,
         configuration: None,
+        profile_name: None,
     }
 }
 

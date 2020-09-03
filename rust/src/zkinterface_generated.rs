@@ -26,7 +26,7 @@ pub enum Message {
   ConstraintSystem = 2,
   Witness = 3,
   Command = 4,
-  GatesSystem = 5,
+  GateSystem = 5,
 
 }
 
@@ -71,7 +71,7 @@ pub const ENUM_VALUES_MESSAGE:[Message; 6] = [
   Message::ConstraintSystem,
   Message::Witness,
   Message::Command,
-  Message::GatesSystem
+  Message::GateSystem
 ];
 
 #[allow(non_camel_case_types)]
@@ -81,7 +81,7 @@ pub const ENUM_NAMES_MESSAGE:[&'static str; 6] = [
     "ConstraintSystem",
     "Witness",
     "Command",
-    "GatesSystem"
+    "GateSystem"
 ];
 
 pub fn enum_name_message(e: Message) -> &'static str {
@@ -99,8 +99,8 @@ pub enum GateSet {
   GateInstanceVar = 2,
   GateWitness = 3,
   GateAssertZero = 4,
-  GateAdd2 = 5,
-  GateMul2 = 6,
+  GateAdd = 5,
+  GateMul = 6,
   GateGeneric = 7,
 
 }
@@ -146,8 +146,8 @@ pub const ENUM_VALUES_GATE_SET:[GateSet; 8] = [
   GateSet::GateInstanceVar,
   GateSet::GateWitness,
   GateSet::GateAssertZero,
-  GateSet::GateAdd2,
-  GateSet::GateMul2,
+  GateSet::GateAdd,
+  GateSet::GateMul,
   GateSet::GateGeneric
 ];
 
@@ -158,8 +158,8 @@ pub const ENUM_NAMES_GATE_SET:[&'static str; 8] = [
     "GateInstanceVar",
     "GateWitness",
     "GateAssertZero",
-    "GateAdd2",
-    "GateMul2",
+    "GateAdd",
+    "GateMul",
     "GateGeneric"
 ];
 
@@ -468,18 +468,18 @@ impl<'a: 'b, 'b> ConstraintSystemBuilder<'a, 'b> {
   }
 }
 
-pub enum GatesSystemOffset {}
+pub enum GateSystemOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-/// GatesSystem represents constraints as a circuit of gates.
+/// GateSystem represents constraints as a circuit of gates.
 ///
 /// Multiple such messages are equivalent to the concatenation of `gates` arrays.
-pub struct GatesSystem<'a> {
+pub struct GateSystem<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GatesSystem<'a> {
-    type Inner = GatesSystem<'a>;
+impl<'a> flatbuffers::Follow<'a> for GateSystem<'a> {
+    type Inner = GateSystem<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -488,18 +488,18 @@ impl<'a> flatbuffers::Follow<'a> for GatesSystem<'a> {
     }
 }
 
-impl<'a> GatesSystem<'a> {
+impl<'a> GateSystem<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        GatesSystem {
+        GateSystem {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args GatesSystemArgs<'args>) -> flatbuffers::WIPOffset<GatesSystem<'bldr>> {
-      let mut builder = GatesSystemBuilder::new(_fbb);
+        args: &'args GateSystemArgs<'args>) -> flatbuffers::WIPOffset<GateSystem<'bldr>> {
+      let mut builder = GateSystemBuilder::new(_fbb);
       if let Some(x) = args.gates { builder.add_gates(x); }
       builder.finish()
     }
@@ -508,40 +508,40 @@ impl<'a> GatesSystem<'a> {
 
   #[inline]
   pub fn gates(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Gate<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Gate<'a>>>>>(GatesSystem::VT_GATES, None)
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Gate<'a>>>>>(GateSystem::VT_GATES, None)
   }
 }
 
-pub struct GatesSystemArgs<'a> {
+pub struct GateSystemArgs<'a> {
     pub gates: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<Gate<'a >>>>>,
 }
-impl<'a> Default for GatesSystemArgs<'a> {
+impl<'a> Default for GateSystemArgs<'a> {
     #[inline]
     fn default() -> Self {
-        GatesSystemArgs {
+        GateSystemArgs {
             gates: None,
         }
     }
 }
-pub struct GatesSystemBuilder<'a: 'b, 'b> {
+pub struct GateSystemBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> GatesSystemBuilder<'a, 'b> {
+impl<'a: 'b, 'b> GateSystemBuilder<'a, 'b> {
   #[inline]
   pub fn add_gates(&mut self, gates: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<Gate<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GatesSystem::VT_GATES, gates);
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateSystem::VT_GATES, gates);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GatesSystemBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateSystemBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    GatesSystemBuilder {
+    GateSystemBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GatesSystem<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GateSystem<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -1413,15 +1413,15 @@ impl<'a: 'b, 'b> GateAssertZeroBuilder<'a, 'b> {
   }
 }
 
-pub enum GateAdd2Offset {}
+pub enum GateAddOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct GateAdd2<'a> {
+pub struct GateAdd<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GateAdd2<'a> {
-    type Inner = GateAdd2<'a>;
+impl<'a> flatbuffers::Follow<'a> for GateAdd<'a> {
+    type Inner = GateAdd<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1430,18 +1430,18 @@ impl<'a> flatbuffers::Follow<'a> for GateAdd2<'a> {
     }
 }
 
-impl<'a> GateAdd2<'a> {
+impl<'a> GateAdd<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        GateAdd2 {
+        GateAdd {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args GateAdd2Args<'args>) -> flatbuffers::WIPOffset<GateAdd2<'bldr>> {
-      let mut builder = GateAdd2Builder::new(_fbb);
+        args: &'args GateAddArgs<'args>) -> flatbuffers::WIPOffset<GateAdd<'bldr>> {
+      let mut builder = GateAddBuilder::new(_fbb);
       if let Some(x) = args.right { builder.add_right(x); }
       if let Some(x) = args.left { builder.add_left(x); }
       if let Some(x) = args.output { builder.add_output(x); }
@@ -1454,74 +1454,74 @@ impl<'a> GateAdd2<'a> {
 
   #[inline]
   pub fn output(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateAdd2::VT_OUTPUT, None)
+    self._tab.get::<Wire>(GateAdd::VT_OUTPUT, None)
   }
   #[inline]
   pub fn left(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateAdd2::VT_LEFT, None)
+    self._tab.get::<Wire>(GateAdd::VT_LEFT, None)
   }
   #[inline]
   pub fn right(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateAdd2::VT_RIGHT, None)
+    self._tab.get::<Wire>(GateAdd::VT_RIGHT, None)
   }
 }
 
-pub struct GateAdd2Args<'a> {
+pub struct GateAddArgs<'a> {
     pub output: Option<&'a  Wire>,
     pub left: Option<&'a  Wire>,
     pub right: Option<&'a  Wire>,
 }
-impl<'a> Default for GateAdd2Args<'a> {
+impl<'a> Default for GateAddArgs<'a> {
     #[inline]
     fn default() -> Self {
-        GateAdd2Args {
+        GateAddArgs {
             output: None,
             left: None,
             right: None,
         }
     }
 }
-pub struct GateAdd2Builder<'a: 'b, 'b> {
+pub struct GateAddBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> GateAdd2Builder<'a, 'b> {
+impl<'a: 'b, 'b> GateAddBuilder<'a, 'b> {
   #[inline]
   pub fn add_output(&mut self, output: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_OUTPUT, output);
+    self.fbb_.push_slot_always::<&Wire>(GateAdd::VT_OUTPUT, output);
   }
   #[inline]
   pub fn add_left(&mut self, left: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_LEFT, left);
+    self.fbb_.push_slot_always::<&Wire>(GateAdd::VT_LEFT, left);
   }
   #[inline]
   pub fn add_right(&mut self, right: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_RIGHT, right);
+    self.fbb_.push_slot_always::<&Wire>(GateAdd::VT_RIGHT, right);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateAdd2Builder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateAddBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    GateAdd2Builder {
+    GateAddBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GateAdd2<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GateAdd<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-pub enum GateMul2Offset {}
+pub enum GateMulOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct GateMul2<'a> {
+pub struct GateMul<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for GateMul2<'a> {
-    type Inner = GateMul2<'a>;
+impl<'a> flatbuffers::Follow<'a> for GateMul<'a> {
+    type Inner = GateMul<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -1530,18 +1530,18 @@ impl<'a> flatbuffers::Follow<'a> for GateMul2<'a> {
     }
 }
 
-impl<'a> GateMul2<'a> {
+impl<'a> GateMul<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        GateMul2 {
+        GateMul {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args GateMul2Args<'args>) -> flatbuffers::WIPOffset<GateMul2<'bldr>> {
-      let mut builder = GateMul2Builder::new(_fbb);
+        args: &'args GateMulArgs<'args>) -> flatbuffers::WIPOffset<GateMul<'bldr>> {
+      let mut builder = GateMulBuilder::new(_fbb);
       if let Some(x) = args.right { builder.add_right(x); }
       if let Some(x) = args.left { builder.add_left(x); }
       if let Some(x) = args.output { builder.add_output(x); }
@@ -1554,60 +1554,60 @@ impl<'a> GateMul2<'a> {
 
   #[inline]
   pub fn output(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateMul2::VT_OUTPUT, None)
+    self._tab.get::<Wire>(GateMul::VT_OUTPUT, None)
   }
   #[inline]
   pub fn left(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateMul2::VT_LEFT, None)
+    self._tab.get::<Wire>(GateMul::VT_LEFT, None)
   }
   #[inline]
   pub fn right(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateMul2::VT_RIGHT, None)
+    self._tab.get::<Wire>(GateMul::VT_RIGHT, None)
   }
 }
 
-pub struct GateMul2Args<'a> {
+pub struct GateMulArgs<'a> {
     pub output: Option<&'a  Wire>,
     pub left: Option<&'a  Wire>,
     pub right: Option<&'a  Wire>,
 }
-impl<'a> Default for GateMul2Args<'a> {
+impl<'a> Default for GateMulArgs<'a> {
     #[inline]
     fn default() -> Self {
-        GateMul2Args {
+        GateMulArgs {
             output: None,
             left: None,
             right: None,
         }
     }
 }
-pub struct GateMul2Builder<'a: 'b, 'b> {
+pub struct GateMulBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> GateMul2Builder<'a, 'b> {
+impl<'a: 'b, 'b> GateMulBuilder<'a, 'b> {
   #[inline]
   pub fn add_output(&mut self, output: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_OUTPUT, output);
+    self.fbb_.push_slot_always::<&Wire>(GateMul::VT_OUTPUT, output);
   }
   #[inline]
   pub fn add_left(&mut self, left: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_LEFT, left);
+    self.fbb_.push_slot_always::<&Wire>(GateMul::VT_LEFT, left);
   }
   #[inline]
   pub fn add_right(&mut self, right: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_RIGHT, right);
+    self.fbb_.push_slot_always::<&Wire>(GateMul::VT_RIGHT, right);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateMul2Builder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateMulBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    GateMul2Builder {
+    GateMulBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<GateMul2<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<GateMul<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -1812,9 +1812,9 @@ impl<'a> Gate<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn gate_as_gate_add_2(&self) -> Option<GateAdd2<'a>> {
-    if self.gate_type() == GateSet::GateAdd2 {
-      self.gate().map(|u| GateAdd2::init_from_table(u))
+  pub fn gate_as_gate_add(&self) -> Option<GateAdd<'a>> {
+    if self.gate_type() == GateSet::GateAdd {
+      self.gate().map(|u| GateAdd::init_from_table(u))
     } else {
       None
     }
@@ -1822,9 +1822,9 @@ impl<'a> Gate<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn gate_as_gate_mul_2(&self) -> Option<GateMul2<'a>> {
-    if self.gate_type() == GateSet::GateMul2 {
-      self.gate().map(|u| GateMul2::init_from_table(u))
+  pub fn gate_as_gate_mul(&self) -> Option<GateMul<'a>> {
+    if self.gate_type() == GateSet::GateMul {
+      self.gate().map(|u| GateMul::init_from_table(u))
     } else {
       None
     }
@@ -1970,9 +1970,9 @@ impl<'a> Root<'a> {
 
   #[inline]
   #[allow(non_snake_case)]
-  pub fn message_as_gates_system(&self) -> Option<GatesSystem<'a>> {
-    if self.message_type() == Message::GatesSystem {
-      self.message().map(|u| GatesSystem::init_from_table(u))
+  pub fn message_as_gate_system(&self) -> Option<GateSystem<'a>> {
+    if self.message_type() == Message::GateSystem {
+      self.message().map(|u| GateSystem::init_from_table(u))
     } else {
       None
     }

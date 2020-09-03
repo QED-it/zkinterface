@@ -108,7 +108,7 @@ impl fmt::Debug for Messages {
                 CircuitHeader => has_header = true,
                 Witness => has_witness = true,
                 ConstraintSystem => has_constraints = true,
-                GatesSystem => {}
+                GateSystem => {}
                 Command => {}
                 NONE => {}
             }

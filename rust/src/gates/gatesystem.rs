@@ -2,19 +2,29 @@ use std::io::Write;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::Result;
-use crate::zkinterface_generated::zkinterface::{GatesSystem, GatesSystemArgs, Message, Root, RootArgs};
+use crate::zkinterface_generated::zkinterface::{GateSystem, GateSystemArgs, Message, Root, RootArgs};
 use super::gates::GateOwned;
+use std::fmt;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct GatesSystemOwned {
+pub struct GateSystemOwned {
     pub gates: Vec<GateOwned>,
 }
 
-impl<'a> From<GatesSystem<'a>> for GatesSystemOwned {
+impl fmt::Display for GateSystemOwned {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for gate in &self.gates {
+            f.write_fmt(format_args!("{}\n", gate))?;
+        }
+        Ok(())
+    }
+}
+
+impl<'a> From<GateSystem<'a>> for GateSystemOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(system_ref: GatesSystem) -> GatesSystemOwned {
-        let mut owned = GatesSystemOwned {
+    fn from(system_ref: GateSystem) -> GateSystemOwned {
+        let mut owned = GateSystemOwned {
             gates: vec![],
         };
 
@@ -28,7 +38,7 @@ impl<'a> From<GatesSystem<'a>> for GatesSystemOwned {
     }
 }
 
-impl GatesSystemOwned {
+impl GateSystemOwned {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -41,12 +51,12 @@ impl GatesSystemOwned {
             ).collect();
 
         let gates = builder.create_vector(&gates);
-        let gates_system = GatesSystem::create(builder, &GatesSystemArgs {
+        let gates_system = GateSystem::create(builder, &GateSystemArgs {
             gates: Some(gates)
         });
 
         Root::create(builder, &RootArgs {
-            message_type: Message::GatesSystem,
+            message_type: Message::GateSystem,
             message: Some(gates_system.as_union_value()),
         })
     }
@@ -56,7 +66,7 @@ impl GatesSystemOwned {
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let gate_system = zkinterface::GatesSystemOwned { gates: vec![] };
+    /// let gate_system = zkinterface::GateSystemOwned { gates: vec![] };
     /// gate_system.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```

@@ -1,6 +1,7 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd2, GateMul2, GateAssertZeroArgs, GateAdd2Args, GateMul2Args, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
+use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
+use std::fmt;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -9,8 +10,34 @@ pub enum GateOwned {
     InstanceVar(u64),
     Witness(u64),
     AssertZero(u64),
-    Add2(u64, u64, u64),
-    Mul2(u64, u64, u64),
+    Add(u64, u64, u64),
+    Mul(u64, u64, u64),
+}
+
+use GateOwned::*;
+
+impl fmt::Display for GateOwned {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Constant(output, constant) =>
+                f.write_fmt(format_args!("wire_{:?} = #constant 0x{}", output, hex::encode(constant))),
+
+            InstanceVar(output) =>
+                f.write_fmt(format_args!("wire_{:?} = #instance", output)),
+
+            Witness(output) =>
+                f.write_fmt(format_args!("wire_{:?} = #witness", output)),
+
+            AssertZero(input) =>
+                f.write_fmt(format_args!("#assert wire_{:?} == 0", input)),
+
+            Add(output, left, right) =>
+                f.write_fmt(format_args!("wire_{:?} = wire_{:?} + wire_{:?}", output, left, right)),
+
+            Mul(output, left, right) =>
+                f.write_fmt(format_args!("wire_{:?} = wire_{:?} * wire_{:?}", output, left, right)),
+        }
+    }
 }
 
 impl<'a> From<Gate<'a>> for GateOwned {
@@ -42,17 +69,17 @@ impl<'a> From<Gate<'a>> for GateOwned {
                     gate.input().unwrap().id())
             }
 
-            GateSet::GateAdd2 => {
-                let gate = gate_ref.gate_as_gate_add_2().unwrap();
-                GateOwned::Add2(
+            GateSet::GateAdd => {
+                let gate = gate_ref.gate_as_gate_add().unwrap();
+                GateOwned::Add(
                     gate.output().unwrap().id(),
                     gate.left().unwrap().id(),
                     gate.right().unwrap().id())
             }
 
-            GateSet::GateMul2 => {
-                let gate = gate_ref.gate_as_gate_mul_2().unwrap();
-                GateOwned::Mul2(
+            GateSet::GateMul => {
+                let gate = gate_ref.gate_as_gate_mul().unwrap();
+                GateOwned::Mul(
                     gate.output().unwrap().id(),
                     gate.left().unwrap().id(),
                     gate.right().unwrap().id())
@@ -113,26 +140,26 @@ impl GateOwned {
                 })
             }
 
-            GateOwned::Add2(output, left, right) => {
-                let gate = GateAdd2::create(builder, &GateAdd2Args {
+            GateOwned::Add(output, left, right) => {
+                let gate = GateAdd::create(builder, &GateAddArgs {
                     output: Some(&Wire::new(*output)),
                     left: Some(&Wire::new(*left)),
                     right: Some(&Wire::new(*right)),
                 });
                 Gate::create(builder, &GateArgs {
-                    gate_type: GateSet::GateAdd2,
+                    gate_type: GateSet::GateAdd,
                     gate: Some(gate.as_union_value()),
                 })
             }
 
-            GateOwned::Mul2(output, left, right) => {
-                let gate = GateMul2::create(builder, &GateMul2Args {
+            GateOwned::Mul(output, left, right) => {
+                let gate = GateMul::create(builder, &GateMulArgs {
                     output: Some(&Wire::new(*output)),
                     left: Some(&Wire::new(*left)),
                     right: Some(&Wire::new(*right)),
                 });
                 Gate::create(builder, &GateArgs {
-                    gate_type: GateSet::GateMul2,
+                    gate_type: GateSet::GateMul,
                     gate: Some(gate.as_union_value()),
                 })
             }
