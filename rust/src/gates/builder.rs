@@ -1,4 +1,5 @@
 use crate::{GateOwned, GateSystemOwned};
+use std::collections::HashMap;
 
 pub trait IBuilder {
     fn alloc(&mut self) -> u64;
@@ -16,8 +17,8 @@ pub trait IBuilder {
 
 #[derive(Default)]
 pub struct Builder {
-    free_id: u64,
     pub gate_system: GateSystemOwned,
+    free_id: u64,
 }
 
 impl IBuilder for Builder {
@@ -33,5 +34,40 @@ impl IBuilder for Builder {
 
     fn push_gate(&mut self, gate: GateOwned) {
         self.gate_system.gates.push(gate);
+    }
+}
+
+#[derive(Default)]
+pub struct CachingBuilder {
+    pub builder: Builder,
+    cache: HashMap<GateOwned, u64>,
+}
+
+impl IBuilder for CachingBuilder {
+    fn alloc(&mut self) -> u64 {
+        self.builder.alloc()
+    }
+
+    fn free_id(&self) -> u64 {
+        self.builder.free_id()
+    }
+
+    fn push_gate(&mut self, allocated_gate: GateOwned) {
+        self.builder.push_gate(allocated_gate)
+    }
+
+    fn gate(&mut self, gate: GateOwned) -> u64 {
+        if gate.cacheable() {
+            match self.cache.get(&gate) {
+                Some(cached) => *cached,
+                None => {
+                    let id = self.builder.gate(gate.clone());
+                    self.cache.insert(gate, id);
+                    id
+                }
+            }
+        } else {
+            self.builder.gate(gate)
+        }
     }
 }

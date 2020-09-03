@@ -2,14 +2,14 @@ use crate::{ConstraintSystemOwned, GateSystemOwned, GateOwned, CircuitHeaderOwne
 use GateOwned::*;
 use crate::reading::Variable;
 use super::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
-use super::builder::{IBuilder, Builder};
+use super::builder::{IBuilder, CachingBuilder};
 
 
 pub fn r1cs_to_gates(
     header: &CircuitHeaderOwned,
     r1cs: &ConstraintSystemOwned,
 ) -> (CircuitHeaderOwned, GateSystemOwned) {
-    let mut bb = Builder::default();
+    let mut bb = CachingBuilder::default();
     let b = &mut bb;
 
     // Allocate the constant one of R1CS.
@@ -51,7 +51,7 @@ pub fn r1cs_to_gates(
         profile_name: Some(ARITHMETIC_CIRCUIT.to_string()),
     };
 
-    (header, bb.gate_system)
+    (header, bb.builder.gate_system)
 }
 
 

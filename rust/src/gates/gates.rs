@@ -4,7 +4,7 @@ use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateCon
 use std::fmt;
 
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub enum GateOwned {
     Constant(u64, Vec<u8>),
     InstanceVar(u64),
@@ -110,6 +110,12 @@ impl GateOwned {
             AssertZero(_) => self,
             Add(_, l, r) => Add(o, l, r),
             Mul(_, l, r) => Mul(o, l, r),
+        }
+    }
+    pub fn cacheable(&self) -> bool {
+        match *self {
+            InstanceVar(_) | Witness(_) => false,
+            Constant(_, _) | AssertZero(_) | Add(_, _, _) | Mul(_, _, _) => true,
         }
     }
 
