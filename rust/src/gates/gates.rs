@@ -1,12 +1,12 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd2, GateMul2, GateAssertZeroArgs, GateAdd2Args, GateMul2Args, GateParameter, GateParameterArgs, GateWitness, GateWitnessArgs};
+use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd2, GateMul2, GateAssertZeroArgs, GateAdd2Args, GateMul2Args, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum GateOwned {
     Constant(Vec<u8>, u64),
-    Parameter(u64),
+    InstanceVar(u64),
     Witness(u64),
     AssertZero(u64),
     Add2(u64, u64, u64),
@@ -24,9 +24,9 @@ impl<'a> From<Gate<'a>> for GateOwned {
                     gate.output().unwrap().id())
             }
 
-            GateSet::GateParameter => {
-                let gate = gate_ref.gate_as_gate_parameter().unwrap();
-                GateOwned::Parameter(
+            GateSet::GateInstanceVar => {
+                let gate = gate_ref.gate_as_gate_instance_var().unwrap();
+                GateOwned::InstanceVar(
                     gate.output().unwrap().id())
             }
 
@@ -83,12 +83,12 @@ impl GateOwned {
                 })
             }
 
-            GateOwned::Parameter(output) => {
-                let gate = GateParameter::create(builder, &GateParameterArgs {
+            GateOwned::InstanceVar(output) => {
+                let gate = GateInstanceVar::create(builder, &GateInstanceVarArgs {
                     output: Some(&Wire::new(*output)),
                 });
                 Gate::create(builder, &GateArgs {
-                    gate_type: GateSet::GateParameter,
+                    gate_type: GateSet::GateInstanceVar,
                     gate: Some(gate.as_union_value()),
                 })
             }

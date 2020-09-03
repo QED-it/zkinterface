@@ -11,7 +11,7 @@ pub fn write_example_gate_system(writer: &mut impl Write) -> Result<()> {
     let sys = GatesSystemOwned {
         gates: vec![
             Constant(vec![11], 1),
-            Parameter(2),
+            InstanceVar(2),
             Witness(3),
             Mul2(1, 2, 4),
             Add2(3, 4, 5),
@@ -38,7 +38,7 @@ fn test_gate_system() -> Result<()> {
             Constant(constant, out_id) =>
                 eprintln!("wire_{:?} = {:?}", out_id, constant),
 
-            Parameter(output) =>
+            InstanceVar(output) =>
                 eprintln!("parameter wire_{:?}", output),
 
             Witness(output) =>

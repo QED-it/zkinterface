@@ -183,7 +183,7 @@ table GateConstant {
 
 /// A parameter to the circuit shared by provers and verifiers.
 /// Its value must be provided in the `connections` of a `Circuit` message.
-table GateParameter {
+table GateInstanceVar {
     output      :Wire;
 }
 
@@ -220,7 +220,7 @@ table GateGeneric {
 
 union GateSet {
     GateConstant,
-    GateParameter,
+    GateInstanceVar,
     GateWitness,
     GateAssertZero,
     GateAdd2,
