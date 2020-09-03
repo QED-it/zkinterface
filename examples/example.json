@@ -1,5 +1,5 @@
 {
-  "circuits": [
+  "circuit_headers": [
     {
       "connections": {
         "variable_ids": [

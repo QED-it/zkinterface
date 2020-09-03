@@ -4,8 +4,8 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{
-    Circuit,
-    CircuitArgs,
+    CircuitHeader,
+    CircuitHeaderArgs,
     Message,
     Root,
     RootArgs,
@@ -16,7 +16,7 @@ use crate::Result;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct CircuitOwned {
+pub struct CircuitHeaderOwned {
     pub connections: VariablesOwned,
 
     pub free_variable_id: u64,
@@ -26,24 +26,24 @@ pub struct CircuitOwned {
     pub configuration: Option<Vec<KeyValueOwned>>,
 }
 
-impl<'a> From<Circuit<'a>> for CircuitOwned {
+impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(circuit_ref: Circuit) -> CircuitOwned {
-        CircuitOwned {
-            connections: VariablesOwned::from(circuit_ref.connections().unwrap()),
-            free_variable_id: circuit_ref.free_variable_id(),
-            field_maximum: circuit_ref.field_maximum().map(Vec::from),
-            configuration: KeyValueOwned::from_vector(circuit_ref.configuration()),
+    fn from(header_ref: CircuitHeader) -> CircuitHeaderOwned {
+        CircuitHeaderOwned {
+            connections: VariablesOwned::from(header_ref.connections().unwrap()),
+            free_variable_id: header_ref.free_variable_id(),
+            field_maximum: header_ref.field_maximum().map(Vec::from),
+            configuration: KeyValueOwned::from_vector(header_ref.configuration()),
         }
     }
 }
 
-impl CircuitOwned {
-    pub fn simple_inputs(num_inputs: u64) -> CircuitOwned {
+impl CircuitHeaderOwned {
+    pub fn simple_inputs(num_inputs: u64) -> CircuitHeaderOwned {
         let first_input_id = 1;
         let first_local_id = first_input_id + num_inputs;
 
-        CircuitOwned {
+        CircuitHeaderOwned {
             connections: VariablesOwned {
                 variable_ids: (first_input_id..first_local_id).collect(),
                 values: None,
@@ -54,12 +54,12 @@ impl CircuitOwned {
         }
     }
 
-    pub fn simple_outputs(num_inputs: u64, num_outputs: u64, num_locals: u64) -> CircuitOwned {
+    pub fn simple_outputs(num_inputs: u64, num_outputs: u64, num_locals: u64) -> CircuitHeaderOwned {
         let first_input_id = 1;
         let first_output_id = first_input_id + num_inputs;
         let first_local_id = first_output_id + num_outputs;
 
-        CircuitOwned {
+        CircuitHeaderOwned {
             connections: VariablesOwned {
                 variable_ids: (first_output_id..first_local_id).collect(),
                 values: None,
@@ -84,7 +84,7 @@ impl CircuitOwned {
         let configuration = self.configuration.as_ref().map(|conf|
             KeyValueOwned::build_vector(conf, builder));
 
-        let call = Circuit::create(builder, &CircuitArgs {
+        let header = CircuitHeader::create(builder, &CircuitHeaderArgs {
             connections,
             free_variable_id: self.free_variable_id,
             field_maximum,
@@ -93,18 +93,18 @@ impl CircuitOwned {
         });
 
         Root::create(builder, &RootArgs {
-            message_type: Message::Circuit,
-            message: Some(call.as_union_value()),
+            message_type: Message::CircuitHeader,
+            message: Some(header.as_union_value()),
         })
     }
 
-    /// Writes this circuit as a Flatbuffers message into the provided buffer.
+    /// Writes this circuit header as a Flatbuffers message into the provided buffer.
     ///
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let circuit = zkinterface::CircuitOwned::default();
-    /// circuit.write_into(&mut buf).unwrap();
+    /// let header = zkinterface::CircuitHeaderOwned::default();
+    /// header.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```
     pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
@@ -117,8 +117,8 @@ impl CircuitOwned {
 }
 
 #[test]
-fn test_circuit_owned() {
-    let circuit = CircuitOwned {
+fn test_circuit_header_owned() {
+    let header = CircuitHeaderOwned {
         connections: VariablesOwned {
             variable_ids: (1..3).collect(),
             values: Some(vec![6, 7]),
@@ -142,12 +142,12 @@ fn test_circuit_owned() {
     };
 
     let mut buffer = vec![];
-    circuit.write_into(&mut buffer).unwrap();
+    header.write_into(&mut buffer).unwrap();
 
     let mut messages = crate::reading::Messages::new();
     messages.push_message(buffer).unwrap();
-    let circuit_ref = messages.first_circuit().unwrap();
+    let header_ref = messages.first_header().unwrap();
 
-    let circuit2 = CircuitOwned::from(circuit_ref);
-    assert_eq!(circuit2, circuit);
+    let header2 = CircuitHeaderOwned::from(header_ref);
+    assert_eq!(header2, header);
 }

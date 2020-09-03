@@ -3,12 +3,12 @@ use std::fs::{File, create_dir_all};
 use std::path::{Path, PathBuf};
 
 use crate::Result;
-use crate::{CircuitOwned, ConstraintSystemOwned, WitnessOwned};
+use crate::{CircuitHeaderOwned, ConstraintSystemOwned, WitnessOwned};
 
 pub trait GadgetCallbacks {
     fn receive_constraints(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
     fn receive_witness(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
-    fn receive_response(&mut self, _request: &CircuitOwned, _response: &CircuitOwned) -> Result<()> { Ok(()) }
+    fn receive_response(&mut self, _request: &CircuitHeaderOwned, _response: &CircuitHeaderOwned) -> Result<()> { Ok(()) }
 }
 
 impl GadgetCallbacks for () {}
@@ -39,7 +39,7 @@ impl<S: Store> GadgetCallbacks for StatementBuilder<S> {
         self.store.receive_witness(msg)
     }
 
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+    fn receive_response(&mut self, request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
         self.vars.receive_response(request, response)?;
         self.store.receive_response(request, response)
     }
@@ -67,7 +67,7 @@ impl VariableManager {
 }
 
 impl GadgetCallbacks for VariableManager {
-    fn receive_response(&mut self, _request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+    fn receive_response(&mut self, _request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
         if self.free_variable_id > response.free_variable_id {
             return Err("free_variable_id returned from the gadget must be higher than the current one.".into());
         }
@@ -78,7 +78,7 @@ impl GadgetCallbacks for VariableManager {
 
 
 pub trait Store: GadgetCallbacks {
-    fn push_main(&mut self, statement: &CircuitOwned) -> Result<()>;
+    fn push_main(&mut self, statement: &CircuitHeaderOwned) -> Result<()>;
     fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()>;
     fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()>;
 }
@@ -111,7 +111,7 @@ impl FileStore {
 }
 
 impl Store for FileStore {
-    fn push_main(&mut self, statement: &CircuitOwned) -> Result<()> {
+    fn push_main(&mut self, statement: &CircuitHeaderOwned) -> Result<()> {
         statement.write_into(&mut File::create(&self.main_path)?)
     }
 
@@ -141,7 +141,7 @@ impl GadgetCallbacks for FileStore {
         Ok(())
     }
 
-    fn receive_response(&mut self, request: &CircuitOwned, response: &CircuitOwned) -> Result<()> {
+    fn receive_response(&mut self, request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
         if let Some(ref mut file) = self.gadgets_file {
             request.write_into(file)?;
             response.write_into(file)?;

@@ -13,7 +13,7 @@ pub mod examples;
 
 pub use reading::Messages;
 pub use owned::{
-    circuit::CircuitOwned,
+    header::CircuitHeaderOwned,
     command::CommandOwned,
     constraints::ConstraintSystemOwned,
     keyvalue::KeyValueOwned,
