@@ -10,11 +10,11 @@ use crate::Result;
 pub fn write_example_gate_system(writer: &mut impl Write) -> Result<()> {
     let sys = GatesSystemOwned {
         gates: vec![
-            Constant(vec![11], 1),
+            Constant(1, vec![11]),
             InstanceVar(2),
             Witness(3),
-            Mul2(1, 2, 4),
-            Add2(3, 4, 5),
+            Mul2(4, 1, 2),
+            Add2(5, 3, 4),
             AssertZero(5),
         ]
     };
@@ -35,22 +35,22 @@ fn test_gate_system() -> Result<()> {
 
     for gate in &owned.gates {
         match gate {
-            Constant(constant, out_id) =>
-                eprintln!("wire_{:?} = {:?}", out_id, constant),
+            Constant(output, constant) =>
+                eprintln!("wire_{:?} = {:?}", output, constant),
 
             InstanceVar(output) =>
-                eprintln!("parameter wire_{:?}", output),
+                eprintln!("wire_{:?} = new instance", output),
 
             Witness(output) =>
-                eprintln!("witness wire_{:?}", output),
+                eprintln!("wire_{:?} = new witness", output),
 
-            AssertZero(in_id) =>
-                eprintln!("assert wire_{:?} == 0", in_id),
+            AssertZero(input) =>
+                eprintln!("assert wire_{:?} == 0", input),
 
-            Add2(left, right, output) =>
+            Add2(output, left, right) =>
                 eprintln!("wire_{:?} = wire_{:?} + wire_{:?}", output, left, right),
 
-            Mul2(left, right, output) =>
+            Mul2(output, left, right) =>
                 eprintln!("wire_{:?} = wire_{:?} * wire_{:?}", output, left, right),
         }
     }

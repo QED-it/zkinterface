@@ -5,7 +5,7 @@ use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateCon
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum GateOwned {
-    Constant(Vec<u8>, u64),
+    Constant(u64, Vec<u8>),
     InstanceVar(u64),
     Witness(u64),
     AssertZero(u64),
@@ -20,8 +20,8 @@ impl<'a> From<Gate<'a>> for GateOwned {
             GateSet::GateConstant => {
                 let gate = gate_ref.gate_as_gate_constant().unwrap();
                 GateOwned::Constant(
-                    Vec::from(gate.constant().unwrap()),
-                    gate.output().unwrap().id())
+                    gate.output().unwrap().id(),
+                    Vec::from(gate.constant().unwrap()))
             }
 
             GateSet::GateInstanceVar => {
@@ -45,17 +45,17 @@ impl<'a> From<Gate<'a>> for GateOwned {
             GateSet::GateAdd2 => {
                 let gate = gate_ref.gate_as_gate_add_2().unwrap();
                 GateOwned::Add2(
+                    gate.output().unwrap().id(),
                     gate.left().unwrap().id(),
-                    gate.right().unwrap().id(),
-                    gate.output().unwrap().id())
+                    gate.right().unwrap().id())
             }
 
             GateSet::GateMul2 => {
                 let gate = gate_ref.gate_as_gate_mul_2().unwrap();
                 GateOwned::Mul2(
+                    gate.output().unwrap().id(),
                     gate.left().unwrap().id(),
-                    gate.right().unwrap().id(),
-                    gate.output().unwrap().id())
+                    gate.right().unwrap().id())
             }
 
             _ => unimplemented!()
@@ -71,11 +71,11 @@ impl GateOwned {
     ) -> WIPOffset<Gate<'bldr>>
     {
         match self {
-            GateOwned::Constant(constant, out_id) => {
+            GateOwned::Constant(output, constant) => {
                 let cons = builder.create_vector(constant);
                 let gate = GateConstant::create(builder, &GateConstantArgs {
+                    output: Some(&Wire::new(*output)),
                     constant: Some(cons),
-                    output: Some(&Wire::new(*out_id)),
                 });
                 Gate::create(builder, &GateArgs {
                     gate_type: GateSet::GateConstant,
@@ -113,11 +113,11 @@ impl GateOwned {
                 })
             }
 
-            GateOwned::Add2(left, right, output) => {
+            GateOwned::Add2(output, left, right) => {
                 let gate = GateAdd2::create(builder, &GateAdd2Args {
+                    output: Some(&Wire::new(*output)),
                     left: Some(&Wire::new(*left)),
                     right: Some(&Wire::new(*right)),
-                    output: Some(&Wire::new(*output)),
                 });
                 Gate::create(builder, &GateArgs {
                     gate_type: GateSet::GateAdd2,
@@ -125,11 +125,11 @@ impl GateOwned {
                 })
             }
 
-            GateOwned::Mul2(left, right, output) => {
+            GateOwned::Mul2(output, left, right) => {
                 let gate = GateMul2::create(builder, &GateMul2Args {
+                    output: Some(&Wire::new(*output)),
                     left: Some(&Wire::new(*left)),
                     right: Some(&Wire::new(*right)),
-                    output: Some(&Wire::new(*output)),
                 });
                 Gate::create(builder, &GateArgs {
                     gate_type: GateSet::GateMul2,

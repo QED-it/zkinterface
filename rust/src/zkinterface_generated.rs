@@ -1122,34 +1122,34 @@ impl<'a> GateConstant<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args GateConstantArgs<'args>) -> flatbuffers::WIPOffset<GateConstant<'bldr>> {
       let mut builder = GateConstantBuilder::new(_fbb);
-      if let Some(x) = args.output { builder.add_output(x); }
       if let Some(x) = args.constant { builder.add_constant(x); }
+      if let Some(x) = args.output { builder.add_output(x); }
       builder.finish()
     }
 
-    pub const VT_CONSTANT: flatbuffers::VOffsetT = 4;
-    pub const VT_OUTPUT: flatbuffers::VOffsetT = 6;
+    pub const VT_OUTPUT: flatbuffers::VOffsetT = 4;
+    pub const VT_CONSTANT: flatbuffers::VOffsetT = 6;
 
-  #[inline]
-  pub fn constant(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(GateConstant::VT_CONSTANT, None).map(|v| v.safe_slice())
-  }
   #[inline]
   pub fn output(&self) -> Option<&'a Wire> {
     self._tab.get::<Wire>(GateConstant::VT_OUTPUT, None)
   }
+  #[inline]
+  pub fn constant(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(GateConstant::VT_CONSTANT, None).map(|v| v.safe_slice())
+  }
 }
 
 pub struct GateConstantArgs<'a> {
-    pub constant: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub output: Option<&'a  Wire>,
+    pub constant: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
 }
 impl<'a> Default for GateConstantArgs<'a> {
     #[inline]
     fn default() -> Self {
         GateConstantArgs {
-            constant: None,
             output: None,
+            constant: None,
         }
     }
 }
@@ -1159,12 +1159,12 @@ pub struct GateConstantBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GateConstantBuilder<'a, 'b> {
   #[inline]
-  pub fn add_constant(&mut self, constant: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateConstant::VT_CONSTANT, constant);
-  }
-  #[inline]
   pub fn add_output(&mut self, output: &'b  Wire) {
     self.fbb_.push_slot_always::<&Wire>(GateConstant::VT_OUTPUT, output);
+  }
+  #[inline]
+  pub fn add_constant(&mut self, constant: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateConstant::VT_CONSTANT, constant);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateConstantBuilder<'a, 'b> {
@@ -1442,16 +1442,20 @@ impl<'a> GateAdd2<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args GateAdd2Args<'args>) -> flatbuffers::WIPOffset<GateAdd2<'bldr>> {
       let mut builder = GateAdd2Builder::new(_fbb);
-      if let Some(x) = args.output { builder.add_output(x); }
       if let Some(x) = args.right { builder.add_right(x); }
       if let Some(x) = args.left { builder.add_left(x); }
+      if let Some(x) = args.output { builder.add_output(x); }
       builder.finish()
     }
 
-    pub const VT_LEFT: flatbuffers::VOffsetT = 4;
-    pub const VT_RIGHT: flatbuffers::VOffsetT = 6;
-    pub const VT_OUTPUT: flatbuffers::VOffsetT = 8;
+    pub const VT_OUTPUT: flatbuffers::VOffsetT = 4;
+    pub const VT_LEFT: flatbuffers::VOffsetT = 6;
+    pub const VT_RIGHT: flatbuffers::VOffsetT = 8;
 
+  #[inline]
+  pub fn output(&self) -> Option<&'a Wire> {
+    self._tab.get::<Wire>(GateAdd2::VT_OUTPUT, None)
+  }
   #[inline]
   pub fn left(&self) -> Option<&'a Wire> {
     self._tab.get::<Wire>(GateAdd2::VT_LEFT, None)
@@ -1460,24 +1464,20 @@ impl<'a> GateAdd2<'a> {
   pub fn right(&self) -> Option<&'a Wire> {
     self._tab.get::<Wire>(GateAdd2::VT_RIGHT, None)
   }
-  #[inline]
-  pub fn output(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateAdd2::VT_OUTPUT, None)
-  }
 }
 
 pub struct GateAdd2Args<'a> {
+    pub output: Option<&'a  Wire>,
     pub left: Option<&'a  Wire>,
     pub right: Option<&'a  Wire>,
-    pub output: Option<&'a  Wire>,
 }
 impl<'a> Default for GateAdd2Args<'a> {
     #[inline]
     fn default() -> Self {
         GateAdd2Args {
+            output: None,
             left: None,
             right: None,
-            output: None,
         }
     }
 }
@@ -1487,16 +1487,16 @@ pub struct GateAdd2Builder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GateAdd2Builder<'a, 'b> {
   #[inline]
+  pub fn add_output(&mut self, output: &'b  Wire) {
+    self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_OUTPUT, output);
+  }
+  #[inline]
   pub fn add_left(&mut self, left: &'b  Wire) {
     self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_LEFT, left);
   }
   #[inline]
   pub fn add_right(&mut self, right: &'b  Wire) {
     self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_RIGHT, right);
-  }
-  #[inline]
-  pub fn add_output(&mut self, output: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateAdd2::VT_OUTPUT, output);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateAdd2Builder<'a, 'b> {
@@ -1542,16 +1542,20 @@ impl<'a> GateMul2<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args GateMul2Args<'args>) -> flatbuffers::WIPOffset<GateMul2<'bldr>> {
       let mut builder = GateMul2Builder::new(_fbb);
-      if let Some(x) = args.output { builder.add_output(x); }
       if let Some(x) = args.right { builder.add_right(x); }
       if let Some(x) = args.left { builder.add_left(x); }
+      if let Some(x) = args.output { builder.add_output(x); }
       builder.finish()
     }
 
-    pub const VT_LEFT: flatbuffers::VOffsetT = 4;
-    pub const VT_RIGHT: flatbuffers::VOffsetT = 6;
-    pub const VT_OUTPUT: flatbuffers::VOffsetT = 8;
+    pub const VT_OUTPUT: flatbuffers::VOffsetT = 4;
+    pub const VT_LEFT: flatbuffers::VOffsetT = 6;
+    pub const VT_RIGHT: flatbuffers::VOffsetT = 8;
 
+  #[inline]
+  pub fn output(&self) -> Option<&'a Wire> {
+    self._tab.get::<Wire>(GateMul2::VT_OUTPUT, None)
+  }
   #[inline]
   pub fn left(&self) -> Option<&'a Wire> {
     self._tab.get::<Wire>(GateMul2::VT_LEFT, None)
@@ -1560,24 +1564,20 @@ impl<'a> GateMul2<'a> {
   pub fn right(&self) -> Option<&'a Wire> {
     self._tab.get::<Wire>(GateMul2::VT_RIGHT, None)
   }
-  #[inline]
-  pub fn output(&self) -> Option<&'a Wire> {
-    self._tab.get::<Wire>(GateMul2::VT_OUTPUT, None)
-  }
 }
 
 pub struct GateMul2Args<'a> {
+    pub output: Option<&'a  Wire>,
     pub left: Option<&'a  Wire>,
     pub right: Option<&'a  Wire>,
-    pub output: Option<&'a  Wire>,
 }
 impl<'a> Default for GateMul2Args<'a> {
     #[inline]
     fn default() -> Self {
         GateMul2Args {
+            output: None,
             left: None,
             right: None,
-            output: None,
         }
     }
 }
@@ -1587,16 +1587,16 @@ pub struct GateMul2Builder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GateMul2Builder<'a, 'b> {
   #[inline]
+  pub fn add_output(&mut self, output: &'b  Wire) {
+    self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_OUTPUT, output);
+  }
+  #[inline]
   pub fn add_left(&mut self, left: &'b  Wire) {
     self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_LEFT, left);
   }
   #[inline]
   pub fn add_right(&mut self, right: &'b  Wire) {
     self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_RIGHT, right);
-  }
-  #[inline]
-  pub fn add_output(&mut self, output: &'b  Wire) {
-    self.fbb_.push_slot_always::<&Wire>(GateMul2::VT_OUTPUT, output);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> GateMul2Builder<'a, 'b> {
@@ -1644,23 +1644,23 @@ impl<'a> GateGeneric<'a> {
       let mut builder = GateGenericBuilder::new(_fbb);
       if let Some(x) = args.data { builder.add_data(x); }
       if let Some(x) = args.kind { builder.add_kind(x); }
-      if let Some(x) = args.outputs { builder.add_outputs(x); }
       if let Some(x) = args.inputs { builder.add_inputs(x); }
+      if let Some(x) = args.outputs { builder.add_outputs(x); }
       builder.finish()
     }
 
-    pub const VT_INPUTS: flatbuffers::VOffsetT = 4;
-    pub const VT_OUTPUTS: flatbuffers::VOffsetT = 6;
+    pub const VT_OUTPUTS: flatbuffers::VOffsetT = 4;
+    pub const VT_INPUTS: flatbuffers::VOffsetT = 6;
     pub const VT_KIND: flatbuffers::VOffsetT = 8;
     pub const VT_DATA: flatbuffers::VOffsetT = 10;
 
   #[inline]
-  pub fn inputs(&self) -> Option<&'a [Wire]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<Wire>>>(GateGeneric::VT_INPUTS, None).map(|v| v.safe_slice() )
-  }
-  #[inline]
   pub fn outputs(&self) -> Option<&'a [Wire]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<Wire>>>(GateGeneric::VT_OUTPUTS, None).map(|v| v.safe_slice() )
+  }
+  #[inline]
+  pub fn inputs(&self) -> Option<&'a [Wire]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<Wire>>>(GateGeneric::VT_INPUTS, None).map(|v| v.safe_slice() )
   }
   #[inline]
   pub fn kind(&self) -> Option<&'a str> {
@@ -1673,8 +1673,8 @@ impl<'a> GateGeneric<'a> {
 }
 
 pub struct GateGenericArgs<'a> {
-    pub inputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , Wire>>>,
     pub outputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , Wire>>>,
+    pub inputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , Wire>>>,
     pub kind: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
 }
@@ -1682,8 +1682,8 @@ impl<'a> Default for GateGenericArgs<'a> {
     #[inline]
     fn default() -> Self {
         GateGenericArgs {
-            inputs: None,
             outputs: None,
+            inputs: None,
             kind: None,
             data: None,
         }
@@ -1695,12 +1695,12 @@ pub struct GateGenericBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> GateGenericBuilder<'a, 'b> {
   #[inline]
-  pub fn add_inputs(&mut self, inputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , Wire>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateGeneric::VT_INPUTS, inputs);
-  }
-  #[inline]
   pub fn add_outputs(&mut self, outputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , Wire>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateGeneric::VT_OUTPUTS, outputs);
+  }
+  #[inline]
+  pub fn add_inputs(&mut self, inputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , Wire>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(GateGeneric::VT_INPUTS, inputs);
   }
   #[inline]
   pub fn add_kind(&mut self, kind: flatbuffers::WIPOffset<&'b  str>) {

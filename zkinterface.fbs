@@ -177,8 +177,8 @@ struct Wire {
 // ---- Circuit sources and sinks. ----
 
 table GateConstant {
-    constant    :[ubyte];
     output      :Wire;
+    constant    :[ubyte];
 }
 
 /// A parameter to the circuit shared by provers and verifiers.
@@ -200,20 +200,20 @@ table GateAssertZero {
 // ---- Computations gates ----
 
 table GateAdd2 {
+    output      :Wire;
     left        :Wire;
     right       :Wire;
-    output      :Wire;
 }
 
 table GateMul2 {
+    output      :Wire;
     left        :Wire;
     right       :Wire;
-    output      :Wire;
 }
 
 table GateGeneric {
-    inputs      :[Wire];
     outputs     :[Wire];
+    inputs      :[Wire];
     kind        :string;
     data        :[ubyte];
 }
