@@ -91,6 +91,28 @@ impl<'a> From<Gate<'a>> for GateOwned {
 }
 
 impl GateOwned {
+    pub fn get_output(&self) -> u64 {
+        match *self {
+            Constant(o, _) => o,
+            InstanceVar(o) => o,
+            Witness(o) => o,
+            AssertZero(_) => 0,
+            Add(o, _, _) => o,
+            Mul(o, _, _) => o,
+        }
+    }
+
+    pub fn with_output(self, o: u64) -> Self {
+        match self {
+            Constant(_, c) => Constant(o, c),
+            InstanceVar(_) => InstanceVar(o),
+            Witness(_) => Witness(o),
+            AssertZero(_) => self,
+            Add(_, l, r) => Add(o, l, r),
+            Mul(_, l, r) => Mul(o, l, r),
+        }
+    }
+
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
