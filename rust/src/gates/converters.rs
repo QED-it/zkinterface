@@ -1,55 +1,57 @@
-use crate::{ConstraintSystemOwned, GateSystemOwned, GateOwned, VariablesOwned};
+use crate::{ConstraintSystemOwned, GateSystemOwned, GateOwned, CircuitHeaderOwned};
 use GateOwned::*;
 use crate::reading::Variable;
-
-pub trait IBuilder {
-    fn alloc(&mut self) -> u64;
-    fn push_gate(&mut self, allocated_gate: GateOwned);
-
-    fn gate(&mut self, non_allocated_gate: GateOwned) -> u64 {
-        assert_eq!(non_allocated_gate.get_output(), 0);
-        let new_id = self.alloc();
-        let allocated_gate = non_allocated_gate.with_output(new_id);
-        self.push_gate(allocated_gate);
-        new_id
-    }
-}
-
-#[derive(Default)]
-struct Builder {
-    free_id: u64,
-    gs: GateSystemOwned,
-}
-
-impl IBuilder for Builder {
-    fn alloc(&mut self) -> u64 {
-        let id = self.free_id;
-        self.free_id += 1;
-        id
-    }
-
-    fn push_gate(&mut self, gate: GateOwned) {
-        self.gs.gates.push(gate);
-    }
-}
+use super::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
+use super::builder::{IBuilder, Builder};
 
 
-pub fn r1cs_to_gates(r1cs: &ConstraintSystemOwned) -> GateSystemOwned {
+pub fn r1cs_to_gates(
+    header: &CircuitHeaderOwned,
+    r1cs: &ConstraintSystemOwned,
+) -> (CircuitHeaderOwned, GateSystemOwned) {
     let mut bb = Builder::default();
     let b = &mut bb;
 
+    // Allocate the constant one of R1CS.
+    let _one_id = b.gate(Constant(0, vec![1]));
+    assert_eq!(_one_id, 0);
+
+    // Allocate instance variables.
+    for i in &header.connections.variable_ids {
+        let j = b.gate(InstanceVar(0));
+        assert_eq!(*i, j, "Only consecutive instance variable IDs are supported.");
+    }
+
+    // Allocate witness variables.
+    for i in b.free_id()..header.free_variable_id {
+        let j = b.gate(Witness(0));
+        assert_eq!(i, j);
+    }
+
+    // Allocate negative one for negation.
+    let neg_one = b.gate(Constant(0, vec![255]));
+
+    // Convert each R1CS constraint into a graph of Add/Mul/AssertZero gates.
     for constraint in &r1cs.constraints {
         let sum_a = build_lc(b, &constraint.linear_combination_a.get_variables());
         let sum_b = build_lc(b, &constraint.linear_combination_b.get_variables());
         let sum_c = build_lc(b, &constraint.linear_combination_c.get_variables());
 
         let prod = b.gate(Mul(0, sum_a, sum_b));
-        //let sum_c = b.alloc_gate(Neg(0, sum_c));
-        let claim_zero = b.gate(Add(0, prod, sum_c));
+        let neg_c = b.gate(Mul(0, neg_one, sum_c));
+        let claim_zero = b.gate(Add(0, prod, neg_c));
         b.gate(AssertZero(claim_zero));
     }
 
-    bb.gs
+    let header = CircuitHeaderOwned {
+        connections: header.connections.clone(),
+        free_variable_id: b.free_id(),
+        field_maximum: header.field_maximum.clone(),
+        configuration: Some(config_for_profile_arithmetic()),
+        profile_name: Some(ARITHMETIC_CIRCUIT.to_string()),
+    };
+
+    (header, bb.gate_system)
 }
 
 
@@ -76,5 +78,5 @@ fn build_term(
     term: &Variable,
 ) -> u64 {
     let c = b.gate(Constant(0, term.value.to_vec()));
-    b.gate(Mul(0, term.id, c))
+    b.gate(Mul(0, c, term.id))
 }
