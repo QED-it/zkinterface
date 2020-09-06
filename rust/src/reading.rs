@@ -14,7 +14,7 @@ use crate::zkinterface_generated::zkinterface::{
     Root,
     Variables,
 };
-use crate::Result;
+use crate::{Result, GateSystemOwned};
 
 pub fn read_circuit_header(msg: &[u8]) -> Result<CircuitHeader> {
     get_size_prefixed_root_as_root(msg)
@@ -102,13 +102,14 @@ impl fmt::Debug for Messages {
         let mut has_header = false;
         let mut has_witness = false;
         let mut has_constraints = false;
+        let mut has_gates = false;
 
         for root in self.into_iter() {
             match root.message_type() {
                 CircuitHeader => has_header = true,
                 Witness => has_witness = true,
                 ConstraintSystem => has_constraints = true,
-                GateSystem => {}
+                GateSystem => has_gates = true,
                 Command => {}
                 NONE => {}
             }
@@ -142,6 +143,16 @@ impl fmt::Debug for Messages {
             write!(f, "\nZkInterface {:?}\n", ConstraintSystem)?;
             for constraint in self.iter_constraints() {
                 write!(f, "{:?}\n", constraint)?;
+            }
+        }
+
+        if has_gates {
+            write!(f, "\nZkInterface {:?}\n", GateSystem)?;
+            for root in self.into_iter() {
+                if root.message_type() == GateSystem {
+                    let gate_system = GateSystemOwned::from(root.message_as_gate_system().unwrap());
+                    write!(f, "{}\n", gate_system)?;
+                }
             }
         }
 

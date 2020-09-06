@@ -89,7 +89,7 @@ fn main() -> Result<()> {
         "cat" => main_cat(&options),
         "json" => main_json(&load_messages(&options)?),
         "pretty" => main_pretty(&load_messages(&options)?),
-        "explain" => main_explain(&load_messages(&options)?),
+        "explain" => main_explain(&load_messages(&options)?, &options),
         "stats" => main_stats(&load_messages(&options)?),
         "fake_prove" => main_fake_prove(&load_messages(&options)?),
         "fake_verify" => main_fake_verify(&load_messages(&options)?),
@@ -180,16 +180,17 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        example_circuit_header().write_into(
-            &mut File::create(out_dir.join("main.zkif"))?)?;
+        let path = out_dir.join("main.zkif");
+        example_circuit_header().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
 
-        example_constraints().write_into(&mut
-            File::create(out_dir.join("constraints.zkif"))?)?;
+        let path = out_dir.join("constraints.zkif");
+        example_constraints().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
 
-        example_witness().write_into(&mut
-            File::create(out_dir.join("witness.zkif"))?)?;
-
-        eprintln!("Written {}", out_dir.join("*.zkif").display());
+        let path = out_dir.join("witness.zkif");
+        example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
     }
     Ok(())
 }
@@ -209,16 +210,17 @@ fn example_ac(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        example_circuit_header().write_into(&mut
-            File::create(out_dir.join("main.zkif"))?)?;
+        let path = out_dir.join("main.zkif");
+        example_circuit_header().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
 
-        example_gate_system().write_into(&mut
-            File::create(out_dir.join("gates.zkif"))?)?;
+        let path = out_dir.join("gates.zkif");
+        example_gate_system().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
 
-        example_witness().write_into(&mut
-            File::create(out_dir.join("witness.zkif"))?)?;
-
-        eprintln!("Written {}", out_dir.join("*.zkif").display());
+        let path = out_dir.join("witness.zkif");
+        example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
     }
     Ok(())
 }
@@ -245,9 +247,19 @@ fn main_pretty(messages: &Messages) -> Result<()> {
     Ok(())
 }
 
-fn main_explain(messages: &Messages) -> Result<()> {
-    eprintln!("{:?}", messages);
-    Ok(())
+fn main_explain(messages: &Messages, opts: &Options) -> Result<()> {
+    match opts.profile.as_ref() {
+        "R1CS" => {
+            eprintln!("{:?}", messages);
+            Ok(())
+        }
+        "AC" => {
+            let owned = MessagesOwned::from(messages);
+            eprintln!("\n{}", owned);
+            Ok(())
+        }
+        _ => Err(format!("Unknown profile {}", opts.profile).into())
+    }
 }
 
 fn main_stats(messages: &Messages) -> Result<()> {
