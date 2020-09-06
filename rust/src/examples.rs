@@ -1,4 +1,4 @@
-use flatbuffers::{emplace_scalar, EndianScalar};
+use flatbuffers::{emplace_scalar, EndianScalar, read_scalar};
 use std::mem::size_of;
 
 use crate::{CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned, KeyValueOwned as KV, WitnessOwned};
@@ -50,6 +50,14 @@ pub fn example_witness_inputs(x: u32, y: u32) -> WitnessOwned {
     }
 }
 
+pub const MODULUS: u64 = 101;
+
+pub const NEG_ONE: u64 = MODULUS - 1;
+
+pub fn neg(val: u64) -> u64 {
+    MODULUS - (val % MODULUS)
+}
+
 pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
     let sz = size_of::<T>();
     let mut buf = vec![0u8; sz * values.len()];
@@ -57,6 +65,16 @@ pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
         emplace_scalar(&mut buf[sz * i..], values[i]);
     }
     buf
+}
+
+pub fn deserialize_small<T: EndianScalar>(encoded: &[u8]) -> T {
+    if encoded.len() == size_of::<T>() {
+        read_scalar(encoded)
+    } else {
+        let mut encoded = Vec::from(encoded);
+        encoded.resize(size_of::<T>(), 0);
+        read_scalar(&encoded)
+    }
 }
 
 
