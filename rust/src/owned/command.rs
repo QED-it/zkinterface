@@ -3,14 +3,10 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{
-    Command,
-    CommandArgs,
-    Message,
-    Root,
-    RootArgs,
-};
+use crate::zkinterface_generated::zkinterface::{Command, CommandArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use crate::Result;
+use std::convert::TryFrom;
+use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -27,6 +23,17 @@ impl<'a> From<Command<'a>> for CommandOwned {
             constraints_generation: command_ref.constraints_generation(),
             witness_generation: command_ref.witness_generation(),
         }
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for CommandOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_command()
+                .ok_or("Not a Command message.")?))
     }
 }
 

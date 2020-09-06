@@ -2,9 +2,11 @@ use std::io::Write;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::Result;
-use crate::zkinterface_generated::zkinterface::{GateSystem, GateSystemArgs, Message, Root, RootArgs};
+use crate::zkinterface_generated::zkinterface::{GateSystem, GateSystemArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use super::gates::GateOwned;
 use std::fmt;
+use serde::export::TryFrom;
+use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -35,6 +37,17 @@ impl<'a> From<GateSystem<'a>> for GateSystemOwned {
         }
 
         owned
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for GateSystemOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_gate_system()
+                .ok_or("Not a GateSystem message.")?))
     }
 }
 

@@ -1,15 +1,11 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{
-    Witness,
-    WitnessArgs,
-    Message,
-    Root,
-    RootArgs,
-};
+use crate::zkinterface_generated::zkinterface::{Witness, WitnessArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use super::variables::VariablesOwned;
 use crate::Result;
+use std::convert::TryFrom;
+use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -23,6 +19,17 @@ impl<'a> From<Witness<'a>> for WitnessOwned {
         WitnessOwned {
             assigned_variables: VariablesOwned::from(witness_ref.assigned_variables().unwrap()),
         }
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for WitnessOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_witness()
+                .ok_or("Not a Witness message.")?))
     }
 }
 

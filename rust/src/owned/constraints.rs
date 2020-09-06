@@ -2,7 +2,9 @@ use std::io::Write;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::{Result, VariablesOwned};
-use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs};
+use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
+use std::convert::TryFrom;
+use std::error::Error;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ConstraintSystemOwned {
@@ -34,6 +36,17 @@ impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
         }
 
         owned
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for ConstraintSystemOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_constraint_system()
+                .ok_or("Not a ConstraintSystem message.")?))
     }
 }
 

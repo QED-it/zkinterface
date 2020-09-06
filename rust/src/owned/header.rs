@@ -3,17 +3,13 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{
-    CircuitHeader,
-    CircuitHeaderArgs,
-    Message,
-    Root,
-    RootArgs,
-};
+use crate::zkinterface_generated::zkinterface::{CircuitHeader, CircuitHeaderArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use super::variables::VariablesOwned;
 use super::keyvalue::KeyValueOwned;
 use crate::Result;
 use std::fmt;
+use std::convert::TryFrom;
+use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -32,8 +28,6 @@ pub struct CircuitHeaderOwned {
 
 impl fmt::Display for CircuitHeaderOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        //self.connections.fmt(f)?;
-
         if self.connections.values.is_some() {
             for var in self.connections.get_variables() {
                 f.write_fmt(format_args!("#set_instance_var wire_{} 0x{}\n", var.id, hex::encode(var.value)))?;
@@ -73,7 +67,26 @@ impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for CircuitHeaderOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_circuit_header()
+                .ok_or("Not a CircuitHeader message.")?))
+    }
+}
+
 impl CircuitHeaderOwned {
+    pub fn with_instance_values(mut self, vars: VariablesOwned) -> Result<Self> {
+        if self.connections.variable_ids != vars.variable_ids {
+            return Err(format!("The provided instance variables do not match.\nGot     : {:?}\nExpected:{:?}", vars.variable_ids, self.connections.variable_ids).into());
+        }
+        self.connections = vars;
+        Ok(self)
+    }
+
     pub fn simple_inputs(num_inputs: u64) -> CircuitHeaderOwned {
         let first_input_id = 1;
         let first_local_id = first_input_id + num_inputs;
