@@ -181,7 +181,7 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
         CircuitOwned::from(messages.first_circuit().unwrap())
     }
 
-    let public_main = read_circuit("local/test_statement/main.zkif");
+    let public_main = read_circuit("local/test_statement/header.zkif");
     println!("Main {:?}", public_main);
     let public_constraints = read_raw("local/test_statement/constraints.zkif");
     assert!(public_constraints.len() > 0);

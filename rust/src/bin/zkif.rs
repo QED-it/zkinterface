@@ -180,7 +180,7 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        let path = out_dir.join("main.zkif");
+        let path = out_dir.join("header.zkif");
         example_circuit_header().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 
@@ -210,7 +210,7 @@ fn example_ac(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        let path = out_dir.join("main.zkif");
+        let path = out_dir.join("header.zkif");
         example_circuit_header().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 

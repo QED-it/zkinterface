@@ -15,16 +15,16 @@ popd
 
 # Look at the files.
 DIR=libsnark-rust/local/test_statement
-MAIN=$DIR/main.zkif
+HEAD=$DIR/header.zkif
 CONS=$DIR/constraints.zkif
 WITN=$DIR/witness.zkif
 NAME=$DIR/snark
 
-zkif explain $MAIN $CONS $WITN
+zkif explain $HEAD $CONS $WITN
 
 # Prove and verify.
-cat $MAIN $CONS $WITN | zkif_snark validate $NAME
-cat $MAIN $CONS       | zkif_snark setup    $NAME
-cat $MAIN $WITN       | zkif_snark prove    $NAME
-cat $MAIN             | zkif_snark verify   $NAME
+cat $HEAD $CONS $WITN | zkif_snark validate $NAME
+cat $HEAD $CONS       | zkif_snark setup    $NAME
+cat $HEAD $WITN       | zkif_snark prove    $NAME
+cat $HEAD             | zkif_snark verify   $NAME
 

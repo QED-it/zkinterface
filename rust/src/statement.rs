@@ -96,7 +96,7 @@ impl FileStore {
         create_dir_all(working_dir.join("logs"))?;
 
         Ok(FileStore {
-            main_path: working_dir.join("main.zkif"),
+            main_path: working_dir.join("header.zkif"),
             constraints_file: if constraints {
                 Some(File::create(working_dir.join("constraints.zkif"))?)
             } else { None },
