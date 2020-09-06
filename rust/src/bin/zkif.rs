@@ -3,7 +3,6 @@ extern crate serde_json;
 extern crate zkinterface;
 
 use std::fs;
-use std::env;
 use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -17,82 +16,101 @@ use zkinterface::{
 use std::fs::{File, create_dir_all};
 use std::ffi::OsStr;
 
-const USAGE: &str = "zkInterface tools.
+const ABOUT: &str = "
+This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
 
-The commands below work within a directory given as first parameter (`local` in the examples below).
-Defaults to the current working directory. The dash - means either write to stdout or read from stdin.
+The tools below work within a workspace directory given after the tool name (`local` in the examples below), or in the current working directory by default. To read from stdin or write to stdout, pass a dash - instead of a filename.
 
 Create an example statement:
-    cargo run example local
+    zkif example local
 Or:
-    cargo run example - > local/example.zkif
+    zkif example - > local/example.zkif
 
 Print a statement in different forms:
-    cargo run json    local
-    cargo run pretty  local
-    cargo run explain local
-    cargo run stats   local
+    zkif json    local
+    zkif pretty  local
+    zkif explain local
 
 Simulate a proving system:
-    cargo run fake_prove  local
-    cargo run fake_verify local
+    zkif stats       local
+    zkif fake_prove  local
+    zkif fake_verify local
 
 Write all the statement files to stdout (to pipe to another program):
-    cargo run cat local
-
-Options
-    --r1cs      Use profile R1CS (default if no profile is specified).
-    --ac        Use profile Arithmetic Circuit.
+    zkif cat local
 
 ";
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "example", about = "An example of StructOpt usage.")]
-struct Options {
-    /// Command
-    command: String,
+use structopt::clap::AppSettings::*;
 
-    /// Workspace
+#[derive(Debug, StructOpt)]
+#[structopt(
+name = "zkif",
+about = "zkInterface toolbox.",
+long_about = ABOUT,
+setting(DontCollapseArgsInUsage),
+setting(ColoredHelp)
+)]
+struct Options {
+    /// Which tool to run.
+    ///
+    /// example     Create example circuits.
+    ///
+    /// cat         Write .zkif files to stdout.
+    ///
+    /// json        Convert to JSON on a single line.
+    ///
+    /// pretty      Convert to JSON with spacing.
+    ///
+    /// explain     Print the content in a human-readable form.
+    ///
+    /// stats       Calculate statistics about the circuit.
+    #[structopt(default_value = "help")]
+    tool: String,
+
+    /// The tools work in a workspace directory containing .zkif files.
+    ///
+    /// Alternatively, a list of .zkif files can be provided explicitly.
+    ///
+    /// The dash - means either write to stdout or read from stdin.
     #[structopt(default_value = ".")]
     paths: Vec<PathBuf>,
 
-    /// Use profile Arithmetic Circuit.
-    #[structopt(short, long)]
-    arithmetic_circuit: bool,
+    /// Select a profile: R1CS or AC (Arithmetic Circuit).
+    #[structopt(short, long, default_value = "R1CS")]
+    profile: String,
 }
 
-pub fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let args: Vec<&str> = args.iter().map(|a| &a[..]).collect();
-    if args.len() <= 1 {
-        eprintln!("{}", USAGE);
-        return Err("Missing command.".into());
-    }
+fn main() -> Result<()> {
+    let options: Options = Options::from_args();
 
-    let opt: Options = Options::from_args();
-    eprintln!("{:?}", opt);
-
-    match &opt.command[..] {
-        "example" => main_example(&opt.paths),
-        "cat" => main_cat(&opt.paths),
-        "json" => main_json(&load_messages(&opt.paths)?),
-        "pretty" => main_pretty(&load_messages(&opt.paths)?),
-        "explain" => main_explain(&load_messages(&opt.paths)?),
-        "stats" => main_stats(&load_messages(&opt.paths)?),
-        "fake_prove" => main_fake_prove(&load_messages(&opt.paths)?),
-        "fake_verify" => main_fake_verify(&load_messages(&opt.paths)?),
+    match &options.tool[..] {
+        "example" => main_example(&options),
+        "cat" => main_cat(&options),
+        "json" => main_json(&load_messages(&options)?),
+        "pretty" => main_pretty(&load_messages(&options)?),
+        "explain" => main_explain(&load_messages(&options)?),
+        "stats" => main_stats(&load_messages(&options)?),
+        "fake_prove" => main_fake_prove(&load_messages(&options)?),
+        "fake_verify" => main_fake_verify(&load_messages(&options)?),
+        "help" => {
+            Options::clap().print_long_help()?;
+            eprintln!("\n");
+            Ok(())
+        }
         _ => {
-            eprintln!("{}", USAGE);
-            Err(format!("Unknown command {}", &opt.command).into())
+            Options::clap().print_long_help()?;
+            eprintln!("\n");
+            Err(format!("Unknown command {}", &options.tool).into())
         }
     }
 }
 
 
-fn load_messages(mut args: &[PathBuf]) -> Result<Messages> {
+fn load_messages(opts: &Options) -> Result<Messages> {
     let mut messages = Messages::new();
 
-    for path in list_files(args)? {
+    for path in list_files(opts)? {
         if path == Path::new("-") {
             eprintln!("Loading from stdin");
             messages.read_from(&mut stdin())?;
@@ -105,10 +123,10 @@ fn load_messages(mut args: &[PathBuf]) -> Result<Messages> {
     Ok(messages)
 }
 
-fn list_files(args: &[PathBuf]) -> Result<Vec<PathBuf>> {
+fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
     let mut all_paths = vec![];
 
-    for arg in args {
+    for arg in &opts.paths {
         if arg.extension() == Some(OsStr::new("zkif")) {
             all_paths.push(arg.clone());
         } else {
@@ -130,13 +148,13 @@ fn list_files(args: &[PathBuf]) -> Result<Vec<PathBuf>> {
     Ok(all_paths)
 }
 
-pub fn main_example(args: &[PathBuf]) -> Result<()> {
+fn main_example(opts: &Options) -> Result<()> {
     use zkinterface::examples::*;
 
-    if args.len() != 1 {
+    if opts.paths.len() != 1 {
         return Err("Specify a single directory where to write examples.".into());
     }
-    let out_dir = &args[0];
+    let out_dir = &opts.paths[0];
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
@@ -163,8 +181,8 @@ pub fn main_example(args: &[PathBuf]) -> Result<()> {
 }
 
 
-pub fn main_cat(args: &[PathBuf]) -> Result<()> {
-    for path in list_files(args)? {
+fn main_cat(opts: &Options) -> Result<()> {
+    for path in list_files(opts)? {
         let mut file = File::open(&path)?;
         let mut stdout = stdout();
         copy(&mut file, &mut stdout)?;
@@ -172,24 +190,24 @@ pub fn main_cat(args: &[PathBuf]) -> Result<()> {
     Ok(())
 }
 
-pub fn main_json(messages: &Messages) -> Result<()> {
+fn main_json(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
     serde_json::to_writer(stdout(), &messages_owned)?;
     Ok(())
 }
 
-pub fn main_pretty(messages: &Messages) -> Result<()> {
+fn main_pretty(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
     serde_json::to_writer_pretty(stdout(), &messages_owned)?;
     Ok(())
 }
 
-pub fn main_explain(messages: &Messages) -> Result<()> {
+fn main_explain(messages: &Messages) -> Result<()> {
     eprintln!("{:?}", messages);
     Ok(())
 }
 
-pub fn main_stats(messages: &Messages) -> Result<()> {
+fn main_stats(messages: &Messages) -> Result<()> {
     let mut stats = Stats::new();
     stats.push(messages)?;
     serde_json::to_writer_pretty(stdout(), &stats)?;
@@ -197,14 +215,14 @@ pub fn main_stats(messages: &Messages) -> Result<()> {
 }
 
 
-pub fn main_fake_prove(_: &Messages) -> Result<()> {
+fn main_fake_prove(_: &Messages) -> Result<()> {
     let mut file = File::create("fake_proof")?;
     write!(file, "I hereby promess that I saw a witness that satisfies the constraint system.")?;
     eprintln!("Fake proof written to file `fake_proof`.");
     Ok(())
 }
 
-pub fn main_fake_verify(_: &Messages) -> Result<()> {
+fn main_fake_verify(_: &Messages) -> Result<()> {
     let mut file = File::open("fake_proof")?;
     let mut proof = String::new();
     file.read_to_string(&mut proof)?;
