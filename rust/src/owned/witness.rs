@@ -42,13 +42,13 @@ impl WitnessOwned {
     {
         let assigned_variables = Some(self.assigned_variables.build(builder));
 
-        let call = Witness::create(builder, &WitnessArgs {
+        let witness = Witness::create(builder, &WitnessArgs {
             assigned_variables,
         });
 
         Root::create(builder, &RootArgs {
             message_type: Message::Witness,
-            message: Some(call.as_union_value()),
+            message: Some(witness.as_union_value()),
         })
     }
 

@@ -1,9 +1,7 @@
-use flatbuffers::{emplace_scalar, EndianScalar, FlatBufferBuilder};
-use std::io;
+use flatbuffers::{emplace_scalar, EndianScalar};
 use std::mem::size_of;
 
-use crate::{Result, CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned, KeyValueOwned as KV};
-use crate::zkinterface_generated::zkinterface::{Message, Root, RootArgs, Variables, VariablesArgs, Witness, WitnessArgs};
+use crate::{CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned, KeyValueOwned as KV, WitnessOwned};
 
 
 pub fn example_circuit_header() -> CircuitHeaderOwned {
@@ -36,40 +34,20 @@ pub fn example_constraints() -> ConstraintSystemOwned {
     ConstraintSystemOwned::from(constraints_vec)
 }
 
-pub fn write_example_constraints<W: io::Write>(mut writer: W) -> Result<()> {
-    example_constraints().write_into(&mut writer)
+pub fn example_witness() -> WitnessOwned {
+    example_witness_inputs(3, 4)
 }
 
-pub fn write_example_witness<W: io::Write>(writer: W) -> Result<()> {
-    write_example_witness_inputs(writer, 3, 4)
-}
-
-pub fn write_example_witness_inputs<W: io::Write>(mut writer: W, x: u32, y: u32) -> Result<()> {
-    let ids = [4, 5 as u64]; // xx, yy
-    let values = serialize_small(&[
-        x * x, // var_4 = xx = x^2
-        y * y, // var_5 = yy = y^2
-    ]);
-
-    let mut builder = &mut FlatBufferBuilder::new();
-    let ids = builder.create_vector(&ids);
-    let values = builder.create_vector(&values);
-    let values = Variables::create(&mut builder, &VariablesArgs {
-        variable_ids: Some(ids),
-        values: Some(values),
-        info: None,
-    });
-    let assign = Witness::create(&mut builder, &WitnessArgs {
-        assigned_variables: Some(values),
-    });
-    let message = Root::create(&mut builder, &RootArgs {
-        message_type: Message::Witness,
-        message: Some(assign.as_union_value()),
-    });
-    builder.finish_size_prefixed(message, None);
-
-    writer.write_all(builder.finished_data())?;
-    Ok(())
+pub fn example_witness_inputs(x: u32, y: u32) -> WitnessOwned {
+    WitnessOwned {
+        assigned_variables: VariablesOwned {
+            variable_ids: vec![4, 5], // xx, yy
+            values: Some(serialize_small(&[
+                x * x, // var_4 = xx = x^2
+                y * y, // var_5 = yy = y^2
+            ])),
+        }
+    }
 }
 
 pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
@@ -88,8 +66,8 @@ fn test_examples() {
 
     let mut buf = Vec::<u8>::new();
     example_circuit_header().write_into(&mut buf).unwrap();
-    write_example_constraints(&mut buf).unwrap();
-    write_example_witness(&mut buf).unwrap();
+    example_constraints().write_into(&mut buf).unwrap();
+    example_witness().write_into(&mut buf).unwrap();
 
     let mut msg = Messages::new();
     msg.push_message(buf).unwrap();

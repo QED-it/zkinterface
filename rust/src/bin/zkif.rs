@@ -123,17 +123,21 @@ fn load_messages(opts: &Options) -> Result<Messages> {
     Ok(messages)
 }
 
+fn has_zkif_extension(path: &Path) -> bool {
+    path.extension() == Some(OsStr::new("zkif"))
+}
+
 fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
     let mut all_paths = vec![];
 
-    for arg in &opts.paths {
-        if arg.extension() == Some(OsStr::new("zkif")) {
-            all_paths.push(arg.clone());
+    for path in &opts.paths {
+        if has_zkif_extension(path) {
+            all_paths.push(path.clone());
         } else {
-            for file in fs::read_dir(arg)? {
+            for file in fs::read_dir(path)? {
                 match file {
                     Ok(file) => {
-                        if file.path().extension() == Some(OsStr::new("zkif")) {
+                        if has_zkif_extension(&file.path()) {
                             all_paths.push(file.path());
                         }
                     }
@@ -149,34 +153,73 @@ fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
 }
 
 fn main_example(opts: &Options) -> Result<()> {
-    use zkinterface::examples::*;
-
     if opts.paths.len() != 1 {
         return Err("Specify a single directory where to write examples.".into());
     }
     let out_dir = &opts.paths[0];
 
+    match opts.profile.as_ref() {
+        "R1CS" => example_r1cs(out_dir),
+        "AC" => example_ac(out_dir),
+        _ => Err(format!("Unknown profile {}", opts.profile).into())
+    }
+}
+
+fn example_r1cs(out_dir: &Path) -> Result<()> {
+    use zkinterface::examples::*;
+
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
-        write_example_constraints(stdout())?;
-        write_example_witness(stdout())?;
+        example_constraints().write_into(&mut stdout())?;
+        example_witness().write_into(&mut stdout())?;
+    } else if has_zkif_extension(out_dir) {
+        let mut file = File::create(out_dir)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_constraints().write_into(&mut file)?;
+        example_witness().write_into(&mut file)?;
     } else {
-        if out_dir.ends_with(".zkif") { return Err("Expecting to write to a directory, not to a file.".into()); }
-
         create_dir_all(out_dir)?;
 
         example_circuit_header().write_into(
             &mut File::create(out_dir.join("main.zkif"))?)?;
 
-        write_example_constraints(
+        example_constraints().write_into(&mut
             File::create(out_dir.join("constraints.zkif"))?)?;
 
-        write_example_witness(
+        example_witness().write_into(&mut
             File::create(out_dir.join("witness.zkif"))?)?;
 
         eprintln!("Written {}", out_dir.join("*.zkif").display());
     }
+    Ok(())
+}
 
+fn example_ac(out_dir: &Path) -> Result<()> {
+    use zkinterface::gates::examples::*;
+
+    if out_dir == Path::new("-") {
+        example_circuit_header().write_into(&mut stdout())?;
+        example_gate_system().write_into(&mut stdout())?;
+        example_witness().write_into(&mut stdout())?;
+    } else if has_zkif_extension(out_dir) {
+        let mut file = File::create(out_dir)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_gate_system().write_into(&mut file)?;
+        example_witness().write_into(&mut file)?;
+    } else {
+        create_dir_all(out_dir)?;
+
+        example_circuit_header().write_into(&mut
+            File::create(out_dir.join("main.zkif"))?)?;
+
+        example_gate_system().write_into(&mut
+            File::create(out_dir.join("gates.zkif"))?)?;
+
+        example_witness().write_into(&mut
+            File::create(out_dir.join("witness.zkif"))?)?;
+
+        eprintln!("Written {}", out_dir.join("*.zkif").display());
+    }
     Ok(())
 }
 
