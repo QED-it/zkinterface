@@ -5,4 +5,5 @@ pub mod profiles;
 pub mod validator;
 pub mod simulator;
 pub mod converters;
+pub mod print;
 pub mod examples;

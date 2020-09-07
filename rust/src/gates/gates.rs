@@ -2,6 +2,7 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
 use std::fmt;
+use crate::gates::print::value_to_string;
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
@@ -20,7 +21,7 @@ impl fmt::Display for GateOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Constant(output, constant) =>
-                f.write_fmt(format_args!("wire_{}\t:= Constant 0x{}", output, hex::encode(constant))),
+                f.write_fmt(format_args!("wire_{}\t:= Constant {}", output, value_to_string(constant))),
 
             InstanceVar(output) =>
                 f.write_fmt(format_args!("wire_{}\t:= InstanceVar", output)),

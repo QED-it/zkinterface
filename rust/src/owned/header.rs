@@ -10,6 +10,7 @@ use crate::Result;
 use std::fmt;
 use std::convert::TryFrom;
 use std::error::Error;
+use crate::gates::print::value_to_string;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -33,7 +34,7 @@ impl fmt::Display for CircuitHeaderOwned {
         }
 
         if let Some(ref field) = self.field_maximum {
-            f.write_fmt(format_args!("FieldMaximum 0x{}\n", hex::encode(field)))?;
+            f.write_fmt(format_args!("FieldMaximum {}\n", value_to_string(field)))?;
         }
 
         for kv in self.configuration.as_ref().unwrap() {
@@ -46,7 +47,7 @@ impl fmt::Display for CircuitHeaderOwned {
 
         if self.connections.values.is_some() {
             for var in self.connections.get_variables() {
-                f.write_fmt(format_args!("SetInstanceVar wire_{} = 0x{}\n", var.id, hex::encode(var.value)))?;
+                f.write_fmt(format_args!("SetInstanceVar wire_{} = {}\n", var.id, value_to_string(var.value)))?;
             }
         }
 

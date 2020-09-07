@@ -216,9 +216,10 @@ impl Validator {
         }
 
         if let Some(max) = self.field_maximum.as_ref() {
-            let int = &BigUint::from_bytes_le(value);
+            let int = &Field::from_bytes_le(value);
             if int > max {
-                self.violation(format!("The value for wire_{} overflows the field specified in CircuitHeader ({}).", id, hex::encode(value)));
+                let msg = format!("The value for wire_{} cannot be represented in the field specified in CircuitHeader ({} > {}).", id, int, max);
+                self.violation(msg);
             }
         }
     }
