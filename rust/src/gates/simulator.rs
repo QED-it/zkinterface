@@ -1,4 +1,4 @@
-use crate::{Result, GateSystemOwned, GateOwned, CircuitHeaderOwned, WitnessOwned};
+use crate::{Result, GateSystemOwned, GateOwned, CircuitHeaderOwned, WitnessOwned, MessagesOwned};
 use std::collections::HashMap;
 use crate::gates::profiles::ensure_arithmetic_circuit_profile;
 use num_bigint::BigUint;
@@ -14,6 +14,19 @@ pub struct Simulator {
 }
 
 impl Simulator {
+    pub fn ingest_messages(&mut self, messages: &MessagesOwned) -> Result<()> {
+        for header in &messages.circuit_headers {
+            self.header(header)?;
+        }
+        for witness in &messages.witnesses {
+            self.witness(witness)?;
+        }
+        for gates in &messages.gate_systems {
+            self.gates(gates)?;
+        }
+        Ok(())
+    }
+
     pub fn header(&mut self, header: &CircuitHeaderOwned) -> Result<()> {
         ensure_arithmetic_circuit_profile(header)?;
 

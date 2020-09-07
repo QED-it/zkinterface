@@ -1,4 +1,4 @@
-use crate::{Result, GateSystemOwned, GateOwned, CircuitHeaderOwned, WitnessOwned};
+use crate::{Result, GateSystemOwned, GateOwned, CircuitHeaderOwned, WitnessOwned, MessagesOwned};
 use std::collections::HashMap;
 use crate::gates::profiles::ensure_arithmetic_circuit_profile;
 use num_bigint::BigUint;
@@ -43,6 +43,20 @@ impl Validator {
 
     pub fn new_as_prover() -> Validator {
         Validator { as_prover: true, ..Self::default() }
+    }
+
+    pub fn ingest_messages(&mut self, messages: &MessagesOwned) {
+        for header in &messages.circuit_headers {
+            self.header(header);
+        }
+        if self.as_prover {
+            for witness in &messages.witnesses {
+                self.witness(witness);
+            }
+        }
+        for gates in &messages.gate_systems {
+            self.gates(gates);
+        }
     }
 
     pub fn get_errors(mut self) -> Vec<String> {
