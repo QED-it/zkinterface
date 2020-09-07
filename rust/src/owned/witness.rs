@@ -7,7 +7,7 @@ use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
-use crate::gates::print::value_to_string;
+use crate::gates::print::{fmt_field, fmt_wire};
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -19,7 +19,7 @@ impl fmt::Display for WitnessOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let vars = self.assigned_variables.get_variables();
         for var in vars {
-            f.write_fmt(format_args!("wire_{}\t= {}\n", var.id, value_to_string(var.value)))?;
+            f.write_fmt(format_args!("{}\t= {}\n", fmt_wire(var.id), fmt_field(var.value)))?;
         }
         Ok(())
     }

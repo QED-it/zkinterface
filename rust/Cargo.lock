@@ -56,6 +56,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "colored"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "atty 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "flatbuffers"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -353,6 +363,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "zkinterface"
 version = "1.1.4"
 dependencies = [
+ "colored 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flatbuffers 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-bigint 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -370,6 +381,7 @@ dependencies = [
 "checksum bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 "checksum cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "082bb9b28e00d3c9d39cc03e64ce4cea0f1bb9b3fde493f0cbc008472d22bdf4"
 "checksum clap 2.33.3 (registry+https://github.com/rust-lang/crates.io-index)" = "37e58ac78573c40708d45522f0d80fa2f01cc4f9b4e2bf749807255454312002"
+"checksum colored 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
 "checksum flatbuffers 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ea0c34f669be9911826facafe996adfda978aeee67285a13556869e2d8b8331f"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
 "checksum hermit-abi 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)" = "3deed196b6e7f9e44a2ae8d94225d80302d81208b1bb673fd21fe634645c85a9"

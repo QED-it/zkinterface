@@ -2,7 +2,7 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
 use std::fmt;
-use crate::gates::print::value_to_string;
+use crate::gates::print::{fmt_field, fmt_wire, fmt_kw};
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
@@ -21,22 +21,22 @@ impl fmt::Display for GateOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Constant(output, constant) =>
-                f.write_fmt(format_args!("wire_{}\t:= Constant {}", output, value_to_string(constant))),
+                f.write_fmt(format_args!("{}\t<- {} {}", fmt_wire(*output), fmt_kw("Constant"), fmt_field(constant))),
 
             InstanceVar(output) =>
-                f.write_fmt(format_args!("wire_{}\t:= InstanceVar", output)),
+                f.write_fmt(format_args!("{}\t<- {}", fmt_wire(*output), fmt_kw("InstanceVar"))),
 
             Witness(output) =>
-                f.write_fmt(format_args!("wire_{}\t:= Witness", output)),
+                f.write_fmt(format_args!("{}\t<- {}", fmt_wire(*output), fmt_kw("Witness"))),
 
             AssertZero(input) =>
-                f.write_fmt(format_args!("AssertZero wire_{}", input)),
+                f.write_fmt(format_args!("{} {}", fmt_kw("AssertZero"), fmt_wire(*input))),
 
             Add(output, left, right) =>
-                f.write_fmt(format_args!("wire_{}\t:= wire_{} + wire_{}", output, left, right)),
+                f.write_fmt(format_args!("{}\t<- {} {} {}", fmt_wire(*output), fmt_wire(*left), fmt_kw("+"), fmt_wire(*right))),
 
             Mul(output, left, right) =>
-                f.write_fmt(format_args!("wire_{}\t:= wire_{} * wire_{}", output, left, right)),
+                f.write_fmt(format_args!("{}\t<- {} {} {}", fmt_wire(*output), fmt_wire(*left), fmt_kw("*"), fmt_wire(*right))),
         }
     }
 }

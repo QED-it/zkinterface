@@ -10,7 +10,7 @@ use crate::Result;
 use std::fmt;
 use std::convert::TryFrom;
 use std::error::Error;
-use crate::gates::print::value_to_string;
+use crate::gates::print::{fmt_field, fmt_kw, fmt_wire};
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -30,11 +30,11 @@ pub struct CircuitHeaderOwned {
 impl fmt::Display for CircuitHeaderOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.free_variable_id > 0 {
-            f.write_fmt(format_args!("FreeVariableId {}\n", self.free_variable_id))?;
+            f.write_fmt(format_args!("{} {}\n", fmt_kw("FreeVariableId"), self.free_variable_id))?;
         }
 
         if let Some(ref field) = self.field_maximum {
-            f.write_fmt(format_args!("FieldMaximum {}\n", value_to_string(field)))?;
+            f.write_fmt(format_args!("{} {}\n", fmt_kw("FieldMaximum"), fmt_field(field)))?;
         }
 
         for kv in self.configuration.as_ref().unwrap() {
@@ -42,12 +42,12 @@ impl fmt::Display for CircuitHeaderOwned {
         }
 
         if let Some(ref p) = self.profile_name {
-            f.write_fmt(format_args!("Profile {}\n", p))?;
+            f.write_fmt(format_args!("{} {}\n", fmt_kw("Profile"), p))?;
         }
 
         if self.instance_variables.values.is_some() {
             for var in self.instance_variables.get_variables() {
-                f.write_fmt(format_args!("SetInstanceVar wire_{} = {}\n", var.id, value_to_string(var.value)))?;
+                f.write_fmt(format_args!("{} {} = {}\n", fmt_kw("SetInstanceVar"), fmt_wire(var.id), fmt_field(var.value)))?;
             }
         }
 

@@ -101,6 +101,7 @@ fn test_r1cs_to_gates() {
 
     let (gate_header, gate_system) = r1cs_to_gates(&r1cs_header, &r1cs_system);
 
+    eprintln!();
     eprintln!("{}", gate_header);
     eprintln!("{}", witness);
     eprintln!("{}", gate_system);
