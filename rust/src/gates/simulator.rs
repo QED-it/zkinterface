@@ -116,8 +116,8 @@ fn test_simulator() -> Result<()> {
     use super::examples::*;
 
     let header = example_circuit_header();
-    let gate_system = example_gate_system();
     let witness = example_witness();
+    let gate_system = example_gate_system();
 
     let mut simulator = Simulator::default();
     simulator.header(&header)?;

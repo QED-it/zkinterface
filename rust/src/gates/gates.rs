@@ -29,7 +29,7 @@ impl fmt::Display for GateOwned {
                 f.write_fmt(format_args!("wire_{}\t:= #witness", output)),
 
             AssertZero(input) =>
-                f.write_fmt(format_args!("#assert wire_{}\t== 0", input)),
+                f.write_fmt(format_args!("#assert_zero wire_{}", input)),
 
             Add(output, left, right) =>
                 f.write_fmt(format_args!("wire_{}\t:= wire_{} + wire_{}", output, left, right)),
@@ -91,6 +91,13 @@ impl<'a> From<Gate<'a>> for GateOwned {
 }
 
 impl GateOwned {
+    pub fn has_output(&self) -> bool {
+        match *self {
+            AssertZero(_) => false,
+            _ => true,
+        }
+    }
+
     pub fn get_output(&self) -> u64 {
         match *self {
             Constant(o, _) => o,

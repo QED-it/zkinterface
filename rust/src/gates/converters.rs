@@ -96,12 +96,12 @@ fn test_r1cs_to_gates() {
     use crate::examples::*;
 
     let r1cs_header = example_circuit_header();
-    let r1cs_system = example_constraints();
     let witness = example_witness();
+    let r1cs_system = example_constraints();
 
     let (gate_header, gate_system) = r1cs_to_gates(&r1cs_header, &r1cs_system);
 
     eprintln!("{}", gate_header);
-    eprintln!("{}", gate_system);
     eprintln!("{}", witness);
+    eprintln!("{}", gate_system);
 }

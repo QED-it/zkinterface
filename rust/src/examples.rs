@@ -84,8 +84,8 @@ fn test_examples() {
 
     let mut buf = Vec::<u8>::new();
     example_circuit_header().write_into(&mut buf).unwrap();
-    example_constraints().write_into(&mut buf).unwrap();
     example_witness().write_into(&mut buf).unwrap();
+    example_constraints().write_into(&mut buf).unwrap();
 
     let mut msg = Messages::new();
     msg.push_message(buf).unwrap();

@@ -179,13 +179,13 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
-        example_constraints().write_into(&mut stdout())?;
         example_witness().write_into(&mut stdout())?;
+        example_constraints().write_into(&mut stdout())?;
     } else if has_zkif_extension(out_dir) {
         let mut file = File::create(out_dir)?;
         example_circuit_header().write_into(&mut file)?;
-        example_constraints().write_into(&mut file)?;
         example_witness().write_into(&mut file)?;
+        example_constraints().write_into(&mut file)?;
     } else {
         create_dir_all(out_dir)?;
 
@@ -193,12 +193,12 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
         example_circuit_header().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 
-        let path = out_dir.join("constraints.zkif");
-        example_constraints().write_into(&mut File::create(&path)?)?;
-        eprintln!("Written {}", path.display());
-
         let path = out_dir.join("witness.zkif");
         example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
+
+        let path = out_dir.join("constraints.zkif");
+        example_constraints().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
     }
     Ok(())
@@ -209,13 +209,13 @@ fn example_ac(out_dir: &Path) -> Result<()> {
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
-        example_gate_system().write_into(&mut stdout())?;
         example_witness().write_into(&mut stdout())?;
+        example_gate_system().write_into(&mut stdout())?;
     } else if has_zkif_extension(out_dir) {
         let mut file = File::create(out_dir)?;
         example_circuit_header().write_into(&mut file)?;
-        example_gate_system().write_into(&mut file)?;
         example_witness().write_into(&mut file)?;
+        example_gate_system().write_into(&mut file)?;
     } else {
         create_dir_all(out_dir)?;
 
@@ -223,12 +223,12 @@ fn example_ac(out_dir: &Path) -> Result<()> {
         example_circuit_header().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 
-        let path = out_dir.join("gates.zkif");
-        example_gate_system().write_into(&mut File::create(&path)?)?;
-        eprintln!("Written {}", path.display());
-
         let path = out_dir.join("witness.zkif");
         example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
+
+        let path = out_dir.join("gates.zkif");
+        example_gate_system().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
     }
     Ok(())
@@ -281,7 +281,7 @@ fn main_validate(messages: &Messages, opts: &Options) -> Result<()> {
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
     validator.ingest_messages(&messages);
-    print_violations(&validator.get_errors())?;
+    print_violations(&validator.get_violations())?;
     Ok(())
 }
 
@@ -295,7 +295,7 @@ fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();
     validator.ingest_messages(&messages);
-    print_violations(&validator.get_errors())?;
+    print_violations(&validator.get_violations())?;
 
     // Check whether the statement is true.
     let ok = Simulator::default().ingest_messages(&messages);

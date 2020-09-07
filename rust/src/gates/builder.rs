@@ -8,6 +8,10 @@ pub trait IBuilder {
     fn push_gate(&mut self, allocated_gate: GateOwned);
 
     fn gate(&mut self, non_allocated_gate: GateOwned) -> u64 {
+        if !non_allocated_gate.has_output() {
+            self.push_gate(non_allocated_gate);
+            return 0;
+        }
         assert_eq!(non_allocated_gate.get_output(), 0);
         let new_id = self.alloc();
         let allocated_gate = non_allocated_gate.with_output(new_id);
