@@ -11,7 +11,6 @@ type Field = BigUint;
 pub struct Simulator {
     values: HashMap<Wire, Field>,
     modulus: Field,
-    free_variable_id: Option<Wire>,
 }
 
 impl Simulator {
@@ -22,14 +21,9 @@ impl Simulator {
         let max = header.field_maximum.as_ref().ok_or("No field_maximum specified")?;
         self.modulus = BigUint::from_bytes_le(max) + 1 as u8;
 
-        // Set a bound on variable count, if provided.
-        if header.free_variable_id > 0 {
-            self.free_variable_id = Some(header.free_variable_id);
-        }
-
         // Set instance variable values.
         for var in header.connections.get_variables() {
-            self.set_encoded(var.id, var.value)?;
+            self.set_encoded(var.id, var.value);
         }
 
         Ok(())
@@ -39,7 +33,7 @@ impl Simulator {
         self.ensure_header()?;
 
         for var in witness.assigned_variables.get_variables() {
-            self.set_encoded(var.id, var.value)?;
+            self.set_encoded(var.id, var.value);
         }
         Ok(())
     }
@@ -52,17 +46,14 @@ impl Simulator {
                 GateOwned::Constant(out, value) =>
                     self.set_encoded(*out, value),
 
-                GateOwned::InstanceVar(out) =>
-                    self.ensure_value(*out),
+                GateOwned::InstanceVar(_out) => {}
 
-                GateOwned::Witness(out) =>
-                    self.ensure_value(*out),
+                GateOwned::Witness(_out) => {}
 
                 GateOwned::AssertZero(inp) => {
                     let val = self.get(*inp)?;
-                    match val.is_zero() {
-                        true => Ok(()),
-                        _ => Err(format!("wire_{} should be 0 but has value {}", *inp, val).into()),
+                    if !val.is_zero() {
+                        return Err(format!("wire_{} should equal 0 but has value {}", *inp, val).into());
                     }
                 }
 
@@ -70,56 +61,33 @@ impl Simulator {
                     let l = self.get(*left)?;
                     let r = self.get(*right)?;
                     let sum = l + r;
-                    self.set(*out, sum)
+                    self.set(*out, sum);
                 }
 
                 GateOwned::Mul(out, left, right) => {
                     let l = self.get(*left)?;
                     let r = self.get(*right)?;
                     let prod = l * r;
-                    self.set(*out, prod)
+                    self.set(*out, prod);
                 }
-            }?;
+            }
         }
         Ok(())
     }
 
 
-    fn set_encoded(&mut self, id: Wire, encoded: &[u8]) -> Result<()> {
-        self.set(id, BigUint::from_bytes_le(encoded))
+    fn set_encoded(&mut self, id: Wire, encoded: &[u8]) {
+        self.set(id, BigUint::from_bytes_le(encoded));
     }
 
-    fn set(&mut self, id: Wire, mut value: Field) -> Result<()> {
-        self.ensure_no_value(id)?;
-        self.ensure_bound(id)?;
+    fn set(&mut self, id: Wire, mut value: Field) {
         value %= &self.modulus;
         self.values.insert(id, value);
-        Ok(())
     }
 
     fn get(&self, id: Wire) -> Result<&Field> {
         self.values.get(&id)
             .ok_or(format!("No value given for wire_{}", id).into())
-    }
-
-    fn ensure_value(&self, id: Wire) -> Result<()> {
-        self.get(id)?;
-        Ok(())
-    }
-
-    fn ensure_no_value(&self, id: Wire) -> Result<()> {
-        match self.get(id) {
-            Err(_) => Ok(()),
-            Ok(_) => Err(format!("Multiple values given for wire_{}", id).into()),
-        }
-    }
-
-    fn ensure_bound(&self, id: Wire) -> Result<()> {
-        match self.free_variable_id {
-            Some(max) if (id >= max) =>
-                Err(format!("Using wire ID {} beyond what was claimed in the header free_variable_id (should be less than {})", id, max).into()),
-            _ => Ok(()),
-        }
     }
 
     fn ensure_header(&self) -> Result<()> {
