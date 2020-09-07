@@ -19,7 +19,7 @@ pub fn r1cs_to_gates(
     let b = &mut bb;
 
     // Allocate negative one for negation.
-    let neg_one = b.gate(Constant(0, vec![255]));
+    let neg_one = b.gate(Constant(0, header.field_maximum.clone().unwrap()));
 
     // Convert each R1CS constraint into a graph of Add/Mul/AssertZero gates.
     for constraint in &r1cs.constraints {
