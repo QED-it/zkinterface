@@ -262,26 +262,26 @@ impl<'a> CircuitHeader<'a> {
       if let Some(x) = args.profile_name { builder.add_profile_name(x); }
       if let Some(x) = args.configuration { builder.add_configuration(x); }
       if let Some(x) = args.field_maximum { builder.add_field_maximum(x); }
-      if let Some(x) = args.connections { builder.add_connections(x); }
+      if let Some(x) = args.instance_variables { builder.add_instance_variables(x); }
       builder.finish()
     }
 
-    pub const VT_CONNECTIONS: flatbuffers::VOffsetT = 4;
+    pub const VT_INSTANCE_VARIABLES: flatbuffers::VOffsetT = 4;
     pub const VT_FREE_VARIABLE_ID: flatbuffers::VOffsetT = 6;
     pub const VT_FIELD_MAXIMUM: flatbuffers::VOffsetT = 8;
     pub const VT_CONFIGURATION: flatbuffers::VOffsetT = 10;
     pub const VT_PROFILE_NAME: flatbuffers::VOffsetT = 12;
 
-  /// Variables to use as connections to the sub-circuit.
+  /// Instance variables used as parameters to the sub-circuit.
   ///
-  /// - Variables to use as input connections to the gadget.
-  /// - Or variables to use as output connections from the gadget.
+  /// - Variables to use as input instance_variables to the gadget.
+  /// - Or variables to use as output instance_variables from the gadget.
   /// - Variables are allocated by the sender of this message.
   /// - The same structure must be provided for R1CS and witness generations.
   /// - If using `Command.witness_generation`, variables must be assigned values.
   #[inline]
-  pub fn connections(&self) -> Option<Variables<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(CircuitHeader::VT_CONNECTIONS, None)
+  pub fn instance_variables(&self) -> Option<Variables<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<Variables<'a>>>(CircuitHeader::VT_INSTANCE_VARIABLES, None)
   }
   /// A variable ID greater than all IDs allocated by the sender of this message.
   /// The recipient of this message can allocate new IDs >= free_variable_id.
@@ -300,7 +300,7 @@ impl<'a> CircuitHeader<'a> {
   ///
   /// Example: function_name, if a gadget supports multiple function variants.
   /// Example: the depth of a Merkle tree.
-  /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
+  /// Counter-example: a Merkle path is not config and belongs in `instance_variables.info`.
   #[inline]
   pub fn configuration(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<KeyValue<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<KeyValue<'a>>>>>(CircuitHeader::VT_CONFIGURATION, None)
@@ -315,7 +315,7 @@ impl<'a> CircuitHeader<'a> {
 }
 
 pub struct CircuitHeaderArgs<'a> {
-    pub connections: Option<flatbuffers::WIPOffset<Variables<'a >>>,
+    pub instance_variables: Option<flatbuffers::WIPOffset<Variables<'a >>>,
     pub free_variable_id: u64,
     pub field_maximum: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
     pub configuration: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<KeyValue<'a >>>>>,
@@ -325,7 +325,7 @@ impl<'a> Default for CircuitHeaderArgs<'a> {
     #[inline]
     fn default() -> Self {
         CircuitHeaderArgs {
-            connections: None,
+            instance_variables: None,
             free_variable_id: 0,
             field_maximum: None,
             configuration: None,
@@ -339,8 +339,8 @@ pub struct CircuitHeaderBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> CircuitHeaderBuilder<'a, 'b> {
   #[inline]
-  pub fn add_connections(&mut self, connections: flatbuffers::WIPOffset<Variables<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(CircuitHeader::VT_CONNECTIONS, connections);
+  pub fn add_instance_variables(&mut self, instance_variables: flatbuffers::WIPOffset<Variables<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Variables>>(CircuitHeader::VT_INSTANCE_VARIABLES, instance_variables);
   }
   #[inline]
   pub fn add_free_variable_id(&mut self, free_variable_id: u64) {
@@ -552,7 +552,7 @@ pub enum WitnessOffset {}
 
 /// Witness represents an assignment of values to variables.
 ///
-/// - Does not include variables already given in `CircuitHeader.connections`.
+/// - Does not include variables already given in `CircuitHeader.instance_variables`.
 /// - Does not include the constant one variable.
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 pub struct Witness<'a> {
@@ -682,10 +682,10 @@ impl<'a> Command<'a> {
   }
   /// For gadget flows.
   /// Request the generation of a witness (or part thereof).
-  /// If true, this must be followed by a CircuitHeader, and the `connections`
+  /// If true, this must be followed by a CircuitHeader, and the `instance_variables`
   /// variables must contain input values.
   /// The response must be another CircuitHeader message, with a greater `free_variable_id`,
-  /// with output values in `connections` variables, followed by one or more `Witness` messages.
+  /// with output values in `instance_variables`, followed by one or more `Witness` messages.
   #[inline]
   pub fn witness_generation(&self) -> bool {
     self._tab.get::<bool>(Command::VT_WITNESS_GENERATION, Some(false)).unwrap()
@@ -856,7 +856,7 @@ pub enum VariablesOffset {}
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - In `CircuitHeader.connections`, the IDs indicate which variables are
+/// - In `CircuitHeader.instance_variables`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
 /// - During witness generation, the values form the assignment to the variables.
 /// - In `BilinearConstraint` linear combinations, the values are the coefficients
@@ -1185,7 +1185,7 @@ pub enum GateInstanceVarOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
 /// A parameter to the circuit shared by provers and verifiers.
-/// Its value must be provided in the `connections` of a `Circuit` message.
+/// Its value must be provided in the `instance_variables` of a `Circuit` message.
 pub struct GateInstanceVar<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }

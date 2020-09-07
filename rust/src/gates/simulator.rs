@@ -35,7 +35,7 @@ impl Simulator {
         self.modulus = BigUint::from_bytes_le(max) + 1 as u8;
 
         // Set instance variable values.
-        for var in header.connections.get_variables() {
+        for var in header.instance_variables.get_variables() {
             self.set_encoded(var.id, var.value);
         }
 

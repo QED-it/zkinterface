@@ -15,7 +15,7 @@ use crate::gates::print::value_to_string;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitHeaderOwned {
-    pub connections: VariablesOwned,
+    pub instance_variables: VariablesOwned,
 
     pub free_variable_id: u64,
 
@@ -45,8 +45,8 @@ impl fmt::Display for CircuitHeaderOwned {
             f.write_fmt(format_args!("Profile {}\n", p))?;
         }
 
-        if self.connections.values.is_some() {
-            for var in self.connections.get_variables() {
+        if self.instance_variables.values.is_some() {
+            for var in self.instance_variables.get_variables() {
                 f.write_fmt(format_args!("SetInstanceVar wire_{} = {}\n", var.id, value_to_string(var.value)))?;
             }
         }
@@ -59,7 +59,7 @@ impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
     /// Convert from Flatbuffers references to owned structure.
     fn from(header_ref: CircuitHeader) -> CircuitHeaderOwned {
         CircuitHeaderOwned {
-            connections: VariablesOwned::from(header_ref.connections().unwrap()),
+            instance_variables: VariablesOwned::from(header_ref.instance_variables().unwrap()),
             free_variable_id: header_ref.free_variable_id(),
             field_maximum: header_ref.field_maximum().map(Vec::from),
             configuration: KeyValueOwned::from_vector(header_ref.configuration()),
@@ -81,10 +81,10 @@ impl<'a> TryFrom<&'a [u8]> for CircuitHeaderOwned {
 
 impl CircuitHeaderOwned {
     pub fn with_instance_values(mut self, vars: VariablesOwned) -> Result<Self> {
-        if self.connections.variable_ids != vars.variable_ids {
-            return Err(format!("The provided instance variables do not match.\nGot     : {:?}\nExpected:{:?}", vars.variable_ids, self.connections.variable_ids).into());
+        if self.instance_variables.variable_ids != vars.variable_ids {
+            return Err(format!("The provided instance variables do not match.\nGot     : {:?}\nExpected:{:?}", vars.variable_ids, self.instance_variables.variable_ids).into());
         }
-        self.connections = vars;
+        self.instance_variables = vars;
         Ok(self)
     }
 
@@ -93,7 +93,7 @@ impl CircuitHeaderOwned {
         let first_local_id = first_input_id + num_inputs;
 
         CircuitHeaderOwned {
-            connections: VariablesOwned {
+            instance_variables: VariablesOwned {
                 variable_ids: (first_input_id..first_local_id).collect(),
                 values: None,
             },
@@ -110,7 +110,7 @@ impl CircuitHeaderOwned {
         let first_local_id = first_output_id + num_outputs;
 
         CircuitHeaderOwned {
-            connections: VariablesOwned {
+            instance_variables: VariablesOwned {
                 variable_ids: (first_output_id..first_local_id).collect(),
                 values: None,
             },
@@ -127,7 +127,7 @@ impl CircuitHeaderOwned {
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
     ) -> WIPOffset<Root<'bldr>>
     {
-        let connections = Some(self.connections.build(builder));
+        let instance_variables = Some(self.instance_variables.build(builder));
 
         let field_maximum = self.field_maximum.as_ref().map(|val|
             builder.create_vector(val));
@@ -138,7 +138,7 @@ impl CircuitHeaderOwned {
         let profile_name = self.profile_name.as_ref().map(|p| builder.create_string(p));
 
         let header = CircuitHeader::create(builder, &CircuitHeaderArgs {
-            connections,
+            instance_variables,
             free_variable_id: self.free_variable_id,
             field_maximum,
             configuration,
@@ -172,7 +172,7 @@ impl CircuitHeaderOwned {
 #[test]
 fn test_circuit_header_owned() {
     let header = CircuitHeaderOwned {
-        connections: VariablesOwned {
+        instance_variables: VariablesOwned {
             variable_ids: (1..3).collect(),
             values: Some(vec![6, 7]),
         },

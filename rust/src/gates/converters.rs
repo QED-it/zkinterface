@@ -34,7 +34,7 @@ pub fn r1cs_to_gates(
     }
 
     let header = CircuitHeaderOwned {
-        connections: header.connections.clone(),
+        instance_variables: header.instance_variables.clone(),
         free_variable_id: b.free_id(),
         field_maximum: header.field_maximum.clone(),
         configuration: Some(switch_profile(
@@ -52,7 +52,7 @@ fn allocate_r1cs_variables(header: &CircuitHeaderOwned, b: &mut CachingBuilder) 
     assert_eq!(_one_id, 0);
 
     // Allocate instance variables.
-    for i in &header.connections.variable_ids {
+    for i in &header.instance_variables.variable_ids {
         let j = b.gate(InstanceVar(0));
         assert_eq!(*i, j, "Only consecutive instance variable IDs are supported.");
     }

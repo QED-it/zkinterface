@@ -99,7 +99,7 @@ impl Validator {
         }
 
         // Set instance variable values.
-        for var in header.connections.get_variables() {
+        for var in header.instance_variables.get_variables() {
             self.ensure_field(var.id, var.value);
             if self.status(var.id) != Undeclared {
                 self.violation(format!("wire_{} redefined in instance values", var.id));

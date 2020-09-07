@@ -11,7 +11,7 @@ pub fn example_circuit_header() -> CircuitHeaderOwned {
 /// A test circuit of inputs x,y,zz such that x^2 + y^2 = zz.
 pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOwned {
     CircuitHeaderOwned {
-        connections: VariablesOwned {
+        instance_variables: VariablesOwned {
             variable_ids: vec![1, 2, 3],  // x, y, zz
             values: Some(serialize_small(&[x, y, zz])),
         },

@@ -8,7 +8,7 @@ use crate::examples::{NEG_ONE, serialize_small};
 
 pub fn example_circuit_header() -> CircuitHeaderOwned {
     CircuitHeaderOwned {
-        connections: VariablesOwned {
+        instance_variables: VariablesOwned {
             // Values for InstanceVar.
             variable_ids: vec![4],
             values: Some(serialize_small(&[25])), // = 3 * 3 + 4 * 4

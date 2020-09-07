@@ -19,14 +19,17 @@ union Message {
 /// or a part of a circuit being built.
 table CircuitHeader {
 
-    /// Variables to use as connections to the sub-circuit.
+    /// Instance variables. This is also called public inputs to the circuit.
     ///
-    /// - Variables to use as input connections to the gadget.
-    /// - Or variables to use as output connections from the gadget.
     /// - Variables are allocated by the sender of this message.
     /// - The same structure must be provided for R1CS and witness generations.
-    /// - If using `Command.witness_generation`, variables must be assigned values.
-    connections             :Variables;
+    /// - Values may be omitted in some contexts, such as in a preprocessing phase.
+    /// - During witness generation, variables must be assigned values.
+    /// - In the particular context of a gadget call, `instance_variables` holds the inputs
+    ///   to the gadget, i.e. variables allocated by the caller that the gadget can
+    ///   refer to. In the context of a gadget response, it holds the outputs of the gadget,
+    ///   i.e. variables allocated by the gadget that the caller can refer to.
+    instance_variables      :Variables;
 
     /// A variable ID greater than all IDs allocated by the sender of this message.
     /// The recipient of this message can allocate new IDs >= free_variable_id.
@@ -41,7 +44,7 @@ table CircuitHeader {
     ///
     /// Example: function_name, if a gadget supports multiple function variants.
     /// Example: the depth of a Merkle tree.
-    /// Counter-example: a Merkle path is not config and belongs in `connections.info`.
+    /// Counter-example: a Merkle path is not config and belongs in `instance_variables.info`.
     configuration           :[KeyValue];
 
     /// The name of the profile used to express this circuit.
@@ -72,7 +75,7 @@ table GateSystem {
 
 /// Witness represents an assignment of values to variables.
 ///
-/// - Does not include variables already given in `CircuitHeader.connections`.
+/// - Does not include variables already given in `CircuitHeader.instance_variables`.
 /// - Does not include the constant one variable.
 /// - Multiple such messages are equivalent to the concatenation of `Variables` arrays.
 table Witness {
@@ -93,10 +96,10 @@ table Command {
 
     /// For gadget flows.
     /// Request the generation of a witness (or part thereof).
-    /// If true, this must be followed by a CircuitHeader, and the `connections`
+    /// If true, this must be followed by a CircuitHeader, and the `instance_variables`
     /// variables must contain input values.
     /// The response must be another CircuitHeader message, with a greater `free_variable_id`,
-    /// with output values in `connections` variables, followed by one or more `Witness` messages.
+    /// with output values in `instance_variables`, followed by one or more `Witness` messages.
     witness_generation      :bool;
 
     /// Optional: Any complementary parameter that may be useful.
@@ -121,7 +124,7 @@ table BilinearConstraint {
 ///
 /// - Each variable is identified by a numerical ID.
 /// - Each variable can be assigned a concrete value.
-/// - In `CircuitHeader.connections`, the IDs indicate which variables are
+/// - In `CircuitHeader.instance_variables`, the IDs indicate which variables are
 ///   meant to be shared as inputs or outputs of a sub-circuit.
 /// - During witness generation, the values form the assignment to the variables.
 /// - In `BilinearConstraint` linear combinations, the values are the coefficients
@@ -182,7 +185,7 @@ table GateConstant {
 }
 
 /// A parameter to the circuit shared by provers and verifiers.
-/// Its value must be provided in the `connections` of a `Circuit` message.
+/// Its value must be provided in the `instance_variables` of a `Circuit` message.
 table GateInstanceVar {
     output      :Wire;
 }

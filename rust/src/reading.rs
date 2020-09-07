@@ -21,11 +21,11 @@ pub fn read_circuit_header(msg: &[u8]) -> Result<CircuitHeader> {
         .message_as_circuit_header().ok_or("not a CircuitHeader message".into())
 }
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(CircuitHeader, Vec<Variable>)> {
-    let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit_header()?;
-    let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
+pub fn parse_header(msg: &[u8]) -> Option<(CircuitHeader, Vec<Variable>)> {
+    let header = get_size_prefixed_root_as_root(msg).message_as_circuit_header()?;
+    let input_var_ids = header.instance_variables()?.variable_ids()?.safe_slice();
 
-    let assigned = match call.connections()?.values() {
+    let assigned = match header.instance_variables()?.values() {
         Some(bytes) => {
             let stride = get_value_size(input_var_ids, bytes);
 
@@ -39,7 +39,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(CircuitHeader, Vec<Variable>)> {
         None => vec![],
     };
 
-    Some((call, assigned))
+    Some((header, assigned))
 }
 
 pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
@@ -117,7 +117,7 @@ impl fmt::Debug for Messages {
 
         if has_header {
             write!(f, "\nZkInterface {:?}\n", CircuitHeader)?;
-            if let Some(vars) = self.connection_variables() {
+            if let Some(vars) = self.instance_variables() {
                 write!(f, "Public variables:\n")?;
                 for var in vars {
                     write!(f, "- {:?}\n", var)?;
@@ -228,16 +228,16 @@ impl Messages {
         returns
     }
 
-    pub fn connection_variables(&self) -> Option<Vec<Variable>> {
-        let connections = self.last_header()?.connections()?;
-        collect_connection_variables(&connections, self.first_id)
+    pub fn instance_variables(&self) -> Option<Vec<Variable>> {
+        let instance_variables = self.last_header()?.instance_variables()?;
+        collect_instance_variables(&instance_variables, self.first_id)
     }
 
     pub fn private_variables(&self) -> Option<Vec<Variable>> {
         // Collect private variables.
         let header = self.last_header()?;
         let mut vars = collect_unassigned_private_variables(
-            &header.connections()?,
+            &header.instance_variables()?,
             self.first_id,
             header.free_variable_id())?;
 
@@ -261,7 +261,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
+pub fn collect_instance_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -284,13 +284,13 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
-    let var_ids = conn.variable_ids()?.safe_slice();
+pub fn collect_unassigned_private_variables<'a>(instance_variables: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
+    let var_ids = instance_variables.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
-        .filter(|id| // Ignore variables already in the connections.
+        .filter(|id| // Ignore variables already in the instance_variables.
             !var_ids.contains(id)
-        ).map(|id|          // Variable without value.
+        ).map(|id|    // Variable without value.
         Variable {
             id,
             value: &[],
