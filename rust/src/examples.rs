@@ -18,7 +18,7 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOw
         free_variable_id: 6,
         field_maximum: Some(serialize_small(&[NEG_ONE])),
         configuration: Some(vec![
-            KV::from(("name", "example")),
+            KV::from(("Name", "example")),
         ]),
         profile_name: None,
     }

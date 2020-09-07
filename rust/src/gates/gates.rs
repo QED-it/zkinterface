@@ -20,16 +20,16 @@ impl fmt::Display for GateOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Constant(output, constant) =>
-                f.write_fmt(format_args!("wire_{}\t:= #constant 0x{}", output, hex::encode(constant))),
+                f.write_fmt(format_args!("wire_{}\t:= Constant 0x{}", output, hex::encode(constant))),
 
             InstanceVar(output) =>
-                f.write_fmt(format_args!("wire_{}\t:= #instance_var", output)),
+                f.write_fmt(format_args!("wire_{}\t:= InstanceVar", output)),
 
             Witness(output) =>
-                f.write_fmt(format_args!("wire_{}\t:= #witness", output)),
+                f.write_fmt(format_args!("wire_{}\t:= Witness", output)),
 
             AssertZero(input) =>
-                f.write_fmt(format_args!("#assert_zero wire_{}", input)),
+                f.write_fmt(format_args!("AssertZero wire_{}", input)),
 
             Add(output, left, right) =>
                 f.write_fmt(format_args!("wire_{}\t:= wire_{} + wire_{}", output, left, right)),

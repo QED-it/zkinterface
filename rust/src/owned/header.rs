@@ -29,24 +29,24 @@ pub struct CircuitHeaderOwned {
 impl fmt::Display for CircuitHeaderOwned {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.free_variable_id > 0 {
-            f.write_fmt(format_args!("#free_variable_id {}\n", self.free_variable_id))?;
+            f.write_fmt(format_args!("FreeVariableId {}\n", self.free_variable_id))?;
         }
 
         if let Some(ref field) = self.field_maximum {
-            f.write_fmt(format_args!("#field_maximum 0x{}\n", hex::encode(field)))?;
+            f.write_fmt(format_args!("FieldMaximum 0x{}\n", hex::encode(field)))?;
         }
 
         for kv in self.configuration.as_ref().unwrap() {
-            f.write_fmt(format_args!("#{}\n", kv))?;
+            f.write_fmt(format_args!("{}\n", kv))?;
         }
 
         if let Some(ref p) = self.profile_name {
-            f.write_fmt(format_args!("#profile {}\n", p))?;
+            f.write_fmt(format_args!("Profile {}\n", p))?;
         }
 
         if self.connections.values.is_some() {
             for var in self.connections.get_variables() {
-                f.write_fmt(format_args!("#set_instance_var wire_{} = 0x{}\n", var.id, hex::encode(var.value)))?;
+                f.write_fmt(format_args!("SetInstanceVar wire_{} = 0x{}\n", var.id, hex::encode(var.value)))?;
             }
         }
 
