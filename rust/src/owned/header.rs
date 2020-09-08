@@ -7,11 +7,8 @@ use crate::zkinterface_generated::zkinterface::{CircuitHeader, CircuitHeaderArgs
 use super::variables::VariablesOwned;
 use super::keyvalue::KeyValueOwned;
 use crate::Result;
-use std::fmt;
 use std::convert::TryFrom;
 use std::error::Error;
-use crate::gates::consumers::print::{fmt_field, fmt_kw, fmt_wire};
-
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitHeaderOwned {
@@ -24,35 +21,6 @@ pub struct CircuitHeaderOwned {
     pub configuration: Option<Vec<KeyValueOwned>>,
 
     pub profile_name: Option<String>,
-}
-
-
-impl fmt::Display for CircuitHeaderOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.free_variable_id > 0 {
-            f.write_fmt(format_args!("{} {}\n", fmt_kw("FreeVariableId"), self.free_variable_id))?;
-        }
-
-        if let Some(ref field) = self.field_maximum {
-            f.write_fmt(format_args!("{} {}\n", fmt_kw("FieldMaximum"), fmt_field(field)))?;
-        }
-
-        for kv in self.configuration.as_ref().unwrap() {
-            f.write_fmt(format_args!("{}\n", kv))?;
-        }
-
-        if let Some(ref p) = self.profile_name {
-            f.write_fmt(format_args!("{} {}\n", fmt_kw("Profile"), p))?;
-        }
-
-        if self.instance_variables.values.is_some() {
-            for var in self.instance_variables.get_variables() {
-                f.write_fmt(format_args!("{} {} = {}\n", fmt_kw("SetInstanceVar"), fmt_wire(var.id), fmt_field(var.value)))?;
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {

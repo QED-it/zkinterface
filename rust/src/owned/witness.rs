@@ -6,23 +6,10 @@ use super::variables::VariablesOwned;
 use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
-use std::fmt;
-use crate::gates::consumers::print::{fmt_field, fmt_wire};
-
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WitnessOwned {
     pub assigned_variables: VariablesOwned,
-}
-
-impl fmt::Display for WitnessOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let vars = self.assigned_variables.get_variables();
-        for var in vars {
-            f.write_fmt(format_args!("{}\t= {}\n", fmt_wire(var.id), fmt_field(var.value)))?;
-        }
-        Ok(())
-    }
 }
 
 impl<'a> From<Witness<'a>> for WitnessOwned {

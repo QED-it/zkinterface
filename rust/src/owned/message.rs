@@ -6,7 +6,6 @@ use super::header::CircuitHeaderOwned;
 use super::constraints::ConstraintSystemOwned;
 use super::witness::WitnessOwned;
 use crate::GateSystemOwned;
-use std::fmt;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MessagesOwned {
@@ -48,24 +47,5 @@ impl From<&Messages> for MessagesOwned {
             }
         }
         owned
-    }
-}
-
-
-impl fmt::Display for MessagesOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for msg in &self.circuit_headers {
-            f.write_fmt(format_args!("{}\n", msg))?;
-        }
-        for msg in &self.constraint_systems {
-            f.write_fmt(format_args!("{:?}\n\n", msg))?;
-        }
-        for msg in &self.gate_systems {
-            f.write_fmt(format_args!("{}\n", msg))?;
-        }
-        for msg in &self.witnesses {
-            f.write_fmt(format_args!("{}\n", msg))?;
-        }
-        Ok(())
     }
 }

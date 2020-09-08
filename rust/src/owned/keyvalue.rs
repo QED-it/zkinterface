@@ -6,8 +6,6 @@ use crate::zkinterface_generated::zkinterface::{
     KeyValue,
     KeyValueArgs,
 };
-use std::fmt;
-use crate::gates::consumers::print::fmt_kw;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct KeyValueOwned {
@@ -50,18 +48,6 @@ impl<'a> From<KeyValue<'a>> for KeyValueOwned {
             text: kv_ref.text().map(|d| String::from(d)),
             data: kv_ref.data().map(|d| Vec::from(d)),
             number: kv_ref.number(),
-        }
-    }
-}
-
-impl fmt::Display for KeyValueOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref text) = self.text {
-            f.write_fmt(format_args!("{} {}", fmt_kw(&self.key), text))
-        } else if let Some(ref data) = self.data {
-            f.write_fmt(format_args!("{} {:?}", fmt_kw(&self.key), data))
-        } else {
-            f.write_fmt(format_args!("{} {}", fmt_kw(&self.key), self.number))
         }
     }
 }

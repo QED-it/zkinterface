@@ -1,8 +1,6 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
-use std::fmt;
-use crate::gates::consumers::print::{fmt_field, fmt_wire, fmt_kw};
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
@@ -17,29 +15,6 @@ pub enum GateOwned {
 
 use GateOwned::*;
 
-impl fmt::Display for GateOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Constant(output, constant) =>
-                f.write_fmt(format_args!("{}\t<- {} {}", fmt_wire(*output), fmt_kw("Constant"), fmt_field(constant))),
-
-            InstanceVar(output) =>
-                f.write_fmt(format_args!("{}\t<- {}", fmt_wire(*output), fmt_kw("InstanceVar"))),
-
-            Witness(output) =>
-                f.write_fmt(format_args!("{}\t<- {}", fmt_wire(*output), fmt_kw("Witness"))),
-
-            AssertZero(input) =>
-                f.write_fmt(format_args!("{} {}", fmt_kw("AssertZero"), fmt_wire(*input))),
-
-            Add(output, left, right) =>
-                f.write_fmt(format_args!("{}\t<- {} {} {}", fmt_wire(*output), fmt_wire(*left), fmt_kw("+"), fmt_wire(*right))),
-
-            Mul(output, left, right) =>
-                f.write_fmt(format_args!("{}\t<- {} {} {}", fmt_wire(*output), fmt_wire(*left), fmt_kw("*"), fmt_wire(*right))),
-        }
-    }
-}
 
 impl<'a> From<Gate<'a>> for GateOwned {
     /// Convert from Flatbuffers references to owned structure.

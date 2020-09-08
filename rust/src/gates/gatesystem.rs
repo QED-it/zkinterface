@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use crate::Result;
 use crate::zkinterface_generated::zkinterface::{GateSystem, GateSystemArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use super::gates::GateOwned;
-use std::fmt;
 use serde::export::TryFrom;
 use std::error::Error;
 
@@ -12,15 +11,6 @@ use std::error::Error;
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct GateSystemOwned {
     pub gates: Vec<GateOwned>,
-}
-
-impl fmt::Display for GateSystemOwned {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for gate in &self.gates {
-            f.write_fmt(format_args!("{}\n", gate))?;
-        }
-        Ok(())
-    }
 }
 
 impl<'a> From<GateSystem<'a>> for GateSystemOwned {
