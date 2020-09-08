@@ -298,7 +298,7 @@ fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
     print_violations(&validator.get_violations())?;
 
     // Check whether the statement is true.
-    let ok = Simulator::default().ingest_messages(&messages);
+    let ok = Simulator::default().simulate(&messages);
     match ok {
         Err(_) => eprintln!("The statement is NOT TRUE!"),
         Ok(_) => eprintln!("The statement is TRUE!"),
@@ -308,11 +308,11 @@ fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
 
 fn print_violations(errors: &[String]) -> Result<()> {
     if errors.len() > 0 {
-        eprintln!("The statement semantics are NOT VALID!");
+        eprintln!("The statement is NOT COMPLIANT with the profile!");
         eprintln!("Violations:\n- {}\n", errors.join("\n- "));
         Err(format!("Found {} violations of the profile semantics.", errors.len()).into())
     } else {
-        eprintln!("The statement semantics are VALID!");
+        eprintln!("The statement is COMPLIANT with the profile!");
         Ok(())
     }
 }

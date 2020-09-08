@@ -19,7 +19,7 @@ pub fn r1cs_to_gates(
     let b = &mut bb;
 
     // Allocate negative one for negation.
-    let neg_one = b.gate(Constant(0, header.field_maximum.clone().unwrap()));
+    let neg_one = b.create_gate(Constant(0, header.field_maximum.clone().unwrap()));
 
     // Convert each R1CS constraint into a graph of Add/Mul/AssertZero gates.
     for constraint in &r1cs.constraints {
@@ -27,10 +27,10 @@ pub fn r1cs_to_gates(
         let sum_b = build_lc(b, &constraint.linear_combination_b.get_variables());
         let sum_c = build_lc(b, &constraint.linear_combination_c.get_variables());
 
-        let prod = b.gate(Mul(0, sum_a, sum_b));
-        let neg_c = b.gate(Mul(0, neg_one, sum_c));
-        let claim_zero = b.gate(Add(0, prod, neg_c));
-        b.gate(AssertZero(claim_zero));
+        let prod = b.create_gate(Mul(0, sum_a, sum_b));
+        let neg_c = b.create_gate(Mul(0, neg_one, sum_c));
+        let claim_zero = b.create_gate(Add(0, prod, neg_c));
+        b.create_gate(AssertZero(claim_zero));
     }
 
     let header = CircuitHeaderOwned {
@@ -48,18 +48,18 @@ pub fn r1cs_to_gates(
 
 fn allocate_r1cs_variables(header: &CircuitHeaderOwned, b: &mut CachingBuilder) {
     // Allocate the constant one of R1CS.
-    let _one_id = b.gate(Constant(0, vec![1]));
+    let _one_id = b.create_gate(Constant(0, vec![1]));
     assert_eq!(_one_id, 0);
 
     // Allocate instance variables.
     for i in &header.instance_variables.variable_ids {
-        let j = b.gate(InstanceVar(0));
+        let j = b.create_gate(InstanceVar(0));
         assert_eq!(*i, j, "Only consecutive instance variable IDs are supported.");
     }
 
     // Allocate witness variables.
     for i in b.free_id()..header.free_variable_id {
-        let j = b.gate(Witness(0));
+        let j = b.create_gate(Witness(0));
         assert_eq!(i, j);
     }
 }
@@ -70,14 +70,14 @@ fn build_lc(
     lc: &Vec<Variable>,
 ) -> u64 {
     if lc.len() == 0 {
-        return b.gate(Constant(0, vec![]));
+        return b.create_gate(Constant(0, vec![]));
     }
 
     let mut sum_id = build_term(b, &lc[0]);
 
     for term in &lc[1..] {
         let term_id = build_term(b, term);
-        sum_id = b.gate(Add(0, sum_id, term_id));
+        sum_id = b.create_gate(Add(0, sum_id, term_id));
     }
 
     sum_id
@@ -87,8 +87,8 @@ fn build_term(
     b: &mut impl IBuilder,
     term: &Variable,
 ) -> u64 {
-    let c = b.gate(Constant(0, term.value.to_vec()));
-    b.gate(Mul(0, c, term.id))
+    let c = b.create_gate(Constant(0, term.value.to_vec()));
+    b.create_gate(Mul(0, c, term.id))
 }
 
 #[test]

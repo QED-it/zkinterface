@@ -47,50 +47,36 @@ impl Validator {
 
     pub fn ingest_messages(&mut self, messages: &MessagesOwned) {
         for header in &messages.circuit_headers {
-            self.header(header);
+            self.ingest_header(header);
         }
         if self.as_prover {
             for witness in &messages.witnesses {
-                self.witness(witness);
+                self.ingest_witness(witness);
             }
         }
         for gates in &messages.gate_systems {
-            self.gates(gates);
+            self.ingest_gates(gates);
         }
     }
 
-    pub fn get_violations(mut self) -> Vec<String> {
-        // Find unused wires.
-        let mut unused = Vec::<String>::new();
-        for (id, status) in self.wires.iter() {
-            match *status {
-                Undeclared => unused.push(format!("wire_{} was accessed but not declared.", id)),
-                InstanceSet => unused.push(format!("wire_{} was given an instance value but not declared.", id)),
-                WitnessSet => unused.push(format!("wire_{} was given a witness value but not declared.", id)),
-                InstanceDeclared => unused.push(format!("The instance wire_{} was declared but not used.", id)),
-                WitnessDeclared => unused.push(format!("The witness wire_{} was declared but not used.", id)),
-                ComputedDeclared => unused.push(format!("wire_{} was computed but not used.", id)),
-                WireUsed => {} // ok.
-            }
-        }
-        self.violations.append(&mut unused);
-
+    pub fn get_violations(self) -> Vec<String> {
+        //self._ensure_all_wires_used();
         self.violations
     }
 
-    pub fn header(&mut self, header: &CircuitHeaderOwned) {
+    pub fn ingest_header(&mut self, header: &CircuitHeaderOwned) {
         if self.got_header {
-            self.violation("Multiple headers.");
+            self.violate("Multiple headers.");
         }
         self.got_header = true;
 
-        self.check(ensure_arithmetic_circuit_profile(header));
+        self.ensure_ok(ensure_arithmetic_circuit_profile(header));
 
         // Set the field.
         if let Some(max) = header.field_maximum.as_ref() {
             self.field_maximum = Some(BigUint::from_bytes_le(max));
         } else {
-            self.violation("No field_maximum provided.");
+            self.violate("No field_maximum provided.");
         }
 
         // Set a bound on variable count, if provided.
@@ -100,76 +86,58 @@ impl Validator {
 
         // Set instance variable values.
         for var in header.instance_variables.get_variables() {
-            self.ensure_field(var.id, var.value);
+            self.ensure_value_in_field(var.id, var.value);
             if self.status(var.id) != Undeclared {
-                self.violation(format!("wire_{} redefined in instance values", var.id));
+                self.violate(format!("wire_{} redefined in instance values", var.id));
             }
             self.set_status(var.id, InstanceSet);
         }
     }
 
-    pub fn witness(&mut self, witness: &WitnessOwned) {
+    pub fn ingest_witness(&mut self, witness: &WitnessOwned) {
         self.ensure_header();
         if !self.as_prover {
-            self.violation("As verifier, got an unexpected Witness message.");
+            self.violate("As verifier, got an unexpected Witness message.");
         }
 
         for var in witness.assigned_variables.get_variables() {
-            self.ensure_field(var.id, var.value);
+            self.ensure_value_in_field(var.id, var.value);
             if self.status(var.id) != Undeclared {
-                self.violation(format!("wire_{} redefined in witness values", var.id));
+                self.violate(format!("wire_{} redefined in witness values", var.id));
             }
             self.set_status(var.id, WitnessSet);
         }
     }
 
-    pub fn gates(&mut self, system: &GateSystemOwned) {
+    pub fn ingest_gates(&mut self, system: &GateSystemOwned) {
         self.ensure_header();
 
         for gate in &system.gates {
             match gate {
                 GateOwned::Constant(out, value) => {
-                    self.ensure_field(*out, value);
-                    self.compute(*out);
+                    self.ensure_value_in_field(*out, value);
+                    self.declare_computed(*out);
                 }
 
-                GateOwned::InstanceVar(out) => {
-                    match self.status(*out) {
-                        InstanceSet => {} // ok.
-                        Undeclared => self.violation(format!(
-                            "Instance wire_{} was not given a value in the header.", out)),
-                        _ => self.violation(format!(
-                            "Instance wire_{} redeclared.", out)),
-                    }
-                    self.set_status(*out, InstanceDeclared);
-                }
+                GateOwned::InstanceVar(out) =>
+                    self.declare_instance_var(*out),
 
-                GateOwned::Witness(out) => {
-                    match self.status(*out) {
-                        WitnessSet => {} // ok.
-                        Undeclared => if self.as_prover {
-                            self.violation(format!("As prover, the witness wire_{} was not assigned a value.", out))
-                        } // else ok.
-                        _ => self.violation(format!(
-                            "Witness wire_{} redeclared.", out)),
-                    }
-                    self.set_status(*out, WitnessDeclared);
-                }
+                GateOwned::Witness(out) =>
+                    self.declare_witness_var(*out),
 
-                GateOwned::AssertZero(inp) => {
-                    self.read(*inp);
-                }
+                GateOwned::AssertZero(inp) =>
+                    self.ensure_declared(*inp),
 
                 GateOwned::Add(out, left, right) => {
-                    self.read(*left);
-                    self.read(*right);
-                    self.compute(*out);
+                    self.ensure_declared(*left);
+                    self.ensure_declared(*right);
+                    self.declare_computed(*out);
                 }
 
                 GateOwned::Mul(out, left, right) => {
-                    self.read(*left);
-                    self.read(*right);
-                    self.compute(*out);
+                    self.ensure_declared(*left);
+                    self.ensure_declared(*right);
+                    self.declare_computed(*out);
                 }
             };
         }
@@ -180,64 +148,100 @@ impl Validator {
     }
 
     fn set_status(&mut self, id: Wire, status: Status) {
-        self.ensure_bound(id);
+        self.ensure_id_bound(id);
         self.wires.insert(id, status);
     }
 
-    fn read(&mut self, id: Wire) {
+    fn declare_instance_var(&mut self, out: u64) {
+        match self.status(out) {
+            InstanceSet => {} // ok.
+            Undeclared => self.violate(format!(
+                "Instance wire_{} was not given a value in the header.", out)),
+            _ => self.violate(format!(
+                "Instance wire_{} redeclared.", out)),
+        }
+        self.set_status(out, InstanceDeclared);
+    }
+
+    fn declare_witness_var(&mut self, out: u64) {
+        match self.status(out) {
+            WitnessSet => {} // ok.
+            Undeclared => if self.as_prover {
+                self.violate(format!("As prover, the witness wire_{} was not assigned a value.", out))
+            } else { /* ok */ }
+            _ => self.violate(format!("Witness wire_{} redeclared.", out)),
+        }
+        self.set_status(out, WitnessDeclared);
+    }
+
+    fn declare_computed(&mut self, id: Wire) {
         match self.status(id) {
-            Undeclared => self.violation(format!("Use of undeclared wire_{}", id)),
-            InstanceSet => self.violation(format!("Use of undeclared wire_{} (an instance value was set but the wire must also be declared)", id)),
-            WitnessSet => self.violation(format!("Use of undeclared wire_{} (a witness value was set but the wire must also be declared)", id)),
+            Undeclared => {} // ok.
+            _ => self.violate(format!("wire_{} redeclared", id)),
+        }
+        self.set_status(id, ComputedDeclared);
+    }
+
+    fn ensure_declared(&mut self, id: Wire) {
+        match self.status(id) {
+            Undeclared => self.violate(format!("Use of undeclared wire_{}", id)),
+            InstanceSet => self.violate(format!("Use of undeclared wire_{} (an instance value was set but the wire must also be declared)", id)),
+            WitnessSet => self.violate(format!("Use of undeclared wire_{} (a witness value was set but the wire must also be declared)", id)),
             _ => {} // ok.
         }
         self.set_status(id, WireUsed);
     }
 
-    fn compute(&mut self, id: Wire) {
-        match self.status(id) {
-            Undeclared => {} // ok.
-            _ => self.violation(format!("wire_{} redeclared", id)),
-        }
-        self.set_status(id, ComputedDeclared);
-    }
-
-    fn ensure_bound(&mut self, id: Wire) {
+    fn ensure_id_bound(&mut self, id: Wire) {
         if let Some(max) = self.free_variable_id {
             if id >= max {
-                self.violation(format!("Using wire ID {} beyond what was claimed in the header free_variable_id (should be less than {})", id, max));
+                self.violate(format!("Using wire ID {} beyond what was claimed in the header free_variable_id (should be less than {})", id, max));
             }
         }
     }
 
-    fn ensure_field(&mut self, id: Wire, value: &[u8]) {
+    fn ensure_value_in_field(&mut self, id: Wire, value: &[u8]) {
         if value.len() == 0 {
-            self.violation(format!("Empty value for wire_{}.", id));
+            self.violate(format!("Empty value for wire_{}.", id));
         }
 
         if let Some(max) = self.field_maximum.as_ref() {
             let int = &Field::from_bytes_le(value);
             if int > max {
                 let msg = format!("The value for wire_{} cannot be represented in the field specified in CircuitHeader ({} > {}).", id, int, max);
-                self.violation(msg);
+                self.violate(msg);
             }
         }
     }
 
     fn ensure_header(&mut self) {
         if !self.got_header {
-            self.violation("A header must be provided before other messages.");
+            self.violate("A header must be provided before other messages.");
         }
     }
 
-    fn violation(&mut self, msg: impl Into<String>) {
-        self.violations.push(msg.into());
+    fn _ensure_all_wires_used(&mut self) {
+        for (id, status) in self.wires.iter() {
+            match *status {
+                Undeclared => self.violations.push(format!("wire_{} was accessed but not declared.", id)),
+                InstanceSet => self.violations.push(format!("wire_{} was given an instance value but not declared.", id)),
+                WitnessSet => self.violations.push(format!("wire_{} was given a witness value but not declared.", id)),
+                InstanceDeclared => self.violations.push(format!("The instance wire_{} was declared but not used.", id)),
+                WitnessDeclared => self.violations.push(format!("The witness wire_{} was declared but not used.", id)),
+                ComputedDeclared => self.violations.push(format!("wire_{} was computed but not used.", id)),
+                WireUsed => { /* ok */ }
+            }
+        }
     }
 
-    fn check<T>(&mut self, res: Result<T>) {
+    fn ensure_ok<T>(&mut self, res: Result<T>) {
         if let Err(err) = res {
-            self.violation(err.to_string());
+            self.violate(err.to_string());
         }
+    }
+
+    fn violate(&mut self, msg: impl Into<String>) {
+        self.violations.push(msg.into());
     }
 }
 
@@ -251,9 +255,9 @@ fn test_validator() -> Result<()> {
     let gate_system = example_gate_system();
 
     let mut validator = Validator::new_as_prover();
-    validator.header(&header);
-    validator.witness(&witness);
-    validator.gates(&gate_system);
+    validator.ingest_header(&header);
+    validator.ingest_witness(&witness);
+    validator.ingest_gates(&gate_system);
 
     let violations = validator.get_violations();
     if violations.len() > 0 {

@@ -14,7 +14,7 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    pub fn ingest_messages(&mut self, messages: &MessagesOwned) -> Result<()> {
+    pub fn simulate(&mut self, messages: &MessagesOwned) -> Result<()> {
         for header in &messages.circuit_headers {
             self.header(header)?;
         }
