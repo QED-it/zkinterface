@@ -7,7 +7,7 @@ use crate::zkinterface_generated::zkinterface::{
     KeyValueArgs,
 };
 use std::fmt;
-use crate::gates::print::fmt_kw;
+use crate::gates::consumers::print::fmt_kw;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct KeyValueOwned {

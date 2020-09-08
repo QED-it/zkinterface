@@ -10,7 +10,7 @@ use crate::Result;
 use std::fmt;
 use std::convert::TryFrom;
 use std::error::Error;
-use crate::gates::print::{fmt_field, fmt_kw, fmt_wire};
+use crate::gates::consumers::print::{fmt_field, fmt_kw, fmt_wire};
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]

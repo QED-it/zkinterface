@@ -7,7 +7,7 @@ use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
-use crate::gates::print::{fmt_field, fmt_wire};
+use crate::gates::consumers::print::{fmt_field, fmt_wire};
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]

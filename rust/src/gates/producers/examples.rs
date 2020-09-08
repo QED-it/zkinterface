@@ -1,4 +1,4 @@
-use super::{
+use crate::gates::{
     gatesystem::GateSystemOwned,
     gates::GateOwned::*,
     profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT},

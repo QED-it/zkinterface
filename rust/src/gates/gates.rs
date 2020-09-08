@@ -2,7 +2,7 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
 use std::fmt;
-use crate::gates::print::{fmt_field, fmt_wire, fmt_kw};
+use crate::gates::consumers::print::{fmt_field, fmt_wire, fmt_kw};
 
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]

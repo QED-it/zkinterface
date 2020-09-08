@@ -1,10 +1,10 @@
 use crate::{ConstraintSystemOwned, GateSystemOwned, GateOwned, CircuitHeaderOwned};
 use GateOwned::*;
 use crate::reading::Variable;
-use super::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
-use super::builder::{IBuilder, CachingBuilder};
+use crate::gates::profiles::{config_for_profile_arithmetic, ARITHMETIC_CIRCUIT};
+use crate::gates::producers::builder::{IBuilder, CachingBuilder};
 use crate::gates::profiles::switch_profile;
-use crate::gates::builder::OptimizingBuilder;
+use crate::gates::producers::builder::OptimizingBuilder;
 
 
 pub fn r1cs_to_gates(

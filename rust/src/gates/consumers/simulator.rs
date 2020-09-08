@@ -113,7 +113,7 @@ impl Simulator {
 
 #[test]
 fn test_simulator() -> Result<()> {
-    use super::examples::*;
+    use crate::gates::producers::examples::*;
 
     let header = example_circuit_header();
     let witness = example_witness();

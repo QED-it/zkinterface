@@ -42,8 +42,8 @@ Write all the statement files to stdout (to pipe to another program):
 ";
 
 use structopt::clap::AppSettings::*;
-use zkinterface::gates::validator::Validator;
-use zkinterface::gates::simulator::Simulator;
+use zkinterface::gates::consumers::validator::Validator;
+use zkinterface::gates::consumers::simulator::Simulator;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -205,7 +205,7 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
 }
 
 fn example_ac(out_dir: &Path) -> Result<()> {
-    use zkinterface::gates::examples::*;
+    use zkinterface::gates::producers::examples::*;
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
