@@ -16,7 +16,7 @@ To communicate a statement, three types of information are transmitted:
 
 - Metadata providing additional instructions to the proving system.
 
-The exact structure of this information is specified in a Flatbuffers schema called `zkinterface.fbs` in this repository, along with inline documentation. See the respective structures: GateSystem, Witness, CircuitHeader.
+The exact structure of this information is specified in a FlatBuffers schema called `zkinterface.fbs` in this repository, along with inline documentation. See the respective structures: GateSystem, Witness, CircuitHeader.
 
 In this guide, the structures are stored in intermediary files for ease and clarity. However, streaming implementations without storage are also supported.
 
@@ -61,41 +61,51 @@ It also acts as a simulator in place of a proving system, and reports whether a 
     The statement is TRUE!
 
 
-### A consumer: human-readable printer
+### A consumer: format to human-readable YAML
 
-The command below reads the statement and prints a textual representation of it, including colored highlights for readability.
+The command below reads the statement and prints a textual representation of it. It uses the YAML format, which is similar to JSON but easier to read and write. It is one-to-one equivalent to the information formatted with FlatBuffers.
 
-    zkif --profile=AC explain
+    zkif pretty
 
     …
     Loading file ./witness.zkif
     Loading file ./statement.zkif
-    
 
-    FreeVariableId 10
-    FieldMaximum 100
-    Gate Constant
-    Gate InstanceVar
-    Gate Witness
-    Gate AssertZero
-    Gate Add
-    Gate Mul
-    Profile arithmetic_circuit
-    SetInstanceVar wire_4 = 25
+    ---
+    circuit_headers:
+      - instance_variables:
+          variable_ids: [4]
+          values: [25, 0, 0, 0]
+        free_variable_id: 10
+        field_maximum: [100, 0, 0, 0, 0, 0, 0, 0]
+        configuration:
+          - { key: Gate, text: Constant }
+          - { key: Gate, text: InstanceVar }
+          - { key: Gate, text: Witness }
+          - { key: Gate, text: AssertZero }
+          - { key: Gate, text: Add }
+          - { key: Gate, text: Mul }
+        profile_name: arithmetic_circuit
     
-    wire_1	<- Constant 100
-    wire_2	<- Witness
-    wire_3	<- Witness
-    wire_4	<- InstanceVar
-    wire_5	<- wire_2 * wire_2
-    wire_6	<- wire_3 * wire_3
-    wire_7	<- wire_5 + wire_6
-    wire_8	<- wire_1 * wire_4
-    wire_9	<- wire_7 + wire_8
-    AssertZero wire_9
+    gate_systems:
+      - gates:
+          - Constant:
+              - 1
+              - [100, 0, 0, 0, 0, 0, 0, 0]
+          - Witness: 2
+          - Witness: 3
+          - InstanceVar: 4
+          - Mul: [5, 2, 2]
+          - Mul: [6, 3, 3]
+          - Add: [7, 5, 6]
+          - Mul: [8, 1, 4]
+          - Add: [9, 7, 8]
+          - AssertZero: 9
     
-    wire_2	= 3
-    wire_3	= 4
+    witnesses:
+      - assigned_variables:
+          variable_ids: [2, 3]
+          values: [3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0]
 
 
 ### A producer: converter from R1CS
@@ -111,7 +121,7 @@ An easy way to start a new integration is to explore the source code of the libr
 
 ### Basic API
 
-All information to be transmitted between systems is in data structures formally specified by the Flatbuffers schema. The simplest Rust API available is a straight one-to-one mapping of these structures. In essence:
+All information to be transmitted between systems is in data structures formally specified by the FlatBuffers schema. The simplest Rust API available is a straight one-to-one mapping of these structures. In essence:
 
     pub struct GateSystemOwned {
         pub gates: Vec<GateOwned>,
@@ -147,4 +157,4 @@ This API is experimental and expected to evolve or be abandoned depending on use
 
 ### Low-level serialization
 
-It is not necessary to use the above APIs to integrate zkInterface. Any implementation of Flatbuffers can be used directly instead (a custom implementation is doable because the encoding is simple, but that would be a last resort). See https://google.github.io/flatbuffers/ for existing tools. This is the recommended approach for systems written in languages other than Rust.
+It is not necessary to use the above APIs to integrate zkInterface. Any implementation of FlatBuffers can be used directly instead (a custom implementation is doable because the encoding is simple, but that would be a last resort). See https://google.github.io/flatbuffers/ for existing tools. This is the recommended approach for systems written in languages other than Rust.

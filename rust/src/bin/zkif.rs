@@ -248,7 +248,7 @@ fn main_json(messages: &Messages) -> Result<()> {
 
 fn main_pretty(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
-    serde_json::to_writer_pretty(stdout(), &messages_owned)?;
+    serde_yaml::to_writer(stdout(), &messages_owned)?;
     Ok(())
 }
 

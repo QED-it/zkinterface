@@ -1,0 +1,35 @@
+---
+circuit_headers:
+  - instance_variables:
+      variable_ids: [4]
+      values: [25, 0, 0, 0]
+    free_variable_id: 10
+    field_maximum: [100, 0, 0, 0, 0, 0, 0, 0]
+    configuration:
+      - { key: Gate, text: Constant }
+      - { key: Gate, text: InstanceVar }
+      - { key: Gate, text: Witness }
+      - { key: Gate, text: AssertZero }
+      - { key: Gate, text: Add }
+      - { key: Gate, text: Mul }
+    profile_name: arithmetic_circuit
+
+gate_systems:
+  - gates:
+      - Constant:
+          - 1
+          - [100, 0, 0, 0, 0, 0, 0, 0]
+      - Witness: 2
+      - Witness: 3
+      - InstanceVar: 4
+      - Mul: [5, 2, 2]
+      - Mul: [6, 3, 3]
+      - Add: [7, 5, 6]
+      - Mul: [8, 1, 4]
+      - Add: [9, 7, 8]
+      - AssertZero: 9
+
+witnesses:
+  - assigned_variables:
+      variable_ids: [2, 3]
+      values: [3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0]
