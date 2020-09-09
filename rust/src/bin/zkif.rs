@@ -94,7 +94,7 @@ fn main() -> Result<()> {
         "example" => main_example(&options),
         "cat" => main_cat(&options),
         "json" => main_json(&load_messages(&options)?),
-        "pretty" => main_pretty(&load_messages(&options)?),
+        "to-yaml" => main_pretty(&load_messages(&options)?),
         "explain" => main_explain(&load_messages(&options)?, &options),
         "validate" => main_validate(&load_messages(&options)?, &options),
         "simulate" => main_simulate(&load_messages(&options)?, &options),

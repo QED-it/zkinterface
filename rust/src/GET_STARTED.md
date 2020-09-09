@@ -36,7 +36,7 @@ This will print a list of available commands (your mileage may vary depending on
 
 ### A producer: example generator
 
-The command below generates an example statement. It stores it into files in the working directory (customizable). The profile AC (Arithmetic Circuit) was selected.
+The command below generates an example statement. It stores it into files in the working directory (customizable, see `zkif help`). The profile AC (Arithmetic Circuit) was selected.
 
     zkif --profile=AC example
 
@@ -65,7 +65,7 @@ It also acts as a simulator in place of a proving system, and reports whether a 
 
 The command below reads the statement and prints a textual representation of it. It uses the YAML format, which is similar to JSON but easier to read and write. It is one-to-one equivalent to the information formatted with FlatBuffers.
 
-    zkif pretty
+    zkif to-yaml
 
     …
     Loading file ./witness.zkif
