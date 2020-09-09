@@ -189,16 +189,14 @@ fn example_r1cs(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        let path = out_dir.join("header.zkif");
-        example_circuit_header().write_into(&mut File::create(&path)?)?;
+        let path = out_dir.join("statement.zkif");
+        let mut file = File::create(&path)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_constraints().write_into(&mut file)?;
         eprintln!("Written {}", path.display());
 
         let path = out_dir.join("witness.zkif");
         example_witness().write_into(&mut File::create(&path)?)?;
-        eprintln!("Written {}", path.display());
-
-        let path = out_dir.join("constraints.zkif");
-        example_constraints().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
     }
     Ok(())
@@ -219,16 +217,14 @@ fn example_ac(out_dir: &Path) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        let path = out_dir.join("header.zkif");
-        example_circuit_header().write_into(&mut File::create(&path)?)?;
+        let path = out_dir.join("statement.zkif");
+        let mut file = File::create(&path)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_gate_system().write_into(&mut file)?;
         eprintln!("Written {}", path.display());
 
         let path = out_dir.join("witness.zkif");
         example_witness().write_into(&mut File::create(&path)?)?;
-        eprintln!("Written {}", path.display());
-
-        let path = out_dir.join("gates.zkif");
-        example_gate_system().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
     }
     Ok(())

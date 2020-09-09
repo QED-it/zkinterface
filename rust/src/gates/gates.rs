@@ -2,15 +2,16 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface::{Gate, GateArgs, GateSet, GateConstant, GateConstantArgs, Wire, GateAssertZero, GateAdd, GateMul, GateAssertZeroArgs, GateAddArgs, GateMulArgs, GateInstanceVar, GateInstanceVarArgs, GateWitness, GateWitnessArgs};
 
+type WireId = u64;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub enum GateOwned {
-    Constant(u64, Vec<u8>),
-    InstanceVar(u64),
-    Witness(u64),
-    AssertZero(u64),
-    Add(u64, u64, u64),
-    Mul(u64, u64, u64),
+    Constant(WireId, Vec<u8>),
+    InstanceVar(WireId),
+    Witness(WireId),
+    AssertZero(WireId),
+    Add(WireId, WireId, WireId),
+    Mul(WireId, WireId, WireId),
 }
 
 use GateOwned::*;
@@ -74,7 +75,7 @@ impl GateOwned {
         }
     }
 
-    pub fn get_output(&self) -> u64 {
+    pub fn get_output(&self) -> WireId {
         match *self {
             Constant(o, _) => o,
             InstanceVar(o) => o,
@@ -85,7 +86,7 @@ impl GateOwned {
         }
     }
 
-    pub fn with_output(self, o: u64) -> Self {
+    pub fn with_output(self, o: WireId) -> Self {
         match self {
             Constant(_, c) => Constant(o, c),
             InstanceVar(_) => InstanceVar(o),
