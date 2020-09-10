@@ -124,6 +124,7 @@ An easy way to start a new integration is to explore the source code of the libr
 
 All information to be transmitted between systems is in data structures formally specified by the FlatBuffers schema. The simplest Rust API available is a straight one-to-one mapping of these structures. In essence:
 
+```rust
     pub struct GateSystemOwned {
         pub gates: Vec<GateOwned>,
     }
@@ -138,6 +139,7 @@ All information to be transmitted between systems is in data structures formally
         Add(WireId, WireId, WireId),
         Mul(WireId, WireId, WireId),
     }
+```
 
 A producer can create a `GateSystemOwned` structure and populate its `gates` vector with a number of `GateOwned`, in compliance with the specification.
 
