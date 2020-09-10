@@ -1,10 +1,10 @@
 # Getting Started with zkInterface
 
-This user guide is aimed at implementors of zero-knowledge systems and details how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
+This user guide is aimed at implementors of zero-knowledge systems and details on how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
 
-This guide uses the zkInterface supporting library for the Rust programming language, and its companion command-line interface (CLI). It focuses on the circuit format supported from zkInterface 2.0.0. For R1CS, see related content in this repository.
+This guide uses the zkInterface supporting library for the Rust programming language and its companion command-line interface (CLI). It focuses on the circuit format supported by zkInterface 2.0.0. For R1CS, see related content in this repository.
 
-zkInterface is a method to communicate a zero-knowledge statement from a statement generator to a proving system. In this guide, we first generate example statements, and we then consume them. These steps can serve as a starting point for a new implementation in a statement generator, or in a proving system, respectively.
+zkInterface is a method to communicate a zero-knowledge statement from a statement generator to a proving system. In this guide, we first generate example statements, and we then consume them. These steps can serve as a starting point for a new implementation in a statement generator or in a proving system, respectively.
 
 ## Information Flow
 
@@ -12,7 +12,7 @@ To communicate a statement, three types of information are transmitted:
 
 - A description of computation as a circuit of gates connected through wires.
 
-- A witness used as input to the circuit by the prover side of the proving system.
+- A witness is used as input to the circuit by the prover side of the proving system.
 
 - Metadata providing additional instructions to the proving system.
 
@@ -27,6 +27,7 @@ In this guide, the structures are stored in intermediary files for ease and clar
     git clone https://github.com/QED-it/zkinterface.git
     cd zkinterface
     git checkout gates
+    cd rust
     cargo install --path .
     
     zkif help
@@ -49,7 +50,7 @@ The command below generates an example statement. It stores it into files in the
 
 The following command validates that the statement is properly formatted in compliance with the selected profile (Arithmetic Circuit).
 
-It also acts as a simulator in place of a proving system, and reports whether a prover could convince a verifier. That is, it performs the computation described by the circuit and checks whether the witness satisfies the circuit.
+It also acts as a simulator in place of a proving system and reports whether a prover could convince a verifier. That is, it performs the computation described by the circuit and checks whether the witness satisfies the circuit.
 
     zkif --profile=AC simulate
     
@@ -147,7 +148,7 @@ Implementations should expect to produce or receive not one but a stream of thes
 
 ### Builder API
 
-An additional circuit builder API is suggested. It may assist with common tasks that arises when building a circuit. The following features are proposed:
+An additional circuit builder API is suggested. It may assist with common tasks that arise when building a circuit. The following features are proposed:
 - Allocation of unique wire IDs. See `struct Builder`.
 - De-duplication of repeated gates. See `struct CachingBuilder`.
 - Removal of identity gates. See `struct OptimizingBuilder`.
