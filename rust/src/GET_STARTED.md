@@ -1,6 +1,6 @@
 # Getting Started with zkInterface
 
-This user guide is aimed at implementors of zero-knowledge systems and details on how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
+This user guide is aimed at implementors of zero-knowledge systems and explains how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
 
 This guide uses the zkInterface supporting library for the Rust programming language and its companion command-line interface (CLI). It focuses on the circuit format supported by zkInterface 2.0.0. For R1CS, see related content in this repository.
 
@@ -10,9 +10,9 @@ zkInterface is a method to communicate a zero-knowledge statement from a stateme
 
 To communicate a statement, three types of information are transmitted:
 
-- A description of computation as a circuit of gates connected through wires.
+- A description of a computation as a circuit of gates connected through wires.
 
-- A witness is used as input to the circuit by the prover side of the proving system.
+- A witness which is the inputs to the circuit by the prover side of the proving system.
 
 - Metadata providing additional instructions to the proving system.
 
@@ -25,9 +25,8 @@ In this guide, the structures are stored in intermediary files for ease and clar
 ### Install
 
     git clone https://github.com/QED-it/zkinterface.git
-    cd zkinterface
+    cd zkinterface/rust/
     git checkout gates
-    cd rust
     cargo install --path .
     
     zkif help
