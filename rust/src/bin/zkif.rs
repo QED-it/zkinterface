@@ -64,6 +64,8 @@ struct Options {
     ///
     /// pretty      Convert to JSON with spacing.
     ///
+    /// to-yaml     Convert to YAML format
+    ///
     /// explain     Print the content in a human-readable form.
     ///
     /// validate    Validate the format and semantics of a statement, as seen by a verifier.
@@ -94,7 +96,8 @@ fn main() -> Result<()> {
         "example" => main_example(&options),
         "cat" => main_cat(&options),
         "json" => main_json(&load_messages(&options)?),
-        "to-yaml" => main_pretty(&load_messages(&options)?),
+        "pretty" => main_pretty(&load_messages(&options)?),
+        "to-yaml" => main_yaml(&load_messages(&options)?),
         "explain" => main_explain(&load_messages(&options)?, &options),
         "validate" => main_validate(&load_messages(&options)?, &options),
         "simulate" => main_simulate(&load_messages(&options)?, &options),
@@ -246,9 +249,15 @@ fn main_json(messages: &Messages) -> Result<()> {
     Ok(())
 }
 
-fn main_pretty(messages: &Messages) -> Result<()> {
+fn main_yaml(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
     serde_yaml::to_writer(stdout(), &messages_owned)?;
+    Ok(())
+}
+
+fn main_pretty(messages: &Messages) -> Result<()> {
+    let messages_owned = MessagesOwned::from(messages);
+    serde_json::to_writer_pretty(stdout(), &messages_owned)?;
     Ok(())
 }
 

@@ -1,18 +1,18 @@
 # Getting Started with zkInterface
 
-This user guide is aimed at implementors of zero-knowledge systems and details how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
+This user guide is aimed at implementors of zero-knowledge systems and explains how to integrate their systems using zkInterface. For an introduction and more details, see the `zkInterface.pdf` specification in this repository.
 
-This guide uses the zkInterface supporting library for the Rust programming language, and its companion command-line interface (CLI). It focuses on the circuit format supported from zkInterface 2.0.0. For R1CS, see related content in this repository.
+This guide uses the zkInterface supporting library for the Rust programming language and its companion command-line interface (CLI). It focuses on the circuit format supported by zkInterface 2.0.0. For R1CS, see related content in this repository.
 
-zkInterface is a method to communicate a zero-knowledge statement from a statement generator to a proving system. In this guide, we first generate example statements, and we then consume them. These steps can serve as a starting point for a new implementation in a statement generator, or in a proving system, respectively.
+zkInterface is a method to communicate a zero-knowledge statement from a statement generator to a proving system. In this guide, we first generate example statements, and we then consume them. These steps can serve as a starting point for a new implementation in a statement generator or in a proving system, respectively.
 
 ## Information Flow
 
 To communicate a statement, three types of information are transmitted:
 
-- A description of computation as a circuit of gates connected through wires.
+- A description of a computation as a circuit of gates connected through wires.
 
-- A witness used as input to the circuit by the prover side of the proving system.
+- A witness which is the inputs to the circuit by the prover side of the proving system.
 
 - Metadata providing additional instructions to the proving system.
 
@@ -25,7 +25,7 @@ In this guide, the structures are stored in intermediary files for ease and clar
 ### Install
 
     git clone https://github.com/QED-it/zkinterface.git
-    cd zkinterface
+    cd zkinterface/rust/
     git checkout gates
     cargo install --path .
     
@@ -49,7 +49,7 @@ The command below generates an example statement. It stores it into files in the
 
 The following command validates that the statement is properly formatted in compliance with the selected profile (Arithmetic Circuit).
 
-It also acts as a simulator in place of a proving system, and reports whether a prover could convince a verifier. That is, it performs the computation described by the circuit and checks whether the witness satisfies the circuit.
+It also acts as a simulator in place of a proving system and reports whether a prover could convince a verifier. That is, it performs the computation described by the circuit and checks whether the witness satisfies the circuit.
 
     zkif --profile=AC simulate
     
@@ -123,20 +123,22 @@ An easy way to start a new integration is to explore the source code of the libr
 
 All information to be transmitted between systems is in data structures formally specified by the FlatBuffers schema. The simplest Rust API available is a straight one-to-one mapping of these structures. In essence:
 
-    pub struct GateSystemOwned {
-        pub gates: Vec<GateOwned>,
-    }
+```rust
+pub struct GateSystemOwned {
+    pub gates: Vec<GateOwned>,
+}
 
-    type WireId = u64;
-    
-    pub enum GateOwned {
-        Constant(WireId, Vec<u8>),
-        InstanceVar(WireId),
-        Witness(WireId),
-        AssertZero(WireId),
-        Add(WireId, WireId, WireId),
-        Mul(WireId, WireId, WireId),
-    }
+type WireId = u64;
+
+pub enum GateOwned {
+    Constant(WireId, Vec<u8>),
+    InstanceVar(WireId),
+    Witness(WireId),
+    AssertZero(WireId),
+    Add(WireId, WireId, WireId),
+    Mul(WireId, WireId, WireId),
+}
+```
 
 A producer can create a `GateSystemOwned` structure and populate its `gates` vector with a number of `GateOwned`, in compliance with the specification.
 
@@ -147,7 +149,7 @@ Implementations should expect to produce or receive not one but a stream of thes
 
 ### Builder API
 
-An additional circuit builder API is suggested. It may assist with common tasks that arises when building a circuit. The following features are proposed:
+An additional circuit builder API is suggested. It may assist with common tasks that arise when building a circuit. The following features are proposed:
 - Allocation of unique wire IDs. See `struct Builder`.
 - De-duplication of repeated gates. See `struct CachingBuilder`.
 - Removal of identity gates. See `struct OptimizingBuilder`.
