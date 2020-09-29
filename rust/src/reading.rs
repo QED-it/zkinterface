@@ -9,23 +9,23 @@ use std::path::Path;
 
 use crate::zkinterface_generated::zkinterface::{
     BilinearConstraint,
-    Circuit,
+    CircuitHeader,
     get_size_prefixed_root_as_root,
     Root,
     Variables,
 };
 use crate::Result;
 
-pub fn read_circuit(msg: &[u8]) -> Result<Circuit> {
+pub fn read_circuit_header(msg: &[u8]) -> Result<CircuitHeader> {
     get_size_prefixed_root_as_root(msg)
-        .message_as_circuit().ok_or("not a Circuit message".into())
+        .message_as_circuit_header().ok_or("not a CircuitHeader message".into())
 }
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
-    let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
-    let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
+pub fn parse_header(msg: &[u8]) -> Option<(CircuitHeader, Vec<Variable>)> {
+    let header = get_size_prefixed_root_as_root(msg).message_as_circuit_header()?;
+    let input_var_ids = header.instance_variables()?.variable_ids()?.safe_slice();
 
-    let assigned = match call.connections()?.values() {
+    let assigned = match header.instance_variables()?.values() {
         Some(bytes) => {
             let stride = get_value_size(input_var_ids, bytes);
 
@@ -39,7 +39,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
         None => vec![],
     };
 
-    Some((call, assigned))
+    Some((header, assigned))
 }
 
 pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
@@ -99,13 +99,13 @@ impl fmt::Debug for Messages {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use crate::zkinterface_generated::zkinterface::Message::*;
 
-        let mut has_circuit = false;
+        let mut has_header = false;
         let mut has_witness = false;
         let mut has_constraints = false;
 
         for root in self.into_iter() {
             match root.message_type() {
-                Circuit => has_circuit = true,
+                CircuitHeader => has_header = true,
                 Witness => has_witness = true,
                 ConstraintSystem => has_constraints = true,
                 Command => {}
@@ -113,17 +113,17 @@ impl fmt::Debug for Messages {
             }
         }
 
-        if has_circuit {
-            write!(f, "\nZkInterface {:?}\n", Circuit)?;
-            if let Some(vars) = self.connection_variables() {
+        if has_header {
+            write!(f, "\nZkInterface {:?}\n", CircuitHeader)?;
+            if let Some(vars) = self.instance_variables() {
                 write!(f, "Public variables:\n")?;
                 for var in vars {
                     write!(f, "- {:?}\n", var)?;
                 }
             }
-            if let Some(circuit) = self.last_circuit() {
-                //write!(f, "{:?}\n", super::owned::circuit::CircuitOwned::from(circuit))?;
-                write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
+            if let Some(header) = self.last_header() {
+                //write!(f, "{:?}\n", super::owned::header::CircuitOwned::from(header))?;
+                write!(f, "Free variable id: {}\n", header.free_variable_id())?;
             }
         }
 
@@ -188,9 +188,9 @@ impl Messages {
         self.push_message(buf)
     }
 
-    pub fn first_circuit(&self) -> Option<Circuit> {
+    pub fn first_header(&self) -> Option<CircuitHeader> {
         for message in self {
-            match message.message_as_circuit() {
+            match message.message_as_circuit_header() {
                 Some(ret) => return Some(ret),
                 None => continue,
             };
@@ -198,17 +198,17 @@ impl Messages {
         None
     }
 
-    pub fn last_circuit(&self) -> Option<Circuit> {
-        let returns = self.circuits();
+    pub fn last_header(&self) -> Option<CircuitHeader> {
+        let returns = self.headers();
         if returns.len() > 0 {
             Some(returns[returns.len() - 1])
         } else { None }
     }
 
-    pub fn circuits(&self) -> Vec<Circuit> {
+    pub fn headers(&self) -> Vec<CircuitHeader> {
         let mut returns = vec![];
         for message in self {
-            match message.message_as_circuit() {
+            match message.message_as_circuit_header() {
                 Some(ret) => returns.push(ret),
                 None => continue,
             };
@@ -216,18 +216,18 @@ impl Messages {
         returns
     }
 
-    pub fn connection_variables(&self) -> Option<Vec<Variable>> {
-        let connections = self.last_circuit()?.connections()?;
-        collect_connection_variables(&connections, self.first_id)
+    pub fn instance_variables(&self) -> Option<Vec<Variable>> {
+        let instance_variables = self.last_header()?.instance_variables()?;
+        collect_instance_variables(&instance_variables, self.first_id)
     }
 
     pub fn private_variables(&self) -> Option<Vec<Variable>> {
         // Collect private variables.
-        let circuit = self.last_circuit()?;
+        let header = self.last_header()?;
         let mut vars = collect_unassigned_private_variables(
-            &circuit.connections()?,
+            &header.instance_variables()?,
             self.first_id,
-            circuit.free_variable_id())?;
+            header.free_variable_id())?;
 
         // Collect assigned values, if any.
         let mut values = HashMap::with_capacity(vars.len());
@@ -249,7 +249,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
+pub fn collect_instance_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -272,13 +272,13 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
-    let var_ids = conn.variable_ids()?.safe_slice();
+pub fn collect_unassigned_private_variables<'a>(instance_variables: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
+    let var_ids = instance_variables.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
-        .filter(|id| // Ignore variables already in the connections.
+        .filter(|id| // Ignore variables already in the instance_variables.
             !var_ids.contains(id)
-        ).map(|id|          // Variable without value.
+        ).map(|id|    // Variable without value.
         Variable {
             id,
             value: &[],

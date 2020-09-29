@@ -16,6 +16,30 @@ pub struct KeyValueOwned {
     pub number: i64,
 }
 
+impl<K: ToString> From<(K, String)> for KeyValueOwned {
+    fn from((key, text): (K, String)) -> Self {
+        Self { key: key.to_string(), text: Some(text), ..Self::default() }
+    }
+}
+
+impl<K: ToString> From<(K, &str)> for KeyValueOwned {
+    fn from((key, text): (K, &str)) -> Self {
+        Self { key: key.to_string(), text: Some(text.to_string()), ..Self::default() }
+    }
+}
+
+impl<K: ToString> From<(K, Vec<u8>)> for KeyValueOwned {
+    fn from((key, data): (K, Vec<u8>)) -> Self {
+        Self { key: key.to_string(), data: Some(data), ..Self::default() }
+    }
+}
+
+impl<K: ToString> From<(K, i64)> for KeyValueOwned {
+    fn from((key, number): (K, i64)) -> Self {
+        Self { key: key.to_string(), number, ..Self::default() }
+    }
+}
+
 impl<'a> From<KeyValue<'a>> for KeyValueOwned {
     /// Convert from Flatbuffers references to owned structure.
     fn from(kv_ref: KeyValue) -> KeyValueOwned {

@@ -1,16 +1,11 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{
-    Witness,
-    WitnessArgs,
-    Message,
-    Root,
-    RootArgs,
-};
+use crate::zkinterface_generated::zkinterface::{Witness, WitnessArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
 use super::variables::VariablesOwned;
 use crate::Result;
-
+use std::convert::TryFrom;
+use std::error::Error;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WitnessOwned {
@@ -26,6 +21,17 @@ impl<'a> From<Witness<'a>> for WitnessOwned {
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for WitnessOwned {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            get_size_prefixed_root_as_root(&buffer)
+                .message_as_witness()
+                .ok_or("Not a Witness message.")?))
+    }
+}
+
 impl WitnessOwned {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
@@ -35,13 +41,13 @@ impl WitnessOwned {
     {
         let assigned_variables = Some(self.assigned_variables.build(builder));
 
-        let call = Witness::create(builder, &WitnessArgs {
+        let witness = Witness::create(builder, &WitnessArgs {
             assigned_variables,
         });
 
         Root::create(builder, &RootArgs {
             message_type: Message::Witness,
-            message: Some(call.as_union_value()),
+            message: Some(witness.as_union_value()),
         })
     }
 

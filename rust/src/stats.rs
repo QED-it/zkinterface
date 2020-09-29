@@ -23,9 +23,9 @@ impl Stats {
     }
 
     pub fn push(&mut self, messages: &Messages) -> Result<()> {
-        let circuit = messages.last_circuit().ok_or("no circuit")?;
-        self.num_public_inputs = circuit.connections().unwrap().variable_ids().unwrap().len() as u64;
-        self.num_private_variables = circuit.free_variable_id() - self.num_public_inputs - 1;
+        let header = messages.last_header().ok_or("no circuit")?;
+        self.num_public_inputs = header.instance_variables().unwrap().variable_ids().unwrap().len() as u64;
+        self.num_private_variables = header.free_variable_id() - self.num_public_inputs - 1;
 
         for constraint in messages.iter_constraints() {
             self.multiplications += 1;

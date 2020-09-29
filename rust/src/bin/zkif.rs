@@ -3,9 +3,9 @@ extern crate serde_json;
 extern crate zkinterface;
 
 use std::fs;
-use std::env;
 use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
+use structopt::StructOpt;
 
 use zkinterface::{
     reading::Messages,
@@ -14,89 +14,135 @@ use zkinterface::{
     Result,
 };
 use std::fs::{File, create_dir_all};
+use std::ffi::OsStr;
 
-const USAGE: &str = "zkInterface tools.
+const ABOUT: &str = "
+This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
 
-The commands below work within a directory given as first parameter (`local` in the examples below).
-Defaults to the current working directory. The dash - means either write to stdout or read from stdin.
+The tools below work within a workspace directory given after the tool name (`local` in the examples below), or in the current working directory by default. To read from stdin or write to stdout, pass a dash - instead of a filename.
 
 Create an example statement:
-    cargo run example local
+    zkif example local
 Or:
-    cargo run example - > local/example.zkif
+    zkif example - > local/example.zkif
 
 Print a statement in different forms:
-    cargo run json    local
-    cargo run pretty  local
-    cargo run explain local
-    cargo run stats   local
+    zkif to-json local
+    zkif to-yaml local
+    zkif explain local
 
 Simulate a proving system:
-    cargo run fake_prove  local
-    cargo run fake_verify local
+    zkif stats       local
+    zkif fake_prove  local
+    zkif fake_verify local
 
 Write all the statement files to stdout (to pipe to another program):
-    cargo run cat local
+    zkif cat local
 
 ";
 
-pub fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let args: Vec<&str> = args.iter().map(|a| &a[..]).collect();
-    if args.len() <= 1 {
-        eprintln!("{}", USAGE);
-        return Err("Missing command.".into());
-    }
+use structopt::clap::AppSettings::*;
+use zkinterface::consumers::validator::Validator;
+use zkinterface::consumers::simulator::Simulator;
 
-    let command = args[1];
-    let paths = &args[2..];
+#[derive(Debug, StructOpt)]
+#[structopt(
+name = "zkif",
+about = "zkInterface toolbox.",
+long_about = ABOUT,
+setting(DontCollapseArgsInUsage),
+setting(ColoredHelp)
+)]
+struct Options {
+    /// Which tool to run.
+    ///
+    /// example     Create example statements.
+    ///
+    /// cat         Write .zkif files to stdout.
+    ///
+    /// to-json     Convert to JSON on a single line.
+    ///
+    /// to-yaml     Convert to YAML.
+    ///
+    /// explain     Print the content in a human-readable form.
+    ///
+    /// validate    Validate the format and semantics of a statement, as seen by a verifier.
+    ///
+    /// simulate    Simulate a proving system as prover by verifying that the statement is true.
+    ///
+    /// stats       Calculate statistics about the circuit.
+    #[structopt(default_value = "help")]
+    tool: String,
 
-    match &command[..] {
-        "example" => main_example(paths),
-        "cat" => main_cat(paths),
-        "json" => main_json(&load_messages(paths)?),
-        "pretty" => main_pretty(&load_messages(paths)?),
-        "explain" => main_explain(&load_messages(paths)?),
-        "stats" => main_stats(&load_messages(paths)?),
-        "fake_prove" => main_fake_prove(&load_messages(paths)?),
-        "fake_verify" => main_fake_verify(&load_messages(paths)?),
+    /// The tools work in a workspace directory containing .zkif files.
+    ///
+    /// Alternatively, a list of .zkif files can be provided explicitly.
+    ///
+    /// The dash - means either write to stdout or read from stdin.
+    #[structopt(default_value = ".")]
+    paths: Vec<PathBuf>,
+}
+
+fn main() -> Result<()> {
+    let options: Options = Options::from_args();
+
+    match &options.tool[..] {
+        "example" => main_example(&options),
+        "cat" => main_cat(&options),
+        "to-json" => main_json(&load_messages(&options)?),
+        "to-yaml" => main_yaml(&load_messages(&options)?),
+        "explain" => main_explain(&load_messages(&options)?, &options),
+        "validate" => main_validate(&load_messages(&options)?, &options),
+        "simulate" => main_simulate(&load_messages(&options)?, &options),
+        "stats" => main_stats(&load_messages(&options)?),
+        "fake_prove" => main_fake_prove(&load_messages(&options)?),
+        "fake_verify" => main_fake_verify(&load_messages(&options)?),
+        "help" => {
+            Options::clap().print_long_help()?;
+            eprintln!("\n");
+            Ok(())
+        }
         _ => {
-            eprintln!("{}", USAGE);
-            Err(format!("Unknown command {}", command).into())
+            Options::clap().print_long_help()?;
+            eprintln!("\n");
+            Err(format!("Unknown command {}", &options.tool).into())
         }
     }
 }
 
-const DEFAULT_WORKING_DIR: [&str; 1] = ["."];
 
-fn load_messages(mut args: &[&str]) -> Result<Messages> {
+fn load_messages(opts: &Options) -> Result<Messages> {
     let mut messages = Messages::new();
 
-    if args.len() == 0 { args = &DEFAULT_WORKING_DIR; }
-    let is_stdin = args.len() == 1 && args[0] == "-";
-
-    if is_stdin {
-        messages.read_from(&mut stdin())?;
-    } else {
-        for path in list_files(args)? {
+    for path in list_files(opts)? {
+        if path == Path::new("-") {
+            eprintln!("Loading from stdin");
+            messages.read_from(&mut stdin())?;
+        } else {
             eprintln!("Loading file {}", path.display());
             messages.read_file(path)?;
         }
     }
+    eprintln!();
+
     Ok(messages)
 }
 
-fn list_files(args: &[&str]) -> Result<Vec<PathBuf>> {
+fn has_zkif_extension(path: &Path) -> bool {
+    path.extension() == Some(OsStr::new("zkif"))
+}
+
+fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
     let mut all_paths = vec![];
 
-    for &arg in args {
-        if arg.ends_with(".zkif") {
-            all_paths.push(arg.into());
+    for path in &opts.paths {
+        if has_zkif_extension(path) {
+            all_paths.push(path.clone());
         } else {
-            for file in fs::read_dir(arg)? {
+            for file in fs::read_dir(path)? {
                 match file {
                     Ok(file) => {
-                        if file.file_name().to_string_lossy().ends_with(".zkif") {
+                        if has_zkif_extension(&file.path()) {
                             all_paths.push(file.path());
                         }
                     }
@@ -111,39 +157,44 @@ fn list_files(args: &[&str]) -> Result<Vec<PathBuf>> {
     Ok(all_paths)
 }
 
-pub fn main_example(args: &[&str]) -> Result<()> {
+fn main_example(opts: &Options) -> Result<()> {
+    if opts.paths.len() != 1 {
+        return Err("Specify a single directory where to write examples.".into());
+    }
+    let out_dir = &opts.paths[0];
+    example_r1cs(out_dir)
+}
+
+fn example_r1cs(out_dir: &Path) -> Result<()> {
     use zkinterface::examples::*;
 
-    let out_dir = if args.len() > 0 { args[0] } else { "." };
-
-    if out_dir == "-" {
-        example_circuit().write_into(&mut stdout())?;
-        write_example_constraints(stdout())?;
-        write_example_witness(stdout())?;
+    if out_dir == Path::new("-") {
+        example_circuit_header().write_into(&mut stdout())?;
+        example_witness().write_into(&mut stdout())?;
+        example_constraints().write_into(&mut stdout())?;
+    } else if has_zkif_extension(out_dir) {
+        let mut file = File::create(out_dir)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_witness().write_into(&mut file)?;
+        example_constraints().write_into(&mut file)?;
     } else {
-        if out_dir.ends_with(".zkif") { return Err("Expecting to write to a directory, not to a file.".into()); }
-
-        let out_dir = Path::new(out_dir);
         create_dir_all(out_dir)?;
 
-        example_circuit().write_into(
-            &mut File::create(out_dir.join("main.zkif"))?)?;
+        let path = out_dir.join("statement.zkif");
+        let mut file = File::create(&path)?;
+        example_circuit_header().write_into(&mut file)?;
+        example_constraints().write_into(&mut file)?;
+        eprintln!("Written {}", path.display());
 
-        write_example_constraints(
-            File::create(out_dir.join("constraints.zkif"))?)?;
-
-        write_example_witness(
-            File::create(out_dir.join("witness.zkif"))?)?;
-
-        eprintln!("Written {}", out_dir.join("*.zkif").display());
+        let path = out_dir.join("witness.zkif");
+        example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
     }
-
     Ok(())
 }
 
-
-pub fn main_cat(args: &[&str]) -> Result<()> {
-    for path in list_files(args)? {
+fn main_cat(opts: &Options) -> Result<()> {
+    for path in list_files(opts)? {
         let mut file = File::open(&path)?;
         let mut stdout = stdout();
         copy(&mut file, &mut stdout)?;
@@ -151,24 +202,62 @@ pub fn main_cat(args: &[&str]) -> Result<()> {
     Ok(())
 }
 
-pub fn main_json(messages: &Messages) -> Result<()> {
+fn main_json(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
     serde_json::to_writer(stdout(), &messages_owned)?;
     Ok(())
 }
 
-pub fn main_pretty(messages: &Messages) -> Result<()> {
+fn main_yaml(messages: &Messages) -> Result<()> {
     let messages_owned = MessagesOwned::from(messages);
-    serde_json::to_writer_pretty(stdout(), &messages_owned)?;
+    serde_yaml::to_writer(stdout(), &messages_owned)?;
     Ok(())
 }
 
-pub fn main_explain(messages: &Messages) -> Result<()> {
+fn main_explain(messages: &Messages, opts: &Options) -> Result<()> {
     eprintln!("{:?}", messages);
     Ok(())
 }
 
-pub fn main_stats(messages: &Messages) -> Result<()> {
+fn main_validate(messages: &Messages, opts: &Options) -> Result<()> {
+    let messages = MessagesOwned::from(messages);
+
+    // Validate semantics as verifier.
+    let mut validator = Validator::new_as_verifier();
+    validator.validate(&messages);
+    print_violations(&validator.get_violations())?;
+    Ok(())
+}
+
+fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
+    let messages = MessagesOwned::from(messages);
+
+    // Validate semantics as prover.
+    let mut validator = Validator::new_as_prover();
+    validator.validate(&messages);
+    print_violations(&validator.get_violations())?;
+
+    // Check whether the statement is true.
+    let ok = Simulator::default().simulate(&messages);
+    match ok {
+        Err(_) => eprintln!("The statement is NOT TRUE!"),
+        Ok(_) => eprintln!("The statement is TRUE!"),
+    }
+    ok
+}
+
+fn print_violations(errors: &[String]) -> Result<()> {
+    if errors.len() > 0 {
+        eprintln!("The statement is NOT COMPLIANT with the specification!");
+        eprintln!("Violations:\n- {}\n", errors.join("\n- "));
+        Err(format!("Found {} violations of the specification.", errors.len()).into())
+    } else {
+        eprintln!("The statement is COMPLIANT with the specification!");
+        Ok(())
+    }
+}
+
+fn main_stats(messages: &Messages) -> Result<()> {
     let mut stats = Stats::new();
     stats.push(messages)?;
     serde_json::to_writer_pretty(stdout(), &stats)?;
@@ -176,14 +265,14 @@ pub fn main_stats(messages: &Messages) -> Result<()> {
 }
 
 
-pub fn main_fake_prove(_: &Messages) -> Result<()> {
+fn main_fake_prove(_: &Messages) -> Result<()> {
     let mut file = File::create("fake_proof")?;
     write!(file, "I hereby promess that I saw a witness that satisfies the constraint system.")?;
     eprintln!("Fake proof written to file `fake_proof`.");
     Ok(())
 }
 
-pub fn main_fake_verify(_: &Messages) -> Result<()> {
+fn main_fake_verify(_: &Messages) -> Result<()> {
     let mut file = File::open("fake_proof")?;
     let mut proof = String::new();
     file.read_to_string(&mut proof)?;
