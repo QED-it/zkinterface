@@ -46,7 +46,7 @@ impl Validator {
         Validator { as_prover: true, ..Self::default() }
     }
 
-    pub fn validate(&mut self, messages: &MessagesOwned) {
+    pub fn ingest_messages(&mut self, messages: &MessagesOwned) {
         for header in &messages.circuit_headers {
             self.ingest_header(header);
         }

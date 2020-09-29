@@ -224,7 +224,7 @@ fn main_validate(messages: &Messages, opts: &Options) -> Result<()> {
 
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
-    validator.validate(&messages);
+    validator.ingest_messages(&messages);
     print_violations(&validator.get_violations())?;
     Ok(())
 }
@@ -234,7 +234,7 @@ fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
 
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();
-    validator.validate(&messages);
+    validator.ingest_messages(&messages);
     print_violations(&validator.get_violations())?;
 
     // Check whether the statement is true.

@@ -1,9 +1,10 @@
-use crate::{Result, CircuitHeaderOwned, WitnessOwned, ConstraintSystemOwned, MessagesOwned};
+use crate::{Result, CircuitHeaderOwned, WitnessOwned, ConstraintSystemOwned, MessagesOwned, VariablesOwned};
 use crate::owned::constraints::BilinearConstraintOwned;
 
 use std::collections::HashMap;
 use num_bigint::BigUint;
-use num_traits::identities::Zero;
+use num_traits::identities::{Zero, One};
+use std::ops::{AddAssign, MulAssign};
 
 type Var = u64;
 type Field = BigUint;
@@ -33,6 +34,8 @@ impl Simulator {
         let max = header.field_maximum.as_ref().ok_or("No field_maximum specified")?;
         self.modulus = BigUint::from_bytes_le(max) + 1 as u8;
 
+        self.set(0, Field::one());
+
         // Set instance variable values.
         for var in header.instance_variables.get_variables() {
             self.set_encoded(var.id, var.value);
@@ -59,13 +62,31 @@ impl Simulator {
         Ok(())
     }
 
-    pub fn verify_constraint(&mut self, constraint: &BilinearConstraintOwned) -> Result<()> {
-        //let val = self.get(*var)?;
-        Ok(())
+    fn verify_constraint(&mut self, constraint: &BilinearConstraintOwned) -> Result<()> {
+        let a = self.sum_terms(&constraint.linear_combination_a)?;
+        let b = self.sum_terms(&constraint.linear_combination_b)?;
+        let c = self.sum_terms(&constraint.linear_combination_c)?;
+        let claim_zero = a * b - c;
+        if claim_zero.is_zero() {
+            Ok(())
+        } else {
+            Err(format!("Constraint is not satisfied ({:?})", constraint).into())
+        }
+    }
+
+    fn sum_terms(&self, terms: &VariablesOwned) -> Result<Field> {
+        let mut sum = Field::zero();
+        for term in terms.get_variables() {
+            let value = self.get(term.id)?;
+            let mut coeff = Field::from_bytes_le(term.value);
+            coeff *= value;
+            sum += coeff;
+        }
+        Ok((sum))
     }
 
     fn set_encoded(&mut self, id: Var, encoded: &[u8]) {
-        self.set(id, BigUint::from_bytes_le(encoded));
+        self.set(id, Field::from_bytes_le(encoded));
     }
 
     fn set(&mut self, id: Var, mut value: Field) {
