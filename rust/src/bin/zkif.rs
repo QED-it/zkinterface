@@ -91,9 +91,9 @@ fn main() -> Result<()> {
         "cat" => main_cat(&options),
         "to-json" => main_json(&load_messages(&options)?),
         "to-yaml" => main_yaml(&load_messages(&options)?),
-        "explain" => main_explain(&load_messages(&options)?, &options),
-        "validate" => main_validate(&load_messages(&options)?, &options),
-        "simulate" => main_simulate(&load_messages(&options)?, &options),
+        "explain" => main_explain(&load_messages(&options)?),
+        "validate" => main_validate(&load_messages(&options)?),
+        "simulate" => main_simulate(&load_messages(&options)?),
         "stats" => main_stats(&load_messages(&options)?),
         "fake_prove" => main_fake_prove(&load_messages(&options)?),
         "fake_verify" => main_fake_verify(&load_messages(&options)?),
@@ -214,12 +214,12 @@ fn main_yaml(messages: &Messages) -> Result<()> {
     Ok(())
 }
 
-fn main_explain(messages: &Messages, opts: &Options) -> Result<()> {
+fn main_explain(messages: &Messages) -> Result<()> {
     eprintln!("{:?}", messages);
     Ok(())
 }
 
-fn main_validate(messages: &Messages, opts: &Options) -> Result<()> {
+fn main_validate(messages: &Messages) -> Result<()> {
     let messages = MessagesOwned::from(messages);
 
     // Validate semantics as verifier.
@@ -229,7 +229,7 @@ fn main_validate(messages: &Messages, opts: &Options) -> Result<()> {
     Ok(())
 }
 
-fn main_simulate(messages: &Messages, opts: &Options) -> Result<()> {
+fn main_simulate(messages: &Messages) -> Result<()> {
     let messages = MessagesOwned::from(messages);
 
     // Validate semantics as prover.

@@ -4,7 +4,6 @@ use crate::owned::constraints::BilinearConstraintOwned;
 use std::collections::HashMap;
 use num_bigint::BigUint;
 use num_traits::identities::{Zero, One};
-use std::ops::{AddAssign, MulAssign};
 
 type Var = u64;
 type Field = BigUint;
@@ -66,8 +65,8 @@ impl Simulator {
         let a = self.sum_terms(&constraint.linear_combination_a)?;
         let b = self.sum_terms(&constraint.linear_combination_b)?;
         let c = self.sum_terms(&constraint.linear_combination_c)?;
-        let claim_zero = a * b - c;
-        if claim_zero.is_zero() {
+        let c = c % &self.modulus;
+        if (a * b).eq(&c) {
             Ok(())
         } else {
             Err(format!("Constraint is not satisfied ({:?})", constraint).into())
@@ -78,11 +77,10 @@ impl Simulator {
         let mut sum = Field::zero();
         for term in terms.get_variables() {
             let value = self.get(term.id)?;
-            let mut coeff = Field::from_bytes_le(term.value);
-            coeff *= value;
-            sum += coeff;
+            let coeff = Field::from_bytes_le(term.value);
+            sum += coeff * value;
         }
-        Ok((sum))
+        Ok(sum)
     }
 
     fn set_encoded(&mut self, id: Var, encoded: &[u8]) {
