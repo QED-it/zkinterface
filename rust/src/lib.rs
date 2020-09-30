@@ -1,4 +1,3 @@
-
 pub extern crate flatbuffers;
 pub extern crate serde;
 
@@ -9,7 +8,7 @@ pub mod owned;
 pub mod consumers;
 pub mod producers;
 
-pub use consumers::reader::Messages;
+pub use consumers::reader::Reader;
 pub use owned::{
     header::CircuitHeaderOwned,
     command::CommandOwned,

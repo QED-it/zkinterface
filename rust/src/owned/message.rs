@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::consumers::reader::Messages;
+use crate::consumers::reader::Reader;
 use crate::zkinterface_generated::zkinterface::Message;
 use super::header::CircuitHeaderOwned;
 use super::constraints::ConstraintSystemOwned;
@@ -13,12 +13,12 @@ pub struct MessagesOwned {
     pub witnesses: Vec<WitnessOwned>,
 }
 
-impl From<&Messages> for MessagesOwned {
+impl From<&Reader> for MessagesOwned {
     /// Convert from Flatbuffers messages to owned structure.
-    fn from(messages: &Messages) -> MessagesOwned {
+    fn from(reader: &Reader) -> MessagesOwned {
         let mut owned = MessagesOwned::default();
 
-        for msg in messages.into_iter() {
+        for msg in reader.into_iter() {
             match msg.message_type() {
                 Message::CircuitHeader => {
                     let header_ref = msg.message_as_circuit_header().unwrap();

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 use zkinterface::{
-    Messages,
+    Reader,
     MessagesOwned,
     consumers::stats::Stats,
     Result,
@@ -113,21 +113,21 @@ fn cli(options: &Options) -> Result<()> {
 }
 
 
-fn load_messages(opts: &Options) -> Result<Messages> {
-    let mut messages = Messages::new();
+fn load_messages(opts: &Options) -> Result<Reader> {
+    let mut reader = Reader::new();
 
     for path in list_files(opts)? {
         if path == Path::new("-") {
             eprintln!("Loading from stdin");
-            messages.read_from(&mut stdin())?;
+            reader.read_from(&mut stdin())?;
         } else {
             eprintln!("Loading file {}", path.display());
-            messages.read_file(path)?;
+            reader.read_file(path)?;
         }
     }
     eprintln!();
 
-    Ok(messages)
+    Ok(reader)
 }
 
 fn has_zkif_extension(path: &Path) -> bool {
@@ -204,42 +204,44 @@ fn main_cat(opts: &Options) -> Result<()> {
     Ok(())
 }
 
-fn main_json(messages: &Messages) -> Result<()> {
-    let messages_owned = MessagesOwned::from(messages);
+fn main_json(reader: &Reader) -> Result<()> {
+    let messages_owned = MessagesOwned::from(reader);
     serde_json::to_writer(stdout(), &messages_owned)?;
+    println!();
     Ok(())
 }
 
-fn main_yaml(messages: &Messages) -> Result<()> {
-    let messages_owned = MessagesOwned::from(messages);
+fn main_yaml(reader: &Reader) -> Result<()> {
+    let messages_owned = MessagesOwned::from(reader);
     serde_yaml::to_writer(stdout(), &messages_owned)?;
+    println!();
     Ok(())
 }
 
-fn main_explain(messages: &Messages) -> Result<()> {
-    eprintln!("{:?}", messages);
+fn main_explain(reader: &Reader) -> Result<()> {
+    eprintln!("{:?}", reader);
     Ok(())
 }
 
-fn main_validate(messages: &Messages) -> Result<()> {
-    let messages = MessagesOwned::from(messages);
+fn main_validate(reader: &Reader) -> Result<()> {
+    let reader = MessagesOwned::from(reader);
 
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
-    validator.ingest_messages(&messages);
+    validator.ingest_messages(&reader);
     print_violations(&validator.get_violations())
 }
 
-fn main_simulate(messages: &Messages) -> Result<()> {
-    let messages = MessagesOwned::from(messages);
+fn main_simulate(reader: &Reader) -> Result<()> {
+    let reader = MessagesOwned::from(reader);
 
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();
-    validator.ingest_messages(&messages);
+    validator.ingest_messages(&reader);
     print_violations(&validator.get_violations())?;
 
     // Check whether the statement is true.
-    let ok = Simulator::default().simulate(&messages);
+    let ok = Simulator::default().simulate(&reader);
     match ok {
         Err(_) => eprintln!("The statement is NOT TRUE!"),
         Ok(_) => eprintln!("The statement is TRUE!"),
@@ -258,22 +260,23 @@ fn print_violations(errors: &[String]) -> Result<()> {
     }
 }
 
-fn main_stats(messages: &Messages) -> Result<()> {
+fn main_stats(reader: &Reader) -> Result<()> {
     let mut stats = Stats::new();
-    stats.push(messages)?;
+    stats.push(reader)?;
     serde_json::to_writer_pretty(stdout(), &stats)?;
+    println!();
     Ok(())
 }
 
 
-fn main_fake_prove(_: &Messages) -> Result<()> {
+fn main_fake_prove(_: &Reader) -> Result<()> {
     let mut file = File::create("fake_proof")?;
     write!(file, "I hereby promess that I saw a witness that satisfies the constraint system.")?;
     eprintln!("Fake proof written to file `fake_proof`.");
     Ok(())
 }
 
-fn main_fake_verify(_: &Messages) -> Result<()> {
+fn main_fake_verify(_: &Reader) -> Result<()> {
     let mut file = File::open("fake_proof")?;
     let mut proof = String::new();
     file.read_to_string(&mut proof)?;
@@ -291,11 +294,6 @@ fn test_cli() -> Result<()> {
 
     cli(&Options {
         tool: "example".to_string(),
-        paths: vec![workspace.clone()],
-    })?;
-
-    cli(&Options {
-        tool: "stats".to_string(),
         paths: vec![workspace.clone()],
     })?;
 

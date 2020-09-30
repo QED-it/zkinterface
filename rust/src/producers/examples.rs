@@ -79,14 +79,14 @@ pub fn deserialize_small<T: EndianScalar>(encoded: &[u8]) -> T {
 
 #[test]
 fn test_examples() {
-    use crate::Messages;
+    use crate::Reader;
 
     let mut buf = Vec::<u8>::new();
     example_circuit_header().write_into(&mut buf).unwrap();
     example_witness().write_into(&mut buf).unwrap();
     example_constraints().write_into(&mut buf).unwrap();
 
-    let mut msg = Messages::new();
+    let mut msg = Reader::new();
     msg.push_message(buf).unwrap();
     assert_eq!(msg.into_iter().count(), 3);
     assert_eq!(msg.headers().len(), 1);

@@ -90,12 +90,12 @@ pub fn get_value_size(var_ids: &[u64], values: &[u8]) -> usize {
 
 /// Collect buffers waiting to be read.
 #[derive(Clone)]
-pub struct Messages {
+pub struct Reader {
     pub messages: Vec<Vec<u8>>,
     pub first_id: u64,
 }
 
-impl fmt::Debug for Messages {
+impl fmt::Debug for Reader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use crate::zkinterface_generated::zkinterface::Message::*;
 
@@ -148,9 +148,9 @@ impl fmt::Debug for Messages {
     }
 }
 
-impl Messages {
-    pub fn new() -> Messages {
-        Messages {
+impl Reader {
+    pub fn new() -> Reader {
+        Reader {
             messages: vec![],
             first_id: 1,
         }
@@ -159,8 +159,8 @@ impl Messages {
     /// Collect messages. Methods will filter out irrelevant variables.
     /// first_id: The first variable ID to consider in received messages.
     /// Variables with lower IDs are ignored.
-    pub fn new_filtered(first_id: u64) -> Messages {
-        Messages {
+    pub fn new_filtered(first_id: u64) -> Reader {
+        Reader {
             messages: vec![],
             first_id,
         }
@@ -289,7 +289,7 @@ pub fn collect_unassigned_private_variables<'a>(instance_variables: &Variables<'
 }
 
 // Implement `for message in messages`
-impl<'a> IntoIterator for &'a Messages {
+impl<'a> IntoIterator for &'a Reader {
     type Item = Root<'a>;
     type IntoIter = MessageIterator<'a>;
 
@@ -343,7 +343,7 @@ impl<'a> Iterator for MessageIterator<'a> {
 
 
 // R1CS messages
-impl Messages {
+impl Reader {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
             messages_iter: self.into_iter(),
@@ -424,7 +424,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
 
 
 // Assignment messages
-impl Messages {
+impl Reader {
     pub fn iter_witness(&self) -> WitnessIterator {
         WitnessIterator {
             messages_iter: self.into_iter(),
@@ -534,31 +534,31 @@ impl<'a> Iterator for WitnessIterator<'a> {
 
 #[test]
 fn test_pretty_print_var() {
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 1,
         value: &[],
     }), "var_1");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9, 0],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9, 8],
     }), "var_2=[9,8]");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 3,
         value: &[9, 8, 7, 6],
     }), "var_3=[9,8,7,6]");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 3,
         value: &[9, 8, 0, 6],
     }), "var_3=[9,8,0,6]");
-    assert_eq!(format!("{:?}", crate::reader::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 4,
         value: &[9, 8, 0, 6, 0, 0],
     }), "var_4=[9,8,0,6]");

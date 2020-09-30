@@ -157,7 +157,7 @@ fn test_circuit_header_owned() {
     let mut buffer = vec![];
     header.write_into(&mut buffer).unwrap();
 
-    let mut messages = crate::consumers::reader::Messages::new();
+    let mut messages = crate::consumers::reader::Reader::new();
     messages.push_message(buffer).unwrap();
     let header_ref = messages.first_header().unwrap();
 
