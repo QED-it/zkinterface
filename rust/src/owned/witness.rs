@@ -1,7 +1,7 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{Witness, WitnessArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
+use crate::zkinterface_generated::zkinterface as fb;
 use super::variables::VariablesOwned;
 use crate::Result;
 use std::convert::TryFrom;
@@ -12,9 +12,9 @@ pub struct WitnessOwned {
     pub assigned_variables: VariablesOwned,
 }
 
-impl<'a> From<Witness<'a>> for WitnessOwned {
+impl<'a> From<fb::Witness<'a>> for WitnessOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(witness_ref: Witness) -> WitnessOwned {
+    fn from(witness_ref: fb::Witness) -> WitnessOwned {
         WitnessOwned {
             assigned_variables: VariablesOwned::from(witness_ref.assigned_variables().unwrap()),
         }
@@ -26,7 +26,7 @@ impl<'a> TryFrom<&'a [u8]> for WitnessOwned {
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
         Ok(Self::from(
-            get_size_prefixed_root_as_root(&buffer)
+            fb::get_size_prefixed_root_as_root(&buffer)
                 .message_as_witness()
                 .ok_or("Not a Witness message.")?))
     }
@@ -37,16 +37,16 @@ impl WitnessOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>>
+    ) -> WIPOffset<fb::Root<'bldr>>
     {
         let assigned_variables = Some(self.assigned_variables.build(builder));
 
-        let witness = Witness::create(builder, &WitnessArgs {
+        let witness = fb::Witness::create(builder, &fb::WitnessArgs {
             assigned_variables,
         });
 
-        Root::create(builder, &RootArgs {
-            message_type: Message::Witness,
+        fb::Root::create(builder, &fb::RootArgs {
+            message_type: fb::Message::Witness,
             message: Some(witness.as_union_value()),
         })
     }

@@ -3,7 +3,7 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{Command, CommandArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
+use crate::zkinterface_generated::zkinterface as fb;
 use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
@@ -16,9 +16,9 @@ pub struct CommandOwned {
     //pub parameters: Option<Vec<KeyValue>>,
 }
 
-impl<'a> From<Command<'a>> for CommandOwned {
+impl<'a> From<fb::Command<'a>> for CommandOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(command_ref: Command) -> CommandOwned {
+    fn from(command_ref: fb::Command) -> CommandOwned {
         CommandOwned {
             constraints_generation: command_ref.constraints_generation(),
             witness_generation: command_ref.witness_generation(),
@@ -31,7 +31,7 @@ impl<'a> TryFrom<&'a [u8]> for CommandOwned {
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
         Ok(Self::from(
-            get_size_prefixed_root_as_root(&buffer)
+            fb::get_size_prefixed_root_as_root(&buffer)
                 .message_as_command()
                 .ok_or("Not a Command message.")?))
     }
@@ -42,16 +42,16 @@ impl CommandOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>>
+    ) -> WIPOffset<fb::Root<'bldr>>
     {
-        let call = Command::create(builder, &CommandArgs {
+        let call = fb::Command::create(builder, &fb::CommandArgs {
             constraints_generation: self.constraints_generation,
             witness_generation: self.witness_generation,
             parameters: None,
         });
 
-        Root::create(builder, &RootArgs {
-            message_type: Message::Command,
+        fb::Root::create(builder, &fb::RootArgs {
+            message_type: fb::Message::Command,
             message: Some(call.as_union_value()),
         })
     }

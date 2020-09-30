@@ -7,22 +7,16 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::zkinterface_generated::zkinterface::{
-    BilinearConstraint,
-    CircuitHeader,
-    get_size_prefixed_root_as_root,
-    Root,
-    Variables,
-};
+use crate::zkinterface_generated::zkinterface as fb;
 use crate::Result;
 
-pub fn read_circuit_header(msg: &[u8]) -> Result<CircuitHeader> {
-    get_size_prefixed_root_as_root(msg)
-        .message_as_circuit_header().ok_or("not a CircuitHeader message".into())
+pub fn read_circuit_header(msg: &[u8]) -> Result<fb::CircuitHeader> {
+    fb::get_size_prefixed_root_as_root(msg)
+        .message_as_circuit_header().ok_or("Not a CircuitHeader message".into())
 }
 
-pub fn parse_header(msg: &[u8]) -> Option<(CircuitHeader, Vec<Variable>)> {
-    let header = get_size_prefixed_root_as_root(msg).message_as_circuit_header()?;
+pub fn parse_header(msg: &[u8]) -> Option<(fb::CircuitHeader, Vec<Variable>)> {
+    let header = fb::get_size_prefixed_root_as_root(msg).message_as_circuit_header()?;
     let input_var_ids = header.instance_variables()?.variable_ids()?.safe_slice();
 
     let assigned = match header.instance_variables()?.values() {
@@ -97,7 +91,7 @@ pub struct Reader {
 
 impl fmt::Debug for Reader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use crate::zkinterface_generated::zkinterface::Message::*;
+        use fb::Message::*;
 
         let mut has_header = false;
         let mut has_witness = false;
@@ -188,7 +182,7 @@ impl Reader {
         self.push_message(buf)
     }
 
-    pub fn first_header(&self) -> Option<CircuitHeader> {
+    pub fn first_header(&self) -> Option<fb::CircuitHeader> {
         for message in self {
             match message.message_as_circuit_header() {
                 Some(ret) => return Some(ret),
@@ -198,14 +192,14 @@ impl Reader {
         None
     }
 
-    pub fn last_header(&self) -> Option<CircuitHeader> {
+    pub fn last_header(&self) -> Option<fb::CircuitHeader> {
         let returns = self.headers();
         if returns.len() > 0 {
             Some(returns[returns.len() - 1])
         } else { None }
     }
 
-    pub fn headers(&self) -> Vec<CircuitHeader> {
+    pub fn headers(&self) -> Vec<fb::CircuitHeader> {
         let mut returns = vec![];
         for message in self {
             match message.message_as_circuit_header() {
@@ -249,7 +243,7 @@ impl Reader {
     }
 }
 
-pub fn collect_instance_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
+pub fn collect_instance_variables<'a>(conn: &fb::Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -272,7 +266,7 @@ pub fn collect_instance_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Op
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(instance_variables: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
+pub fn collect_unassigned_private_variables<'a>(instance_variables: &fb::Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = instance_variables.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
@@ -290,7 +284,7 @@ pub fn collect_unassigned_private_variables<'a>(instance_variables: &Variables<'
 
 // Implement `for message in messages`
 impl<'a> IntoIterator for &'a Reader {
-    type Item = Root<'a>;
+    type Item = fb::Root<'a>;
     type IntoIter = MessageIterator<'a>;
 
     fn into_iter(self) -> MessageIterator<'a> {
@@ -307,7 +301,7 @@ pub struct MessageIterator<'a> {
 }
 
 impl<'a> Iterator for MessageIterator<'a> {
-    type Item = Root<'a>;
+    type Item = fb::Root<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -335,7 +329,7 @@ impl<'a> Iterator for MessageIterator<'a> {
             self.offset += size;
 
             // Parse the current message.
-            let root = get_size_prefixed_root_as_root(&buf[..size]);
+            let root = fb::get_size_prefixed_root_as_root(&buf[..size]);
             return Some(root);
         }
     }
@@ -370,7 +364,7 @@ pub struct R1CSIterator<'a> {
     // Iterate over constraints in the current message.
     constraints_count: usize,
     next_constraint: usize,
-    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>,
+    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<fb::BilinearConstraint<'a>>>>,
 }
 
 impl<'a> Iterator for R1CSIterator<'a> {
@@ -396,7 +390,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
         let constraint = self.constraints.as_ref().unwrap().get(self.next_constraint);
         self.next_constraint += 1;
 
-        fn to_vec<'a>(lc: Variables<'a>) -> Vec<Term<'a>> {
+        fn to_vec<'a>(lc: fb::Variables<'a>) -> Vec<Term<'a>> {
             let mut terms = vec![];
             let var_ids: &[u64] = lc.variable_ids().unwrap().safe_slice();
             let values: &[u8] = lc.values().unwrap();

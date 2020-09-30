@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use crate::zkinterface_generated::zkinterface::{
-    Variables,
-    VariablesArgs,
-};
+use crate::zkinterface_generated::zkinterface as fb;
 use crate::consumers::reader::{Variable, get_value_size};
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -14,9 +11,9 @@ pub struct VariablesOwned {
     // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
-impl<'a> From<Variables<'a>> for VariablesOwned {
+impl<'a> From<fb::Variables<'a>> for VariablesOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(variables_ref: Variables) -> VariablesOwned {
+    fn from(variables_ref: fb::Variables) -> VariablesOwned {
         VariablesOwned {
             variable_ids: match variables_ref.variable_ids() {
                 Some(var_ids) => Vec::from(var_ids.safe_slice()),
@@ -53,14 +50,14 @@ impl VariablesOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Variables<'bldr>>
+    ) -> WIPOffset<fb::Variables<'bldr>>
     {
         let variable_ids = Some(builder.create_vector(&self.variable_ids));
 
         let values = self.values.as_ref().map(|values|
             builder.create_vector(values));
 
-        Variables::create(builder, &VariablesArgs {
+        fb::Variables::create(builder, &fb::VariablesArgs {
             variable_ids,
             values,
             info: None,

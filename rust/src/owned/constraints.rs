@@ -2,7 +2,7 @@ use std::io::Write;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
 use crate::{Result, VariablesOwned};
-use crate::zkinterface_generated::zkinterface::{BilinearConstraint, BilinearConstraintArgs, ConstraintSystem, ConstraintSystemArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
+use crate::zkinterface_generated::zkinterface as fb;
 use std::convert::TryFrom;
 use std::error::Error;
 
@@ -18,9 +18,9 @@ pub struct BilinearConstraintOwned {
     pub linear_combination_c: VariablesOwned,
 }
 
-impl<'a> From<ConstraintSystem<'a>> for ConstraintSystemOwned {
+impl<'a> From<fb::ConstraintSystem<'a>> for ConstraintSystemOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(constraints_ref: ConstraintSystem) -> ConstraintSystemOwned {
+    fn from(constraints_ref: fb::ConstraintSystem) -> ConstraintSystemOwned {
         let mut owned = ConstraintSystemOwned {
             constraints: vec![],
         };
@@ -44,7 +44,7 @@ impl<'a> TryFrom<&'a [u8]> for ConstraintSystemOwned {
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
         Ok(Self::from(
-            get_size_prefixed_root_as_root(&buffer)
+            fb::get_size_prefixed_root_as_root(&buffer)
                 .message_as_constraint_system()
                 .ok_or("Not a ConstraintSystem message.")?))
     }
@@ -98,13 +98,13 @@ impl BilinearConstraintOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<BilinearConstraint<'bldr>>
+    ) -> WIPOffset<fb::BilinearConstraint<'bldr>>
     {
         let lca = self.linear_combination_a.build(builder);
         let lcb = self.linear_combination_b.build(builder);
         let lcc = self.linear_combination_c.build(builder);
 
-        BilinearConstraint::create(builder, &BilinearConstraintArgs {
+        fb::BilinearConstraint::create(builder, &fb::BilinearConstraintArgs {
             linear_combination_a: Some(lca),
             linear_combination_b: Some(lcb),
             linear_combination_c: Some(lcc),
@@ -117,7 +117,7 @@ impl ConstraintSystemOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>>
+    ) -> WIPOffset<fb::Root<'bldr>>
     {
         let constraints_built: Vec<_> = self.constraints.iter()
             .map(|constraint|
@@ -125,13 +125,13 @@ impl ConstraintSystemOwned {
             ).collect();
 
         let constraints_built = builder.create_vector(&constraints_built);
-        let r1cs = ConstraintSystem::create(builder, &ConstraintSystemArgs {
+        let r1cs = fb::ConstraintSystem::create(builder, &fb::ConstraintSystemArgs {
             constraints: Some(constraints_built),
             info: None,
         });
 
-        Root::create(builder, &RootArgs {
-            message_type: Message::ConstraintSystem,
+        fb::Root::create(builder, &fb::RootArgs {
+            message_type: fb::Message::ConstraintSystem,
             message: Some(r1cs.as_union_value()),
         })
     }

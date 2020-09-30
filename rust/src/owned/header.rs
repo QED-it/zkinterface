@@ -3,7 +3,7 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{CircuitHeader, CircuitHeaderArgs, Message, Root, RootArgs, get_size_prefixed_root_as_root};
+use crate::zkinterface_generated::zkinterface as fb;
 use super::variables::VariablesOwned;
 use super::keyvalue::KeyValueOwned;
 use crate::Result;
@@ -21,9 +21,9 @@ pub struct CircuitHeaderOwned {
     pub configuration: Option<Vec<KeyValueOwned>>,
 }
 
-impl<'a> From<CircuitHeader<'a>> for CircuitHeaderOwned {
+impl<'a> From<fb::CircuitHeader<'a>> for CircuitHeaderOwned {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(header_ref: CircuitHeader) -> CircuitHeaderOwned {
+    fn from(header_ref: fb::CircuitHeader) -> CircuitHeaderOwned {
         CircuitHeaderOwned {
             instance_variables: VariablesOwned::from(header_ref.instance_variables().unwrap()),
             free_variable_id: header_ref.free_variable_id(),
@@ -38,7 +38,7 @@ impl<'a> TryFrom<&'a [u8]> for CircuitHeaderOwned {
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
         Ok(Self::from(
-            get_size_prefixed_root_as_root(&buffer)
+            fb::get_size_prefixed_root_as_root(&buffer)
                 .message_as_circuit_header()
                 .ok_or("Not a CircuitHeader message.")?))
     }
@@ -88,7 +88,7 @@ impl CircuitHeaderOwned {
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>>
+    ) -> WIPOffset<fb::Root<'bldr>>
     {
         let instance_variables = Some(self.instance_variables.build(builder));
 
@@ -98,15 +98,15 @@ impl CircuitHeaderOwned {
         let configuration = self.configuration.as_ref().map(|conf|
             KeyValueOwned::build_vector(conf, builder));
 
-        let header = CircuitHeader::create(builder, &CircuitHeaderArgs {
+        let header = fb::CircuitHeader::create(builder, &fb::CircuitHeaderArgs {
             instance_variables,
             free_variable_id: self.free_variable_id,
             field_maximum,
             configuration,
         });
 
-        Root::create(builder, &RootArgs {
-            message_type: Message::CircuitHeader,
+        fb::Root::create(builder, &fb::RootArgs {
+            message_type: fb::Message::CircuitHeader,
             message: Some(header.as_union_value()),
         })
     }

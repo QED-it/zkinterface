@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::consumers::reader::Reader;
-use crate::zkinterface_generated::zkinterface::Message;
+use crate::zkinterface_generated::zkinterface as fb;
 use super::header::CircuitHeaderOwned;
 use super::constraints::ConstraintSystemOwned;
 use super::witness::WitnessOwned;
@@ -20,23 +20,23 @@ impl From<&Reader> for MessagesOwned {
 
         for msg in reader.into_iter() {
             match msg.message_type() {
-                Message::CircuitHeader => {
+                fb::Message::CircuitHeader => {
                     let header_ref = msg.message_as_circuit_header().unwrap();
                     owned.circuit_headers.push(
                         CircuitHeaderOwned::from(header_ref));
                 }
-                Message::ConstraintSystem => {
+                fb::Message::ConstraintSystem => {
                     let constraints_ref = msg.message_as_constraint_system().unwrap();
                     owned.constraint_systems.push(
                         ConstraintSystemOwned::from(constraints_ref));
                 }
-                Message::Witness => {
+                fb::Message::Witness => {
                     let witness_ref = msg.message_as_witness().unwrap();
                     owned.witnesses.push(
                         WitnessOwned::from(witness_ref));
                 }
-                Message::Command => {}
-                Message::NONE => {}
+                fb::Message::Command => {}
+                fb::Message::NONE => {}
             }
         }
         owned
