@@ -3,7 +3,7 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-use crate::reading::Messages;
+use crate::Messages;
 use crate::Result;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]

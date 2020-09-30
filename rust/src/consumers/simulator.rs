@@ -107,7 +107,7 @@ impl Simulator {
 
 #[test]
 fn test_simulator() -> Result<()> {
-    use crate::examples::*;
+    use crate::producers::examples::*;
 
     let header = example_circuit_header();
     let witness = example_witness();

@@ -534,31 +534,31 @@ impl<'a> Iterator for WitnessIterator<'a> {
 
 #[test]
 fn test_pretty_print_var() {
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 1,
         value: &[],
     }), "var_1");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 2,
         value: &[9],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 2,
         value: &[9, 0],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 2,
         value: &[9, 8],
     }), "var_2=[9,8]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 3,
         value: &[9, 8, 7, 6],
     }), "var_3=[9,8,7,6]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 3,
         value: &[9, 8, 0, 6],
     }), "var_3=[9,8,0,6]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", crate::reader::Variable {
         id: 4,
         value: &[9, 8, 0, 6, 0, 0],
     }), "var_4=[9,8,0,6]");

@@ -5,7 +5,7 @@ use crate::zkinterface_generated::zkinterface::{
     Variables,
     VariablesArgs,
 };
-use crate::reading::{Variable, get_value_size};
+use crate::consumers::reader::{Variable, get_value_size};
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct VariablesOwned {

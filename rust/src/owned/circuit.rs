@@ -143,7 +143,7 @@ fn test_circuit_owned() {
     let mut buffer = vec![];
     circuit.write_into(&mut buffer).unwrap();
 
-    let mut messages = crate::reading::Messages::new();
+    let mut messages = crate::reader::Messages::new();
     messages.push_message(buffer).unwrap();
     let circuit_ref = messages.first_circuit().unwrap();
 

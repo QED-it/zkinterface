@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::reading::Messages;
+use crate::consumers::reader::Messages;
 use crate::zkinterface_generated::zkinterface::Message;
 use super::header::CircuitHeaderOwned;
 use super::constraints::ConstraintSystemOwned;

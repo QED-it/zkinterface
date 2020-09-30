@@ -1,17 +1,15 @@
+
 pub extern crate flatbuffers;
 pub extern crate serde;
 
 #[allow(unused_imports)]
 pub mod zkinterface_generated;
 
-pub mod reading;
 pub mod owned;
 pub mod consumers;
-pub mod statement;
-pub mod stats;
-pub mod examples;
+pub mod producers;
 
-pub use reading::Messages;
+pub use consumers::reader::Messages;
 pub use owned::{
     header::CircuitHeaderOwned,
     command::CommandOwned,

@@ -185,7 +185,7 @@ impl Validator {
 
 #[test]
 fn test_validator() -> crate::Result<()> {
-    use crate::examples::*;
+    use crate::producers::examples::*;
 
     let header = example_circuit_header();
     let witness = example_witness();

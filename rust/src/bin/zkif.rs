@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 use zkinterface::{
-    reading::Messages,
+    Messages,
     MessagesOwned,
-    stats::Stats,
+    consumers::stats::Stats,
     Result,
 };
 use std::fs::{File, create_dir_all};
@@ -168,7 +168,7 @@ fn main_example(opts: &Options) -> Result<()> {
 }
 
 fn example_r1cs(out_dir: &Path) -> Result<()> {
-    use zkinterface::examples::*;
+    use zkinterface::producers::examples::*;
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
