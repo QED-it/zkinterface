@@ -5,7 +5,7 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset, Vector, ForwardsUOffset};
 use crate::zkinterface_generated::zkinterface as fb;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct KeyValueOwned {
+pub struct KeyValue {
     pub key: String,
     // The value goes into one the following:
     pub text: Option<String>,
@@ -13,53 +13,53 @@ pub struct KeyValueOwned {
     pub number: i64,
 }
 
-impl<K: ToString> From<(K, String)> for KeyValueOwned {
+impl<K: ToString> From<(K, String)> for KeyValue {
     fn from((key, text): (K, String)) -> Self {
         Self { key: key.to_string(), text: Some(text), ..Self::default() }
     }
 }
 
-impl<K: ToString> From<(K, &str)> for KeyValueOwned {
+impl<K: ToString> From<(K, &str)> for KeyValue {
     fn from((key, text): (K, &str)) -> Self {
         Self { key: key.to_string(), text: Some(text.to_string()), ..Self::default() }
     }
 }
 
-impl<K: ToString> From<(K, Vec<u8>)> for KeyValueOwned {
+impl<K: ToString> From<(K, Vec<u8>)> for KeyValue {
     fn from((key, data): (K, Vec<u8>)) -> Self {
         Self { key: key.to_string(), data: Some(data), ..Self::default() }
     }
 }
 
-impl<K: ToString> From<(K, i64)> for KeyValueOwned {
+impl<K: ToString> From<(K, i64)> for KeyValue {
     fn from((key, number): (K, i64)) -> Self {
         Self { key: key.to_string(), number, ..Self::default() }
     }
 }
 
-impl<'a> From<fb::KeyValue<'a>> for KeyValueOwned {
+impl<'a> From<fb::KeyValue<'a>> for KeyValue {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(kv_ref: fb::KeyValue) -> KeyValueOwned {
-        KeyValueOwned {
-            key: kv_ref.key().unwrap().into(),
-            text: kv_ref.text().map(|d| String::from(d)),
-            data: kv_ref.data().map(|d| Vec::from(d)),
-            number: kv_ref.number(),
+    fn from(fb_kv: fb::KeyValue) -> KeyValue {
+        KeyValue {
+            key: fb_kv.key().unwrap().into(),
+            text: fb_kv.text().map(|d| String::from(d)),
+            data: fb_kv.data().map(|d| Vec::from(d)),
+            number: fb_kv.number(),
         }
     }
 }
 
-impl KeyValueOwned {
+impl KeyValue {
     pub fn from_vector(
-        vec_kv_ref: Option<Vector<ForwardsUOffset<fb::KeyValue>>>)
-        -> Option<Vec<KeyValueOwned>> {
-        vec_kv_ref.map(|vec_kv_ref| {
-            let mut vec_kv = vec![];
-            for i in 0..vec_kv_ref.len() {
-                let kv = vec_kv_ref.get(i);
-                vec_kv.push(KeyValueOwned::from(kv));
+        fb_key_values: Option<Vector<ForwardsUOffset<fb::KeyValue>>>
+    ) -> Option<Vec<KeyValue>> {
+        fb_key_values.map(|fb_key_values| {
+            let mut key_values = vec![];
+            for i in 0..fb_key_values.len() {
+                let fb_key_value = fb_key_values.get(i);
+                key_values.push(KeyValue::from(fb_key_value));
             }
-            vec_kv
+            key_values
         })
     }
 
@@ -87,13 +87,13 @@ impl KeyValueOwned {
 
     /// Add a vector of these structures into a Flatbuffers message builder.
     pub fn build_vector<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        kv_vec: &'args [KeyValueOwned],
+        key_values: &'args [KeyValue],
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
     ) -> WIPOffset<Vector<'bldr, ForwardsUOffset<fb::KeyValue<'bldr>>>>
     {
-        let vec_kv_ref = Vec::from_iter(kv_vec.iter().map(|kv|
+        let fb_key_values = Vec::from_iter(key_values.iter().map(|kv|
             kv.build(builder)));
 
-        builder.create_vector(&vec_kv_ref)
+        builder.create_vector(&fb_key_values)
     }
 }

@@ -116,7 +116,6 @@ impl fmt::Debug for Reader {
                 }
             }
             if let Some(header) = self.last_header() {
-                //write!(f, "{:?}\n", super::owned::header::CircuitOwned::from(header))?;
                 write!(f, "Free variable id: {}\n", header.free_variable_id())?;
             }
         }

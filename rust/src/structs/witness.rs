@@ -2,26 +2,26 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
 use crate::zkinterface_generated::zkinterface as fb;
-use super::variables::VariablesOwned;
+use super::variables::Variables;
 use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct WitnessOwned {
-    pub assigned_variables: VariablesOwned,
+pub struct Witness {
+    pub assigned_variables: Variables,
 }
 
-impl<'a> From<fb::Witness<'a>> for WitnessOwned {
+impl<'a> From<fb::Witness<'a>> for Witness {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(witness_ref: fb::Witness) -> WitnessOwned {
-        WitnessOwned {
-            assigned_variables: VariablesOwned::from(witness_ref.assigned_variables().unwrap()),
+    fn from(fb_witness: fb::Witness) -> Witness {
+        Witness {
+            assigned_variables: Variables::from(fb_witness.assigned_variables().unwrap()),
         }
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for WitnessOwned {
+impl<'a> TryFrom<&'a [u8]> for Witness {
     type Error = Box<dyn Error>;
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
@@ -32,7 +32,7 @@ impl<'a> TryFrom<&'a [u8]> for WitnessOwned {
     }
 }
 
-impl WitnessOwned {
+impl Witness {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -56,7 +56,7 @@ impl WitnessOwned {
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let witness = zkinterface::WitnessOwned::default();
+    /// let witness = zkinterface::Witness::default();
     /// witness.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```

@@ -1,5 +1,5 @@
-use crate::{Result, CircuitHeaderOwned, WitnessOwned, ConstraintSystemOwned, MessagesOwned, VariablesOwned};
-use crate::owned::constraints::BilinearConstraintOwned;
+use crate::{Result, CircuitHeader, Witness, ConstraintSystem, Messages, Variables};
+use crate::structs::constraints::BilinearConstraint;
 
 use std::collections::HashMap;
 use num_bigint::BigUint;
@@ -15,7 +15,7 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    pub fn simulate(&mut self, messages: &MessagesOwned) -> Result<()> {
+    pub fn simulate(&mut self, messages: &Messages) -> Result<()> {
         for header in &messages.circuit_headers {
             self.ingest_header(header)?;
         }
@@ -28,7 +28,7 @@ impl Simulator {
         Ok(())
     }
 
-    pub fn ingest_header(&mut self, header: &CircuitHeaderOwned) -> Result<()> {
+    pub fn ingest_header(&mut self, header: &CircuitHeader) -> Result<()> {
         // Set the field.
         let max = header.field_maximum.as_ref().ok_or("No field_maximum specified")?;
         self.modulus = BigUint::from_bytes_le(max) + 1 as u8;
@@ -43,7 +43,7 @@ impl Simulator {
         Ok(())
     }
 
-    pub fn ingest_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
+    pub fn ingest_witness(&mut self, witness: &Witness) -> Result<()> {
         self.ensure_header()?;
 
         for var in witness.assigned_variables.get_variables() {
@@ -52,7 +52,7 @@ impl Simulator {
         Ok(())
     }
 
-    pub fn ingest_constraint_system(&mut self, system: &ConstraintSystemOwned) -> Result<()> {
+    pub fn ingest_constraint_system(&mut self, system: &ConstraintSystem) -> Result<()> {
         self.ensure_header()?;
 
         for constraint in &system.constraints {
@@ -61,7 +61,7 @@ impl Simulator {
         Ok(())
     }
 
-    fn verify_constraint(&mut self, constraint: &BilinearConstraintOwned) -> Result<()> {
+    fn verify_constraint(&mut self, constraint: &BilinearConstraint) -> Result<()> {
         let a = self.sum_terms(&constraint.linear_combination_a)?;
         let b = self.sum_terms(&constraint.linear_combination_b)?;
         let c = self.sum_terms(&constraint.linear_combination_c)?;
@@ -73,7 +73,7 @@ impl Simulator {
         }
     }
 
-    fn sum_terms(&self, terms: &VariablesOwned) -> Result<Field> {
+    fn sum_terms(&self, terms: &Variables) -> Result<Field> {
         let mut sum = Field::zero();
         for term in terms.get_variables() {
             let value = self.get(term.id)?;

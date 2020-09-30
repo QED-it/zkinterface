@@ -5,21 +5,21 @@ use crate::zkinterface_generated::zkinterface as fb;
 use crate::consumers::reader::{Variable, get_value_size};
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct VariablesOwned {
+pub struct Variables {
     pub variable_ids: Vec<u64>,
     pub values: Option<Vec<u8>>,
     // pub info: Option<Vec<(String, &'a [u8])>>,
 }
 
-impl<'a> From<fb::Variables<'a>> for VariablesOwned {
+impl<'a> From<fb::Variables<'a>> for Variables {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(variables_ref: fb::Variables) -> VariablesOwned {
-        VariablesOwned {
-            variable_ids: match variables_ref.variable_ids() {
+    fn from(fb_variables: fb::Variables) -> Variables {
+        Variables {
+            variable_ids: match fb_variables.variable_ids() {
                 Some(var_ids) => Vec::from(var_ids.safe_slice()),
                 None => vec![],
             },
-            values: match variables_ref.values() {
+            values: match fb_variables.values() {
                 Some(bytes) => Some(Vec::from(bytes)),
                 None => None,
             },
@@ -27,7 +27,7 @@ impl<'a> From<fb::Variables<'a>> for VariablesOwned {
     }
 }
 
-impl VariablesOwned {
+impl Variables {
     pub fn get_variables(&self) -> Vec<Variable> {
         let values = match self.values {
             Some(ref values) => values as &[u8],

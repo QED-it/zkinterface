@@ -1,4 +1,4 @@
-pub mod message;
+pub mod messages;
 pub mod header;
 pub mod command;
 pub mod constraints;

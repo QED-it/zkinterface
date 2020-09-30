@@ -10,23 +10,23 @@ use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct CommandOwned {
+pub struct Command {
     pub constraints_generation: bool,
     pub witness_generation: bool,
     //pub parameters: Option<Vec<KeyValue>>,
 }
 
-impl<'a> From<fb::Command<'a>> for CommandOwned {
+impl<'a> From<fb::Command<'a>> for Command {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(command_ref: fb::Command) -> CommandOwned {
-        CommandOwned {
-            constraints_generation: command_ref.constraints_generation(),
-            witness_generation: command_ref.witness_generation(),
+    fn from(fb_command: fb::Command) -> Command {
+        Command {
+            constraints_generation: fb_command.constraints_generation(),
+            witness_generation: fb_command.witness_generation(),
         }
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for CommandOwned {
+impl<'a> TryFrom<&'a [u8]> for Command {
     type Error = Box<dyn Error>;
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
@@ -37,7 +37,7 @@ impl<'a> TryFrom<&'a [u8]> for CommandOwned {
     }
 }
 
-impl CommandOwned {
+impl Command {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -61,7 +61,7 @@ impl CommandOwned {
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let command = zkinterface::CommandOwned::default();
+    /// let command = zkinterface::Command::default();
     /// command.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```

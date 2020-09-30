@@ -9,7 +9,7 @@ use structopt::StructOpt;
 
 use zkinterface::{
     Reader,
-    MessagesOwned,
+    Messages,
     consumers::stats::Stats,
     Result,
 };
@@ -205,15 +205,15 @@ fn main_cat(opts: &Options) -> Result<()> {
 }
 
 fn main_json(reader: &Reader) -> Result<()> {
-    let messages_owned = MessagesOwned::from(reader);
-    serde_json::to_writer(stdout(), &messages_owned)?;
+    let messages = Messages::from(reader);
+    serde_json::to_writer(stdout(), &messages)?;
     println!();
     Ok(())
 }
 
 fn main_yaml(reader: &Reader) -> Result<()> {
-    let messages_owned = MessagesOwned::from(reader);
-    serde_yaml::to_writer(stdout(), &messages_owned)?;
+    let messages = Messages::from(reader);
+    serde_yaml::to_writer(stdout(), &messages)?;
     println!();
     Ok(())
 }
@@ -224,7 +224,7 @@ fn main_explain(reader: &Reader) -> Result<()> {
 }
 
 fn main_validate(reader: &Reader) -> Result<()> {
-    let reader = MessagesOwned::from(reader);
+    let reader = Messages::from(reader);
 
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
@@ -233,7 +233,7 @@ fn main_validate(reader: &Reader) -> Result<()> {
 }
 
 fn main_simulate(reader: &Reader) -> Result<()> {
-    let reader = MessagesOwned::from(reader);
+    let reader = Messages::from(reader);
 
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();

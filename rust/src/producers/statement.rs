@@ -3,12 +3,12 @@ use std::fs::{File, create_dir_all};
 use std::path::{Path, PathBuf};
 
 use crate::Result;
-use crate::{CircuitHeaderOwned, ConstraintSystemOwned, WitnessOwned};
+use crate::{CircuitHeader, ConstraintSystem, Witness};
 
 pub trait GadgetCallbacks {
     fn receive_constraints(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
     fn receive_witness(&mut self, _msg: &[u8]) -> Result<()> { Ok(()) }
-    fn receive_response(&mut self, _request: &CircuitHeaderOwned, _response: &CircuitHeaderOwned) -> Result<()> { Ok(()) }
+    fn receive_response(&mut self, _request: &CircuitHeader, _response: &CircuitHeader) -> Result<()> { Ok(()) }
 }
 
 impl GadgetCallbacks for () {}
@@ -39,7 +39,7 @@ impl<S: Store> GadgetCallbacks for StatementBuilder<S> {
         self.store.receive_witness(msg)
     }
 
-    fn receive_response(&mut self, request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
+    fn receive_response(&mut self, request: &CircuitHeader, response: &CircuitHeader) -> Result<()> {
         self.vars.receive_response(request, response)?;
         self.store.receive_response(request, response)
     }
@@ -67,7 +67,7 @@ impl VariableManager {
 }
 
 impl GadgetCallbacks for VariableManager {
-    fn receive_response(&mut self, _request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
+    fn receive_response(&mut self, _request: &CircuitHeader, response: &CircuitHeader) -> Result<()> {
         if self.free_variable_id > response.free_variable_id {
             return Err("free_variable_id returned from the gadget must be higher than the current one.".into());
         }
@@ -78,9 +78,9 @@ impl GadgetCallbacks for VariableManager {
 
 
 pub trait Store: GadgetCallbacks {
-    fn push_main(&mut self, statement: &CircuitHeaderOwned) -> Result<()>;
-    fn push_constraints(&mut self, cs: &ConstraintSystemOwned) -> Result<()>;
-    fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()>;
+    fn push_main(&mut self, statement: &CircuitHeader) -> Result<()>;
+    fn push_constraints(&mut self, cs: &ConstraintSystem) -> Result<()>;
+    fn push_witness(&mut self, witness: &Witness) -> Result<()>;
 }
 
 pub struct FileStore {
@@ -111,15 +111,15 @@ impl FileStore {
 }
 
 impl Store for FileStore {
-    fn push_main(&mut self, statement: &CircuitHeaderOwned) -> Result<()> {
+    fn push_main(&mut self, statement: &CircuitHeader) -> Result<()> {
         statement.write_into(&mut File::create(&self.main_path)?)
     }
 
-    fn push_constraints(&mut self, _: &ConstraintSystemOwned) -> Result<()> {
+    fn push_constraints(&mut self, _: &ConstraintSystem) -> Result<()> {
         Err("not implemented".into())
     }
 
-    fn push_witness(&mut self, witness: &WitnessOwned) -> Result<()> {
+    fn push_witness(&mut self, witness: &Witness) -> Result<()> {
         if let Some(ref mut file) = self.witness_file {
             witness.write_into(file)
         } else { Err("no witness output".into()) }
@@ -141,7 +141,7 @@ impl GadgetCallbacks for FileStore {
         Ok(())
     }
 
-    fn receive_response(&mut self, request: &CircuitHeaderOwned, response: &CircuitHeaderOwned) -> Result<()> {
+    fn receive_response(&mut self, request: &CircuitHeader, response: &CircuitHeader) -> Result<()> {
         if let Some(ref mut file) = self.gadgets_file {
             request.write_into(file)?;
             response.write_into(file)?;

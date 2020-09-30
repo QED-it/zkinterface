@@ -1,45 +1,45 @@
 use std::io::Write;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use serde::{Deserialize, Serialize};
-use crate::{Result, VariablesOwned};
+use crate::{Result, Variables};
 use crate::zkinterface_generated::zkinterface as fb;
 use std::convert::TryFrom;
 use std::error::Error;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct ConstraintSystemOwned {
-    pub constraints: Vec<BilinearConstraintOwned>,
+pub struct ConstraintSystem {
+    pub constraints: Vec<BilinearConstraint>,
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct BilinearConstraintOwned {
-    pub linear_combination_a: VariablesOwned,
-    pub linear_combination_b: VariablesOwned,
-    pub linear_combination_c: VariablesOwned,
+pub struct BilinearConstraint {
+    pub linear_combination_a: Variables,
+    pub linear_combination_b: Variables,
+    pub linear_combination_c: Variables,
 }
 
-impl<'a> From<fb::ConstraintSystem<'a>> for ConstraintSystemOwned {
+impl<'a> From<fb::ConstraintSystem<'a>> for ConstraintSystem {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(constraints_ref: fb::ConstraintSystem) -> ConstraintSystemOwned {
-        let mut owned = ConstraintSystemOwned {
+    fn from(fb_cs: fb::ConstraintSystem) -> ConstraintSystem {
+        let mut cs = ConstraintSystem {
             constraints: vec![],
         };
 
-        let cons_ref = constraints_ref.constraints().unwrap();
-        for i in 0..cons_ref.len() {
-            let con_ref = cons_ref.get(i);
-            owned.constraints.push(BilinearConstraintOwned {
-                linear_combination_a: VariablesOwned::from(con_ref.linear_combination_a().unwrap()),
-                linear_combination_b: VariablesOwned::from(con_ref.linear_combination_b().unwrap()),
-                linear_combination_c: VariablesOwned::from(con_ref.linear_combination_c().unwrap()),
+        let fb_constraints = fb_cs.constraints().unwrap();
+        for i in 0..fb_constraints.len() {
+            let fb_constraint = fb_constraints.get(i);
+            cs.constraints.push(BilinearConstraint {
+                linear_combination_a: Variables::from(fb_constraint.linear_combination_a().unwrap()),
+                linear_combination_b: Variables::from(fb_constraint.linear_combination_b().unwrap()),
+                linear_combination_c: Variables::from(fb_constraint.linear_combination_c().unwrap()),
             });
         }
 
-        owned
+        cs
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for ConstraintSystemOwned {
+impl<'a> TryFrom<&'a [u8]> for ConstraintSystem {
     type Error = Box<dyn Error>;
 
     fn try_from(buffer: &'a [u8]) -> Result<Self> {
@@ -50,8 +50,8 @@ impl<'a> TryFrom<&'a [u8]> for ConstraintSystemOwned {
     }
 }
 
-impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> for ConstraintSystemOwned {
-    /// Creates a `ConstraintSystemOwned` from an R1CS vector
+impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> for ConstraintSystem {
+    /// Creates a `ConstraintSystem` from an R1CS vector
     ///
     /// # Examples
     /// ```
@@ -62,38 +62,38 @@ impl From<&[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]> fo
     ///     ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     /// ];
     ///
-    /// let constraints = zkinterface::ConstraintSystemOwned::from(constraints_vec);
+    /// let constraints = zkinterface::ConstraintSystem::from(constraints_vec);
     ///```
 
-    fn from(constraints: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]) -> ConstraintSystemOwned {
-        let mut constraints_owned = ConstraintSystemOwned {
+    fn from(constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))]) -> ConstraintSystem {
+        let mut constraints = ConstraintSystem {
             constraints: vec![]
         };
 
-        for (lca, lcb, lcc) in constraints {
-            let lca = VariablesOwned {
+        for (lca, lcb, lcc) in constraints_vec {
+            let lca = Variables {
                 variable_ids: lca.0.clone(),
                 values: Some(lca.1.clone()),
             };
-            let lcb = VariablesOwned {
+            let lcb = Variables {
                 variable_ids: lcb.0.clone(),
                 values: Some(lcb.1.clone()),
             };
-            let lcc = VariablesOwned {
+            let lcc = Variables {
                 variable_ids: lcc.0.clone(),
                 values: Some(lcc.1.clone()),
             };
-            constraints_owned.constraints.push(BilinearConstraintOwned {
+            constraints.constraints.push(BilinearConstraint {
                 linear_combination_a: lca,
                 linear_combination_b: lcb,
                 linear_combination_c: lcc,
             });
         }
-        constraints_owned
+        constraints
     }
 }
 
-impl BilinearConstraintOwned {
+impl BilinearConstraint {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -112,7 +112,7 @@ impl BilinearConstraintOwned {
     }
 }
 
-impl ConstraintSystemOwned {
+impl ConstraintSystem {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
@@ -141,7 +141,7 @@ impl ConstraintSystemOwned {
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let constraints = zkinterface::ConstraintSystemOwned::from(&[][..]);
+    /// let constraints = zkinterface::ConstraintSystem::from(&[][..]);
     /// constraints.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```

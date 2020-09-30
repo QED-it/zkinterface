@@ -1,17 +1,17 @@
 use flatbuffers::{emplace_scalar, EndianScalar, read_scalar};
 use std::mem::size_of;
 
-use crate::{CircuitHeaderOwned, ConstraintSystemOwned, VariablesOwned, KeyValueOwned as KV, WitnessOwned};
+use crate::{CircuitHeader, ConstraintSystem, Variables, KeyValue as KV, Witness};
 
 
-pub fn example_circuit_header() -> CircuitHeaderOwned {
+pub fn example_circuit_header() -> CircuitHeader {
     example_circuit_header_inputs(3, 4, 25)
 }
 
 /// A test circuit of inputs x,y,zz such that x^2 + y^2 = zz.
-pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOwned {
-    CircuitHeaderOwned {
-        instance_variables: VariablesOwned {
+pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeader {
+    CircuitHeader {
+        instance_variables: Variables {
             variable_ids: vec![1, 2, 3],  // x, y, zz
             values: Some(serialize_small(&[x, y, zz])),
         },
@@ -23,23 +23,23 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeaderOw
     }
 }
 
-pub fn example_constraints() -> ConstraintSystemOwned {
+pub fn example_constraints() -> ConstraintSystem {
     let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![1], vec![1]), (vec![1], vec![1]), (vec![4], vec![1])),       // x * x = xx
         ((vec![2], vec![1]), (vec![2], vec![1]), (vec![5], vec![1])),       // y * y = yy
         ((vec![0], vec![1]), (vec![4, 5], vec![1, 1]), (vec![3], vec![1])), // 1 * (xx + yy) = z
     ];
-    ConstraintSystemOwned::from(constraints_vec)
+    ConstraintSystem::from(constraints_vec)
 }
 
-pub fn example_witness() -> WitnessOwned {
+pub fn example_witness() -> Witness {
     example_witness_inputs(3, 4)
 }
 
-pub fn example_witness_inputs(x: u32, y: u32) -> WitnessOwned {
-    WitnessOwned {
-        assigned_variables: VariablesOwned {
+pub fn example_witness_inputs(x: u32, y: u32) -> Witness {
+    Witness {
+        assigned_variables: Variables {
             variable_ids: vec![4, 5], // xx, yy
             values: Some(serialize_small(&[
                 x * x, // var_4 = xx = x^2

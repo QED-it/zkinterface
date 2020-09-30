@@ -1,4 +1,4 @@
-use crate::{CircuitHeaderOwned, WitnessOwned, ConstraintSystemOwned, MessagesOwned, VariablesOwned};
+use crate::{CircuitHeader, Witness, ConstraintSystem, Messages, Variables};
 
 use std::collections::HashMap;
 use num_bigint::BigUint;
@@ -37,7 +37,7 @@ impl Validator {
         Validator { as_prover: true, ..Self::default() }
     }
 
-    pub fn ingest_messages(&mut self, messages: &MessagesOwned) {
+    pub fn ingest_messages(&mut self, messages: &Messages) {
         for header in &messages.circuit_headers {
             self.ingest_header(header);
         }
@@ -56,7 +56,7 @@ impl Validator {
         self.violations
     }
 
-    pub fn ingest_header(&mut self, header: &CircuitHeaderOwned) {
+    pub fn ingest_header(&mut self, header: &CircuitHeader) {
         if self.got_header {
             self.violate("Multiple headers.");
         }
@@ -83,7 +83,7 @@ impl Validator {
         }
     }
 
-    pub fn ingest_witness(&mut self, witness: &WitnessOwned) {
+    pub fn ingest_witness(&mut self, witness: &Witness) {
         self.ensure_header();
         if !self.as_prover {
             self.violate("As verifier, got an unexpected Witness message.");
@@ -94,7 +94,7 @@ impl Validator {
         }
     }
 
-    pub fn ingest_constraint_system(&mut self, system: &ConstraintSystemOwned) {
+    pub fn ingest_constraint_system(&mut self, system: &ConstraintSystem) {
         self.ensure_header();
 
         for constraint in &system.constraints {
@@ -104,7 +104,7 @@ impl Validator {
         }
     }
 
-    fn validate_terms(&mut self, terms: &VariablesOwned) {
+    fn validate_terms(&mut self, terms: &Variables) {
         for term in terms.get_variables() {
             self.ensure_defined(term.id);
             self.ensure_value_in_field(term.value, || format!("coefficient for variable_{}", term.id));
