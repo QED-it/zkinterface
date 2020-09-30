@@ -84,19 +84,21 @@ struct Options {
 }
 
 fn main() -> Result<()> {
-    let options: Options = Options::from_args();
+    cli(&Options::from_args())
+}
 
+fn cli(options: &Options) -> Result<()> {
     match &options.tool[..] {
-        "example" => main_example(&options),
-        "cat" => main_cat(&options),
-        "to-json" => main_json(&load_messages(&options)?),
-        "to-yaml" => main_yaml(&load_messages(&options)?),
-        "explain" => main_explain(&load_messages(&options)?),
-        "validate" => main_validate(&load_messages(&options)?),
-        "simulate" => main_simulate(&load_messages(&options)?),
-        "stats" => main_stats(&load_messages(&options)?),
-        "fake_prove" => main_fake_prove(&load_messages(&options)?),
-        "fake_verify" => main_fake_verify(&load_messages(&options)?),
+        "example" => main_example(options),
+        "cat" => main_cat(options),
+        "to-json" => main_json(&load_messages(options)?),
+        "to-yaml" => main_yaml(&load_messages(options)?),
+        "explain" => main_explain(&load_messages(options)?),
+        "validate" => main_validate(&load_messages(options)?),
+        "simulate" => main_simulate(&load_messages(options)?),
+        "stats" => main_stats(&load_messages(options)?),
+        "fake_prove" => main_fake_prove(&load_messages(options)?),
+        "fake_verify" => main_fake_verify(&load_messages(options)?),
         "help" => {
             Options::clap().print_long_help()?;
             eprintln!("\n");
@@ -225,8 +227,7 @@ fn main_validate(messages: &Messages) -> Result<()> {
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
     validator.ingest_messages(&messages);
-    print_violations(&validator.get_violations())?;
-    Ok(())
+    print_violations(&validator.get_violations())
 }
 
 fn main_simulate(messages: &Messages) -> Result<()> {
@@ -278,5 +279,35 @@ fn main_fake_verify(_: &Messages) -> Result<()> {
     file.read_to_string(&mut proof)?;
     assert_eq!(proof, "I hereby promess that I saw a witness that satisfies the constraint system.");
     eprintln!("Fake proof verified!");
+    Ok(())
+}
+
+#[test]
+fn test_cli() -> Result<()> {
+    use std::fs::remove_dir_all;
+
+    let workspace = PathBuf::from("local/test_cli");
+    let _ = remove_dir_all(&workspace);
+
+    cli(&Options {
+        tool: "example".to_string(),
+        paths: vec![workspace.clone()],
+    })?;
+
+    cli(&Options {
+        tool: "stats".to_string(),
+        paths: vec![workspace.clone()],
+    })?;
+
+    cli(&Options {
+        tool: "validate".to_string(),
+        paths: vec![workspace.clone()],
+    })?;
+
+    cli(&Options {
+        tool: "simulate".to_string(),
+        paths: vec![workspace.clone()],
+    })?;
+
     Ok(())
 }
