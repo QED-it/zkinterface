@@ -17,7 +17,7 @@ pub mod structs;
 pub use structs::{
     header::CircuitHeader,
     command::Command,
-    constraints::ConstraintSystem,
+    constraints::{ConstraintSystem, BilinearConstraint},
     keyvalue::KeyValue,
     messages::Messages,
     variables::Variables,

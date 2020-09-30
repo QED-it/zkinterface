@@ -19,25 +19,27 @@ use std::ffi::OsStr;
 const ABOUT: &str = "
 This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
 
-The tools below work within a workspace directory given after the tool name (`local` in the examples below), or in the current working directory by default. To read from stdin or write to stdout, pass a dash - instead of a filename.
+The tools below work within a workspace directory given after the tool name (`workspace` in the examples below), or in the current working directory by default. To read from stdin or write to stdout, pass a dash - instead of a filename.
 
 Create an example statement:
-    zkif example local
+    zkif example workspace
 Or:
-    zkif example - > local/example.zkif
+    zkif example - > workspace/example.zkif
 
 Print a statement in different forms:
-    zkif to-json local
-    zkif to-yaml local
-    zkif explain local
+    zkif to-json workspace
+    zkif to-yaml workspace
+    zkif explain workspace
 
 Simulate a proving system:
-    zkif stats       local
-    zkif fake_prove  local
-    zkif fake_verify local
+    zkif stats       workspace
+    zkif validate    workspace
+    zkif simulate    workspace
+    zkif fake_prove  workspace
+    zkif fake_verify workspace
 
 Write all the statement files to stdout (to pipe to another program):
-    zkif cat local
+    zkif cat workspace
 
 ";
 
