@@ -3,48 +3,55 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::io::Write;
 use serde::{Deserialize, Serialize};
-use crate::zkinterface_generated::zkinterface::{
-    Command,
-    CommandArgs,
-    Message,
-    Root,
-    RootArgs,
-};
+use crate::zkinterface_generated::zkinterface as fb;
 use crate::Result;
+use std::convert::TryFrom;
+use std::error::Error;
 
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct CommandOwned {
+pub struct Command {
     pub constraints_generation: bool,
     pub witness_generation: bool,
     //pub parameters: Option<Vec<KeyValue>>,
 }
 
-impl<'a> From<Command<'a>> for CommandOwned {
+impl<'a> From<fb::Command<'a>> for Command {
     /// Convert from Flatbuffers references to owned structure.
-    fn from(command_ref: Command) -> CommandOwned {
-        CommandOwned {
-            constraints_generation: command_ref.constraints_generation(),
-            witness_generation: command_ref.witness_generation(),
+    fn from(fb_command: fb::Command) -> Command {
+        Command {
+            constraints_generation: fb_command.constraints_generation(),
+            witness_generation: fb_command.witness_generation(),
         }
     }
 }
 
-impl CommandOwned {
+impl<'a> TryFrom<&'a [u8]> for Command {
+    type Error = Box<dyn Error>;
+
+    fn try_from(buffer: &'a [u8]) -> Result<Self> {
+        Ok(Self::from(
+            fb::get_size_prefixed_root_as_root(&buffer)
+                .message_as_command()
+                .ok_or("Not a Command message.")?))
+    }
+}
+
+impl Command {
     /// Add this structure into a Flatbuffers message builder.
     pub fn build<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         &'args self,
         builder: &'mut_bldr mut FlatBufferBuilder<'bldr>,
-    ) -> WIPOffset<Root<'bldr>>
+    ) -> WIPOffset<fb::Root<'bldr>>
     {
-        let call = Command::create(builder, &CommandArgs {
+        let call = fb::Command::create(builder, &fb::CommandArgs {
             constraints_generation: self.constraints_generation,
             witness_generation: self.witness_generation,
             parameters: None,
         });
 
-        Root::create(builder, &RootArgs {
-            message_type: Message::Command,
+        fb::Root::create(builder, &fb::RootArgs {
+            message_type: fb::Message::Command,
             message: Some(call.as_union_value()),
         })
     }
@@ -54,7 +61,7 @@ impl CommandOwned {
     /// # Examples
     /// ```
     /// let mut buf = Vec::<u8>::new();
-    /// let command = zkinterface::CommandOwned::default();
+    /// let command = zkinterface::Command::default();
     /// command.write_into(&mut buf).unwrap();
     /// assert!(buf.len() > 0);
     /// ```

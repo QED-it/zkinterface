@@ -4,21 +4,24 @@ pub extern crate serde;
 #[allow(unused_imports)]
 pub mod zkinterface_generated;
 
-pub mod reading;
-pub mod owned;
-pub mod statement;
-pub mod stats;
-pub mod examples;
+pub use consumers::reader::Reader;
 
-pub use reading::Messages;
-pub use owned::{
-    circuit::CircuitOwned,
-    command::CommandOwned,
-    constraints::ConstraintSystemOwned,
-    keyvalue::KeyValueOwned,
-    message::MessagesOwned,
-    variables::VariablesOwned,
-    witness::WitnessOwned,
+pub mod consumers;
+pub mod producers;
+
+/// Fully-owned version of each data structure.
+/// These structures may be easier to work with than the
+/// no-copy versions found in zkinterface_generated and Reader.
+pub mod structs;
+
+pub use structs::{
+    header::CircuitHeader,
+    command::Command,
+    constraints::{ConstraintSystem, BilinearConstraint},
+    keyvalue::KeyValue,
+    messages::Messages,
+    variables::Variables,
+    witness::Witness,
 };
 
 // Common definitions.

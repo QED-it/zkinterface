@@ -1,5 +1,5 @@
-pub mod message;
-pub mod circuit;
+pub mod messages;
+pub mod header;
 pub mod command;
 pub mod constraints;
 pub mod witness;

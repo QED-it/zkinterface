@@ -7,25 +7,19 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::zkinterface_generated::zkinterface::{
-    BilinearConstraint,
-    Circuit,
-    get_size_prefixed_root_as_root,
-    Root,
-    Variables,
-};
+use crate::zkinterface_generated::zkinterface as fb;
 use crate::Result;
 
-pub fn read_circuit(msg: &[u8]) -> Result<Circuit> {
-    get_size_prefixed_root_as_root(msg)
-        .message_as_circuit().ok_or("not a Circuit message".into())
+pub fn read_circuit_header(msg: &[u8]) -> Result<fb::CircuitHeader> {
+    fb::get_size_prefixed_root_as_root(msg)
+        .message_as_circuit_header().ok_or("Not a CircuitHeader message".into())
 }
 
-pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
-    let call = get_size_prefixed_root_as_root(call_msg).message_as_circuit()?;
-    let input_var_ids = call.connections()?.variable_ids()?.safe_slice();
+pub fn parse_header(msg: &[u8]) -> Option<(fb::CircuitHeader, Vec<Variable>)> {
+    let header = fb::get_size_prefixed_root_as_root(msg).message_as_circuit_header()?;
+    let input_var_ids = header.instance_variables()?.variable_ids()?.safe_slice();
 
-    let assigned = match call.connections()?.values() {
+    let assigned = match header.instance_variables()?.values() {
         Some(bytes) => {
             let stride = get_value_size(input_var_ids, bytes);
 
@@ -39,7 +33,7 @@ pub fn parse_call(call_msg: &[u8]) -> Option<(Circuit, Vec<Variable>)> {
         None => vec![],
     };
 
-    Some((call, assigned))
+    Some((header, assigned))
 }
 
 pub fn is_contiguous(mut first_id: u64, ids: &[u64]) -> bool {
@@ -90,22 +84,22 @@ pub fn get_value_size(var_ids: &[u64], values: &[u8]) -> usize {
 
 /// Collect buffers waiting to be read.
 #[derive(Clone)]
-pub struct Messages {
+pub struct Reader {
     pub messages: Vec<Vec<u8>>,
     pub first_id: u64,
 }
 
-impl fmt::Debug for Messages {
+impl fmt::Debug for Reader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use crate::zkinterface_generated::zkinterface::Message::*;
+        use fb::Message::*;
 
-        let mut has_circuit = false;
+        let mut has_header = false;
         let mut has_witness = false;
         let mut has_constraints = false;
 
         for root in self.into_iter() {
             match root.message_type() {
-                Circuit => has_circuit = true,
+                CircuitHeader => has_header = true,
                 Witness => has_witness = true,
                 ConstraintSystem => has_constraints = true,
                 Command => {}
@@ -113,17 +107,16 @@ impl fmt::Debug for Messages {
             }
         }
 
-        if has_circuit {
-            write!(f, "\nZkInterface {:?}\n", Circuit)?;
-            if let Some(vars) = self.connection_variables() {
+        if has_header {
+            write!(f, "\nZkInterface {:?}\n", CircuitHeader)?;
+            if let Some(vars) = self.instance_variables() {
                 write!(f, "Public variables:\n")?;
                 for var in vars {
                     write!(f, "- {:?}\n", var)?;
                 }
             }
-            if let Some(circuit) = self.last_circuit() {
-                //write!(f, "{:?}\n", super::owned::circuit::CircuitOwned::from(circuit))?;
-                write!(f, "Free variable id: {}\n", circuit.free_variable_id())?;
+            if let Some(header) = self.last_header() {
+                write!(f, "Free variable id: {}\n", header.free_variable_id())?;
             }
         }
 
@@ -148,9 +141,9 @@ impl fmt::Debug for Messages {
     }
 }
 
-impl Messages {
-    pub fn new() -> Messages {
-        Messages {
+impl Reader {
+    pub fn new() -> Reader {
+        Reader {
             messages: vec![],
             first_id: 1,
         }
@@ -159,8 +152,8 @@ impl Messages {
     /// Collect messages. Methods will filter out irrelevant variables.
     /// first_id: The first variable ID to consider in received messages.
     /// Variables with lower IDs are ignored.
-    pub fn new_filtered(first_id: u64) -> Messages {
-        Messages {
+    pub fn new_filtered(first_id: u64) -> Reader {
+        Reader {
             messages: vec![],
             first_id,
         }
@@ -188,9 +181,9 @@ impl Messages {
         self.push_message(buf)
     }
 
-    pub fn first_circuit(&self) -> Option<Circuit> {
+    pub fn first_header(&self) -> Option<fb::CircuitHeader> {
         for message in self {
-            match message.message_as_circuit() {
+            match message.message_as_circuit_header() {
                 Some(ret) => return Some(ret),
                 None => continue,
             };
@@ -198,17 +191,17 @@ impl Messages {
         None
     }
 
-    pub fn last_circuit(&self) -> Option<Circuit> {
-        let returns = self.circuits();
+    pub fn last_header(&self) -> Option<fb::CircuitHeader> {
+        let returns = self.headers();
         if returns.len() > 0 {
             Some(returns[returns.len() - 1])
         } else { None }
     }
 
-    pub fn circuits(&self) -> Vec<Circuit> {
+    pub fn headers(&self) -> Vec<fb::CircuitHeader> {
         let mut returns = vec![];
         for message in self {
-            match message.message_as_circuit() {
+            match message.message_as_circuit_header() {
                 Some(ret) => returns.push(ret),
                 None => continue,
             };
@@ -216,18 +209,18 @@ impl Messages {
         returns
     }
 
-    pub fn connection_variables(&self) -> Option<Vec<Variable>> {
-        let connections = self.last_circuit()?.connections()?;
-        collect_connection_variables(&connections, self.first_id)
+    pub fn instance_variables(&self) -> Option<Vec<Variable>> {
+        let instance_variables = self.last_header()?.instance_variables()?;
+        collect_instance_variables(&instance_variables, self.first_id)
     }
 
     pub fn private_variables(&self) -> Option<Vec<Variable>> {
         // Collect private variables.
-        let circuit = self.last_circuit()?;
+        let header = self.last_header()?;
         let mut vars = collect_unassigned_private_variables(
-            &circuit.connections()?,
+            &header.instance_variables()?,
             self.first_id,
-            circuit.free_variable_id())?;
+            header.free_variable_id())?;
 
         // Collect assigned values, if any.
         let mut values = HashMap::with_capacity(vars.len());
@@ -249,7 +242,7 @@ impl Messages {
     }
 }
 
-pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
+pub fn collect_instance_variables<'a>(conn: &fb::Variables<'a>, first_id: u64) -> Option<Vec<Variable<'a>>> {
     let var_ids = conn.variable_ids()?.safe_slice();
 
     let values = match conn.values() {
@@ -272,13 +265,13 @@ pub fn collect_connection_variables<'a>(conn: &Variables<'a>, first_id: u64) -> 
     Some(vars)
 }
 
-pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
-    let var_ids = conn.variable_ids()?.safe_slice();
+pub fn collect_unassigned_private_variables<'a>(instance_variables: &fb::Variables<'a>, first_id: u64, free_id: u64) -> Option<Vec<Variable<'a>>> {
+    let var_ids = instance_variables.variable_ids()?.safe_slice();
 
     let vars = (first_id..free_id)
-        .filter(|id| // Ignore variables already in the connections.
+        .filter(|id| // Ignore variables already in the instance_variables.
             !var_ids.contains(id)
-        ).map(|id|          // Variable without value.
+        ).map(|id|    // Variable without value.
         Variable {
             id,
             value: &[],
@@ -289,8 +282,8 @@ pub fn collect_unassigned_private_variables<'a>(conn: &Variables<'a>, first_id: 
 }
 
 // Implement `for message in messages`
-impl<'a> IntoIterator for &'a Messages {
-    type Item = Root<'a>;
+impl<'a> IntoIterator for &'a Reader {
+    type Item = fb::Root<'a>;
     type IntoIter = MessageIterator<'a>;
 
     fn into_iter(self) -> MessageIterator<'a> {
@@ -307,7 +300,7 @@ pub struct MessageIterator<'a> {
 }
 
 impl<'a> Iterator for MessageIterator<'a> {
-    type Item = Root<'a>;
+    type Item = fb::Root<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -335,7 +328,7 @@ impl<'a> Iterator for MessageIterator<'a> {
             self.offset += size;
 
             // Parse the current message.
-            let root = get_size_prefixed_root_as_root(&buf[..size]);
+            let root = fb::get_size_prefixed_root_as_root(&buf[..size]);
             return Some(root);
         }
     }
@@ -343,7 +336,7 @@ impl<'a> Iterator for MessageIterator<'a> {
 
 
 // R1CS messages
-impl Messages {
+impl Reader {
     pub fn iter_constraints(&self) -> R1CSIterator {
         R1CSIterator {
             messages_iter: self.into_iter(),
@@ -370,7 +363,7 @@ pub struct R1CSIterator<'a> {
     // Iterate over constraints in the current message.
     constraints_count: usize,
     next_constraint: usize,
-    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<BilinearConstraint<'a>>>>,
+    constraints: Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<fb::BilinearConstraint<'a>>>>,
 }
 
 impl<'a> Iterator for R1CSIterator<'a> {
@@ -396,7 +389,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
         let constraint = self.constraints.as_ref().unwrap().get(self.next_constraint);
         self.next_constraint += 1;
 
-        fn to_vec<'a>(lc: Variables<'a>) -> Vec<Term<'a>> {
+        fn to_vec<'a>(lc: fb::Variables<'a>) -> Vec<Term<'a>> {
             let mut terms = vec![];
             let var_ids: &[u64] = lc.variable_ids().unwrap().safe_slice();
             let values: &[u8] = lc.values().unwrap();
@@ -424,7 +417,7 @@ impl<'a> Iterator for R1CSIterator<'a> {
 
 
 // Assignment messages
-impl Messages {
+impl Reader {
     pub fn iter_witness(&self) -> WitnessIterator {
         WitnessIterator {
             messages_iter: self.into_iter(),
@@ -534,31 +527,31 @@ impl<'a> Iterator for WitnessIterator<'a> {
 
 #[test]
 fn test_pretty_print_var() {
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 1,
         value: &[],
     }), "var_1");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9, 0],
     }), "var_2=[9]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 2,
         value: &[9, 8],
     }), "var_2=[9,8]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 3,
         value: &[9, 8, 7, 6],
     }), "var_3=[9,8,7,6]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 3,
         value: &[9, 8, 0, 6],
     }), "var_3=[9,8,0,6]");
-    assert_eq!(format!("{:?}", super::reading::Variable {
+    assert_eq!(format!("{:?}", Variable {
         id: 4,
         value: &[9, 8, 0, 6, 0, 0],
     }), "var_4=[9,8,0,6]");

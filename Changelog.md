@@ -1,3 +1,25 @@
+# Version v1.2.0, 2020-09, Rust refactor
+
+FlatBuffers schema (binary encoding remains unchanged):
+- Renamed `Circuit` to `CircuitHeader`.
+- Renamed `connections` to `instance_variables`.
+
+CLI:
+- `to-json` - Convert messages into one-line compact JSON.
+- `to-yaml` - Convert messages into readable YAML.
+- `validate` - Validate the format of messages, from the point of view of the verifier.
+- `simulate` - Validate the format of messages and verify that the statement is true, from the point of view of the prover.
+
+Rust:
+- *(breaking)* Moved "owned" structures to a `structs` module and removed the "Owned" suffix.
+- *(breaking)* Organized code into `producers` and `consumers` modules.
+- *(breaking)* Renamed `reading::Messages` into `consumers::reader::Reader`.
+- Renamed occurrences of `circuit` or `main` to `header`.
+- Simplified `StatementBuilder`. Renamed occurrences of "Store" to "Sink".
+- Moved helpers for external gadget calls into a `gadget_caller` module.
+- Using the StructOpt library for the CLI.
+
+
 # Version v1.1.4, 2020-08, Rust fixes
 
 Rust:
