@@ -34,7 +34,7 @@ impl Variables {
             None => &[], // No values, only variable ids and empty values.
         };
 
-        let stride = get_value_size(&self.variable_ids, values);
+        let stride = self.value_size();
 
         (0..self.variable_ids.len())
             .map(|var_i|
@@ -44,6 +44,13 @@ impl Variables {
                     value: &values[stride * var_i..stride * (var_i + 1)],
                 }
             ).collect()
+    }
+
+    pub fn value_size(&self) -> usize {
+        match self.values {
+            Some(ref values) => get_value_size(&self.variable_ids, values),
+            None => 0,
+        }
     }
 
     /// Add this structure into a Flatbuffers message builder.

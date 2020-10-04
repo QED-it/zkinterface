@@ -162,15 +162,12 @@ fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
 }
 
 fn main_example(opts: &Options) -> Result<()> {
+    use zkinterface::producers::examples::*;
+
     if opts.paths.len() != 1 {
         return Err("Specify a single directory where to write examples.".into());
     }
     let out_dir = &opts.paths[0];
-    example_r1cs(out_dir)
-}
-
-fn example_r1cs(out_dir: &Path) -> Result<()> {
-    use zkinterface::producers::examples::*;
 
     if out_dir == Path::new("-") {
         example_circuit_header().write_into(&mut stdout())?;
