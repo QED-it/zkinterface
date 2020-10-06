@@ -140,7 +140,7 @@ fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
     let mut all_paths = vec![];
 
     for path in &opts.paths {
-        if has_zkif_extension(path) {
+        if has_zkif_extension(path) || path == Path::new("-") {
             all_paths.push(path.clone());
         } else {
             for file in fs::read_dir(path)? {
