@@ -68,13 +68,13 @@ pub fn read_buffer(stream: &mut impl Read) -> Result<Vec<u8>> {
         return Ok(Vec::new()); // End of stream at the correct place.
     }
     let size = read_size_prefix(&buffer);
-    eprintln!("Read size: {:?} --> size={}", buffer, size);
+    //eprintln!("Read size: {:?} --> size={}", buffer, size);
     if size <= SIZE_UOFFSET {
         return Ok(Vec::new()); // Explicit size 0 as end marker.
     }
     buffer.resize(size, 0);
     stream.read_exact(&mut buffer[4..])?;
-    eprintln!("Read buffer: {:?}", buffer);
+    //eprintln!("Read buffer: {:?}", buffer);
     Ok(buffer)
 }
 
