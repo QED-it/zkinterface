@@ -92,6 +92,7 @@ pub struct FileSink {
     pub workspace: PathBuf,
     pub constraints_file: Option<File>,
     pub witness_file: Option<File>,
+    cs_file_counter: u32,
 }
 
 impl FileSink {
@@ -101,6 +102,7 @@ impl FileSink {
             workspace: workspace.as_ref().to_path_buf(),
             constraints_file: None,
             witness_file: None,
+            cs_file_counter: 0,
         })
     }
 }
@@ -116,7 +118,8 @@ impl Sink for FileSink {
         let file = match self.constraints_file {
             None => {
                 self.constraints_file = Some(File::create(
-                    self.workspace.join("constraints.zkif"))?);
+                    self.workspace.join(format!("constraints_{}.zkif", &self.cs_file_counter)))?);
+                self.cs_file_counter += 1;
                 self.constraints_file.as_mut().unwrap()
             }
             Some(ref mut file) => file,
