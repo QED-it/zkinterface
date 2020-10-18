@@ -4,6 +4,9 @@ pub extern crate serde;
 #[allow(unused_imports)]
 pub mod zkinterface_generated;
 
+pub mod cli;
+pub mod workspace;
+
 pub use consumers::reader::Reader;
 
 pub mod consumers;

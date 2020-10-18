@@ -1,3 +1,11 @@
+# Version v1.2.1, 2020-10
+
+Rust:
+- Make CLI tools available as a library.
+- Fix a bug in the simulator.
+- Start organizing workspace features in a module.
+- clean_workspace() function.
+
 # Version v1.2.0, 2020-09, Rust refactor
 
 FlatBuffers schema (binary encoding remains unchanged):
