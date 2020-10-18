@@ -65,8 +65,9 @@ impl Simulator {
         let a = self.sum_terms(&constraint.linear_combination_a)?;
         let b = self.sum_terms(&constraint.linear_combination_b)?;
         let c = self.sum_terms(&constraint.linear_combination_c)?;
+        let ab = (a * b) % &self.modulus;
         let c = c % &self.modulus;
-        if (a * b).eq(&c) {
+        if ab.eq(&c) {
             Ok(())
         } else {
             Err(format!("Constraint is not satisfied ({:?})", constraint).into())
