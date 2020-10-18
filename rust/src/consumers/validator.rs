@@ -1,4 +1,4 @@
-use crate::{CircuitHeader, Witness, ConstraintSystem, Messages, Variables};
+use crate::{CircuitHeader, Witness, ConstraintSystem, Messages, Variables, Message, Workspace};
 
 use std::collections::HashMap;
 use num_bigint::BigUint;
@@ -51,8 +51,31 @@ impl Validator {
         }
     }
 
+    pub fn ingest_workspace(&mut self, ws: &Workspace) {
+        for msg in ws.iter_messages() {
+            match msg {
+                Message::Header(header) => {
+                    self.ingest_header(&header);
+                }
+                Message::ConstraintSystem(cs) => {
+                    self.ingest_constraint_system(&cs);
+                }
+                Message::Witness(witness) => {
+                    if self.as_prover {
+                        self.ingest_witness(&witness);
+                    }
+                }
+                Message::Command(_) => {}
+                Message::Err(err) => self.violate(err.to_string()),
+            }
+        }
+    }
+
     pub fn get_violations(mut self) -> Vec<String> {
         self.ensure_all_variables_used();
+        if !self.got_header {
+            self.violate("Missing header.");
+        }
         self.violations
     }
 

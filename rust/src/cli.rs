@@ -6,12 +6,7 @@ use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-use crate::{
-    Reader,
-    Messages,
-    consumers::stats::Stats,
-    Result,
-};
+use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
 use std::fs::{File, create_dir_all};
 use std::ffi::OsStr;
 
@@ -91,9 +86,9 @@ pub fn cli(options: &Options) -> Result<()> {
         "to-json" => main_json(&load_messages(options)?),
         "to-yaml" => main_yaml(&load_messages(options)?),
         "explain" => main_explain(&load_messages(options)?),
-        "validate" => main_validate(&load_messages(options)?),
-        "simulate" => main_simulate(&load_messages(options)?),
-        "stats" => main_stats(&load_messages(options)?),
+        "validate" => main_validate(&stream_messages(options)?),
+        "simulate" => main_simulate(&stream_messages(options)?),
+        "stats" => main_stats(&stream_messages(options)?),
         "fake_prove" => main_fake_prove(&load_messages(options)?),
         "fake_verify" => main_fake_verify(&load_messages(options)?),
         "help" => {
@@ -116,7 +111,7 @@ fn load_messages(opts: &Options) -> Result<Reader> {
     for path in list_files(opts)? {
         if path == Path::new("-") {
             eprintln!("Loading from stdin");
-            reader.read_from(&mut stdin())?;
+            reader.read_from(stdin())?;
         } else {
             eprintln!("Loading file {}", path.display());
             reader.read_file(path)?;
@@ -125,6 +120,11 @@ fn load_messages(opts: &Options) -> Result<Reader> {
     eprintln!();
 
     Ok(reader)
+}
+
+fn stream_messages(opts: &Options) -> Result<Workspace> {
+    let paths = list_files(opts)?;
+    Ok(Workspace::new(paths))
 }
 
 fn has_zkif_extension(path: &Path) -> bool {
@@ -176,14 +176,16 @@ fn main_example(opts: &Options) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
 
-        let path = out_dir.join("statement.zkif");
-        let mut file = File::create(&path)?;
-        example_circuit_header().write_into(&mut file)?;
-        example_constraints().write_into(&mut file)?;
+        let path = out_dir.join("header.zkif");
+        example_circuit_header().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 
         let path = out_dir.join("witness.zkif");
         example_witness().write_into(&mut File::create(&path)?)?;
+        eprintln!("Written {}", path.display());
+
+        let path = out_dir.join("constraints.zkif");
+        example_constraints().write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
     }
     Ok(())
@@ -217,25 +219,21 @@ fn main_explain(reader: &Reader) -> Result<()> {
     Ok(())
 }
 
-fn main_validate(reader: &Reader) -> Result<()> {
-    let reader = Messages::from(reader);
-
+fn main_validate(ws: &Workspace) -> Result<()> {
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
-    validator.ingest_messages(&reader);
+    validator.ingest_workspace(ws);
     print_violations(&validator.get_violations())
 }
 
-fn main_simulate(reader: &Reader) -> Result<()> {
-    let reader = Messages::from(reader);
-
+fn main_simulate(ws: &Workspace) -> Result<()> {
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();
-    validator.ingest_messages(&reader);
+    validator.ingest_workspace(ws);
     print_violations(&validator.get_violations())?;
 
     // Check whether the statement is true.
-    let ok = Simulator::default().simulate(&reader);
+    let ok = Simulator::default().simulate_workspace(ws);
     match ok {
         Err(_) => eprintln!("The statement is NOT TRUE!"),
         Ok(_) => eprintln!("The statement is TRUE!"),
@@ -254,9 +252,9 @@ fn print_violations(errors: &[String]) -> Result<()> {
     }
 }
 
-fn main_stats(reader: &Reader) -> Result<()> {
-    let mut stats = Stats::new();
-    stats.push(reader)?;
+fn main_stats(ws: &Workspace) -> Result<()> {
+    let mut stats = Stats::default();
+    stats.ingest_workspace(ws);
     serde_json::to_writer_pretty(stdout(), &stats)?;
     println!();
     Ok(())

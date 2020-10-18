@@ -3,10 +3,9 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-use crate::Reader;
-use crate::Result;
+use crate::{Workspace, Message};
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Stats {
     num_public_inputs: u64,
     num_private_variables: u64,
@@ -18,29 +17,38 @@ pub struct Stats {
 }
 
 impl Stats {
-    pub fn new() -> Stats {
-        return Stats { num_public_inputs: 0, num_private_variables: 0, multiplications: 0, additions_a: 0, additions_b: 0, additions_c: 0, additions: 0 };
-    }
+    pub fn ingest_workspace(&mut self, ws: &Workspace) {
+        for msg in ws.iter_messages() {
+            match msg {
+                Message::Header(header) => {
+                    self.num_public_inputs = header.instance_variables.variable_ids.len() as u64;
+                    self.num_private_variables = header.free_variable_id - self.num_public_inputs - 1;
+                }
 
-    pub fn push(&mut self, reader: &Reader) -> Result<()> {
-        let header = reader.last_header().ok_or("no circuit")?;
-        self.num_public_inputs = header.instance_variables().unwrap().variable_ids().unwrap().len() as u64;
-        self.num_private_variables = header.free_variable_id() - self.num_public_inputs - 1;
+                Message::ConstraintSystem(cs) => {
+                    self.multiplications += cs.constraints.len() as u64;
 
-        for constraint in reader.iter_constraints() {
-            self.multiplications += 1;
-            if constraint.a.len() > 0 {
-                self.additions_a += (constraint.a.len() - 1) as u64;
-            }
-            if constraint.b.len() > 0 {
-                self.additions_b += (constraint.b.len() - 1) as u64;
-            }
-            if constraint.c.len() > 0 {
-                self.additions_c += (constraint.c.len() - 1) as u64;
+                    for constraint in &cs.constraints {
+                        let len_a = constraint.linear_combination_a.variable_ids.len() as u64;
+                        if len_a > 0 {
+                            self.additions_a += len_a - 1;
+                        }
+
+                        let len_b = constraint.linear_combination_b.variable_ids.len() as u64;
+                        if len_b > 0 {
+                            self.additions_b += len_b - 1;
+                        }
+
+                        let len_c = constraint.linear_combination_c.variable_ids.len() as u64;
+                        if len_c > 0 {
+                            self.additions_c += len_c - 1;
+                        }
+                    }
+                    self.additions = self.additions_a + self.additions_b + self.additions_c;
+                }
+
+                _ => {}
             }
         }
-
-        self.additions = self.additions_a + self.additions_b + self.additions_c;
-        Ok(())
     }
 }

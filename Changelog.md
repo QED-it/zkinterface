@@ -1,3 +1,13 @@
+# Version v1.3.0, 2020-10, Rust streaming
+
+Rust:
+- Unified Workspace reader with streaming mode.
+- Supports reading from stdin stream.
+- Supports reading chunk by chunk from unlimited files.
+- CLI stats, validate, and simulate work in streaming mode.
+- *(breaking)* Renamed FileSink to WorkspaceSink.
+
+
 # Version v1.2.1, 2020-10
 
 Rust:

@@ -1,8 +1,4 @@
-use std::fs::{File, create_dir_all};
-use std::path::{Path, PathBuf};
-
 use crate::{Result, Variables, CircuitHeader, ConstraintSystem, Witness};
-
 
 pub trait Sink {
     fn push_header(&mut self, statement: CircuitHeader) -> Result<()>;
@@ -14,11 +10,10 @@ pub trait Sink {
 /// StatementBuilder assists with constructing and storing a statement in zkInterface format.
 /// # Example
 /// ```
-/// use zkinterface::producers::builder::{StatementBuilder, Sink, FileSink};
-/// use zkinterface::{CircuitHeader, ConstraintSystem, Witness};
+/// use zkinterface::{StatementBuilder, Sink, WorkspaceSink, CircuitHeader, ConstraintSystem, Witness};
 ///
 /// // Create a workspace where to write zkInterafce files.
-/// let sink = FileSink::new("local/test_builder").unwrap();
+/// let sink = WorkspaceSink::new("local/test_builder").unwrap();
 /// let mut builder = StatementBuilder::new(sink);
 ///
 /// // Use variables, construct a constraint system, and a witness.
@@ -84,57 +79,4 @@ impl<S: Sink> Sink for StatementBuilder<S> {
     fn push_header(&mut self, header: CircuitHeader) -> Result<()> { self.sink.push_header(header) }
     fn push_constraints(&mut self, cs: ConstraintSystem) -> Result<()> { self.sink.push_constraints(cs) }
     fn push_witness(&mut self, witness: Witness) -> Result<()> { self.sink.push_witness(witness) }
-}
-
-
-/// Store messages into files using conventional filenames inside of a workspace.
-pub struct FileSink {
-    pub workspace: PathBuf,
-    pub constraints_file: Option<File>,
-    pub witness_file: Option<File>,
-}
-
-impl FileSink {
-    pub fn new(workspace: impl AsRef<Path>) -> Result<FileSink> {
-        create_dir_all(workspace.as_ref())?;
-        Ok(FileSink {
-            workspace: workspace.as_ref().to_path_buf(),
-            constraints_file: None,
-            witness_file: None,
-        })
-    }
-}
-
-impl Sink for FileSink {
-    fn push_header(&mut self, header: CircuitHeader) -> Result<()> {
-        let mut file = File::create(
-            self.workspace.join("header.zkif"))?;
-        header.write_into(&mut file)
-    }
-
-    fn push_constraints(&mut self, cs: ConstraintSystem) -> Result<()> {
-        let file = match self.constraints_file {
-            None => {
-                self.constraints_file = Some(File::create(
-                    self.workspace.join("constraints.zkif"))?);
-                self.constraints_file.as_mut().unwrap()
-            }
-            Some(ref mut file) => file,
-        };
-
-        cs.write_into(file)
-    }
-
-    fn push_witness(&mut self, witness: Witness) -> Result<()> {
-        let file = match self.witness_file {
-            None => {
-                self.witness_file = Some(File::create(
-                    self.workspace.join("witness.zkif"))?);
-                self.witness_file.as_mut().unwrap()
-            }
-            Some(ref mut file) => file,
-        };
-
-        witness.write_into(file)
-    }
 }

@@ -1,4 +1,4 @@
-use crate::{Result, CircuitHeader, Witness, ConstraintSystem, Messages, Variables};
+use crate::{Result, CircuitHeader, Witness, ConstraintSystem, Messages, Variables, Workspace, Message};
 use crate::structs::constraints::BilinearConstraint;
 
 use std::collections::HashMap;
@@ -12,6 +12,8 @@ type Field = BigUint;
 pub struct Simulator {
     values: HashMap<Var, Field>,
     modulus: Field,
+
+    violations: Vec<String>,
 }
 
 impl Simulator {
@@ -24,6 +26,25 @@ impl Simulator {
         }
         for cs in &messages.constraint_systems {
             self.ingest_constraint_system(cs)?;
+        }
+        Ok(())
+    }
+
+    pub fn simulate_workspace(&mut self, ws: &Workspace) -> Result<()> {
+        for msg in ws.iter_messages() {
+            match msg {
+                Message::Header(header) => {
+                    self.ingest_header(&header)?;
+                }
+                Message::ConstraintSystem(cs) => {
+                    self.ingest_constraint_system(&cs)?;
+                }
+                Message::Witness(witness) => {
+                    self.ingest_witness(&witness)?;
+                }
+                Message::Command(_) => {}
+                Message::Err(_) => {}
+            }
         }
         Ok(())
     }

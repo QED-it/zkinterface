@@ -5,12 +5,20 @@ pub extern crate serde;
 pub mod zkinterface_generated;
 
 pub mod cli;
-pub mod workspace;
-
-pub use consumers::reader::Reader;
 
 pub mod consumers;
+
+pub use consumers::{
+    reader::Reader,
+    workspace::Workspace,
+};
+
 pub mod producers;
+
+pub use producers::{
+    builder::{Sink, StatementBuilder},
+    workspace::{WorkspaceSink, clean_workspace},
+};
 
 /// Fully-owned version of each data structure.
 /// These structures may be easier to work with than the
@@ -22,6 +30,7 @@ pub use structs::{
     command::Command,
     constraints::{ConstraintSystem, BilinearConstraint},
     keyvalue::KeyValue,
+    message::Message,
     messages::Messages,
     variables::Variables,
     witness::Witness,

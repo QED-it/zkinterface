@@ -1,5 +1,6 @@
 use crate::{Result, CircuitHeader};
-use super::builder::{StatementBuilder, Sink, FileSink};
+use super::builder::{StatementBuilder, Sink};
+use super::workspace::WorkspaceSink;
 use std::io::Write;
 
 
@@ -31,7 +32,7 @@ impl<S: Sink + GadgetCallbacks> GadgetCallbacks for StatementBuilder<S> {
     }
 }
 
-impl GadgetCallbacks for FileSink {
+impl GadgetCallbacks for WorkspaceSink {
     fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
         if let Some(ref mut file) = self.constraints_file {
             file.write_all(msg)?;
