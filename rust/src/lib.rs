@@ -5,6 +5,7 @@ pub extern crate serde;
 pub mod zkinterface_generated;
 
 pub mod cli;
+pub mod workspace;
 
 pub use consumers::reader::Reader;
 
