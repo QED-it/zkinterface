@@ -62,7 +62,7 @@ pub fn split_messages(mut buf: &[u8]) -> Vec<&[u8]> {
     bufs
 }
 
-pub fn read_buffer(stream: &mut impl Read) -> Result<Vec<u8>> {
+pub fn read_buffer(mut stream: impl Read) -> Result<Vec<u8>> {
     let mut buffer = vec![0u8; 4];
     if stream.read_exact(&mut buffer).is_err() {
         return Ok(Vec::new()); // End of stream at the correct place.
@@ -164,9 +164,9 @@ impl Reader {
         Ok(())
     }
 
-    pub fn read_from(&mut self, reader: &mut impl Read) -> Result<()> {
+    pub fn read_from(&mut self, mut reader: impl Read) -> Result<()> {
         loop {
-            let buffer = read_buffer(reader)?;
+            let buffer = read_buffer(&mut reader)?;
             if buffer.len() == 0 {
                 return Ok(());
             }
