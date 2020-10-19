@@ -1,3 +1,10 @@
+# Version v1.3.1, 2020-10, Rust streaming
+
+Rust:
+- WorkspaceSink creates multiple constraints files instead of a large one.
+- Example code to read in chunked/streamed mode.
+- Consolidate the workspace file discovery into its module.
+
 # Version v1.3.0, 2020-10, Rust streaming
 
 Rust:

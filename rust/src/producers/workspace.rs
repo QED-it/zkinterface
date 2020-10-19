@@ -72,7 +72,7 @@ fn test_workspace_cleanup() {
     let workspace = PathBuf::from("local/test_workspace_cleanup");
     let _ = remove_dir_all(&workspace);
     let mut sink = WorkspaceSink::new(&workspace).unwrap();
-    
+
     // workspace is empty, check it!
     assert_eq!(read_dir(&workspace).unwrap().count(), 0);
 
@@ -89,5 +89,5 @@ fn test_workspace_cleanup() {
 
     // clean workspace, and check there is no more file in it.
     clean_workspace(&workspace).unwrap();
-    assert_eq!(read_dir(&workspace).unwrap().count(), 0);    
+    assert_eq!(read_dir(&workspace).unwrap().count(), 0);
 }
