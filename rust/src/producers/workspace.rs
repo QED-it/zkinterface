@@ -44,11 +44,9 @@ impl Sink for WorkspaceSink {
     }
 
     fn push_constraints(&mut self, cs: ConstraintSystem) -> Result<()> {
-        let mut constraints_file = Some(File::create(
-                    self.workspace.join(format!("constraints_{}.zkif", &self.cs_file_counter)))?);
+        let mut constraints_file = File::create(self.workspace.join(format!("constraints_{}.zkif", &self.cs_file_counter)))?;
         self.cs_file_counter += 1;
-        let file = constraints_file.as_mut().unwrap();
-        cs.write_into(file)
+        cs.write_into(&mut constraints_file)
     }
 
     fn push_witness(&mut self, witness: Witness) -> Result<()> {

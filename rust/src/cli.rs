@@ -6,8 +6,8 @@ use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-use crate::{Reader, Workspace, Messages, consumers::stats::Stats, producers::workspace::clean_workspace, Result};
-use std::fs::{File, create_dir_all};
+use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
+use std::fs::{File, create_dir_all, remove_file};
 use std::ffi::OsStr;
 
 const ABOUT: &str = "
@@ -265,9 +265,16 @@ fn main_stats(ws: &Workspace) -> Result<()> {
 }
 
 fn main_clean(opts: &Options) -> Result<()> {
-    for path in &opts.paths {
-        clean_workspace(path)?;
+    let all_files = list_files(opts)?;
+    for file in &all_files {
+        match remove_file(file) {
+            Err(err) => {
+                eprintln!("Warning: {}", err)
+            }
+            _ => {/* OK */}
+        }
     }
+
     Ok(())
 }
 
