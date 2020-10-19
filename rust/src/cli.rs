@@ -267,6 +267,7 @@ fn main_stats(ws: &Workspace) -> Result<()> {
 fn main_clean(opts: &Options) -> Result<()> {
     let all_files = list_files(opts)?;
     for file in &all_files {
+        eprintln!("Removing {}", file.display());
         match remove_file(file) {
             Err(err) => {
                 eprintln!("Warning: {}", err)
