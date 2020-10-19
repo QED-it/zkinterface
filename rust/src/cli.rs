@@ -1,14 +1,15 @@
 extern crate serde;
 extern crate serde_json;
 
-use std::fs;
+use std::fs::{File, create_dir_all, remove_file};
 use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
-use std::fs::{File, create_dir_all, remove_file};
-use std::ffi::OsStr;
+use crate::consumers::workspace::{list_workspace_files, has_zkif_extension};
+use crate::consumers::validator::Validator;
+use crate::consumers::simulator::Simulator;
 
 const ABOUT: &str = "
 This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
@@ -38,8 +39,6 @@ Write all the statement files to stdout (to pipe to another program):
 ";
 
 use structopt::clap::AppSettings::*;
-use crate::consumers::validator::Validator;
-use crate::consumers::simulator::Simulator;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -112,7 +111,7 @@ pub fn cli(options: &Options) -> Result<()> {
 fn load_messages(opts: &Options) -> Result<Reader> {
     let mut reader = Reader::new();
 
-    for path in list_files(opts)? {
+    for path in list_workspace_files(&opts.paths)? {
         if path == Path::new("-") {
             eprintln!("Loading from stdin");
             reader.read_from(stdin())?;
@@ -127,37 +126,7 @@ fn load_messages(opts: &Options) -> Result<Reader> {
 }
 
 fn stream_messages(opts: &Options) -> Result<Workspace> {
-    let paths = list_files(opts)?;
-    Ok(Workspace::new(paths))
-}
-
-fn has_zkif_extension(path: &Path) -> bool {
-    path.extension() == Some(OsStr::new("zkif"))
-}
-
-fn list_files(opts: &Options) -> Result<Vec<PathBuf>> {
-    let mut all_paths = vec![];
-
-    for path in &opts.paths {
-        if has_zkif_extension(path) || path == Path::new("-") {
-            all_paths.push(path.clone());
-        } else {
-            for file in fs::read_dir(path)? {
-                match file {
-                    Ok(file) => {
-                        if has_zkif_extension(&file.path()) {
-                            all_paths.push(file.path());
-                        }
-                    }
-                    Err(err) => {
-                        eprintln!("Warning: {}", err);
-                        continue;
-                    }
-                }
-            }
-        }
-    }
-    Ok(all_paths)
+    Workspace::from_dirs_and_files(&opts.paths)
 }
 
 fn main_example(opts: &Options) -> Result<()> {
@@ -196,7 +165,7 @@ fn main_example(opts: &Options) -> Result<()> {
 }
 
 fn main_cat(opts: &Options) -> Result<()> {
-    for path in list_files(opts)? {
+    for path in list_workspace_files(&opts.paths)? {
         let mut file = File::open(&path)?;
         let mut stdout = stdout();
         copy(&mut file, &mut stdout)?;
@@ -265,14 +234,14 @@ fn main_stats(ws: &Workspace) -> Result<()> {
 }
 
 fn main_clean(opts: &Options) -> Result<()> {
-    let all_files = list_files(opts)?;
+    let all_files = list_workspace_files(&opts.paths)?;
     for file in &all_files {
         eprintln!("Removing {}", file.display());
         match remove_file(file) {
             Err(err) => {
                 eprintln!("Warning: {}", err)
             }
-            _ => {/* OK */}
+            _ => { /* OK */ }
         }
     }
 
