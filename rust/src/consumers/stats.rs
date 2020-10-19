@@ -7,13 +7,13 @@ use crate::{Workspace, Message};
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Stats {
-    num_public_inputs: u64,
-    num_private_variables: u64,
-    multiplications: u64,
-    additions: u64,
-    additions_a: u64,
-    additions_b: u64,
-    additions_c: u64,
+    pub num_public_inputs: u64,
+    pub num_private_variables: u64,
+    pub multiplications: u64,
+    pub additions: u64,
+    pub additions_a: u64,
+    pub additions_b: u64,
+    pub additions_c: u64,
 }
 
 impl Stats {

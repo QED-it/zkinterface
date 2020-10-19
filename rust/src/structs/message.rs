@@ -1,13 +1,14 @@
-use std::error::Error;
+use serde::{Serialize, Deserialize};
 use crate::zkinterface_generated::zkinterface as fb;
 use crate::{CircuitHeader, ConstraintSystem, Witness, Command};
 
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum Message {
     Header(CircuitHeader),
     ConstraintSystem(ConstraintSystem),
     Witness(Witness),
     Command(Command),
-    Err(Box<dyn Error>),
+    Err(String),
 }
 
 impl<'a> From<&'a [u8]> for Message {
