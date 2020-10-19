@@ -7,6 +7,10 @@ See a [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
 See the [specification](zkInterface.pdf) and the [serialization format](zkinterface.fbs).
 
+See the Rust implementation: [![docs](https://docs.rs/zkinterface/badge.svg)](https://docs.rs/zkinterface/)
+
+See integration instructions under [ecosystem/](ecosystem/).
+
 ## Introduction
 
 ![alt text](https://qedit.s3.eu-central-1.amazonaws.com/pictures/zkinterface.png)
@@ -48,7 +52,7 @@ __Backends:__
 
 See also the [WebAssembly modules](https://github.com/QED-it/zkinterface-wasm/) used to build the [live demo](https://qed-it.github.io/zkinterface-wasm-demo/).
 
-See the `ecosystem/` folder for a collection of instructions to install and connect multiple systems.
+See the [ecosystem/](ecosystem/) folder for a collection of instructions to install and connect multiple systems.
 
 <!-- ## How to use it
 
