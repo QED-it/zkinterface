@@ -1,4 +1,4 @@
-use crate::{CircuitHeader, Witness, ConstraintSystem, Messages, Variables, Message, Workspace};
+use crate::{CircuitHeader, Witness, ConstraintSystem, Variables, Message};
 
 use std::collections::HashMap;
 use num_bigint::BigUint;
@@ -37,46 +37,22 @@ impl Validator {
         Validator { as_prover: true, ..Self::default() }
     }
 
-    pub fn ingest_messages(&mut self, messages: &Messages) {
-        for header in &messages.circuit_headers {
-            self.ingest_header(header);
-        }
-        if self.as_prover {
-            for witness in &messages.witnesses {
-                self.ingest_witness(witness);
-            }
-        }
-        for cs in &messages.constraint_systems {
-            self.ingest_constraint_system(cs);
-        }
-    }
-
-    pub fn ingest_workspace(&mut self, ws: &Workspace) {
-        for msg in ws.iter_messages() {
-            match msg {
-                Message::Header(header) => {
-                    self.ingest_header(&header);
-                }
-                Message::ConstraintSystem(cs) => {
-                    self.ingest_constraint_system(&cs);
-                }
-                Message::Witness(witness) => {
-                    if self.as_prover {
-                        self.ingest_witness(&witness);
-                    }
-                }
-                Message::Command(_) => {}
-                Message::Err(err) => self.violate(err.to_string()),
-            }
-        }
-    }
-
     pub fn get_violations(mut self) -> Vec<String> {
         self.ensure_all_variables_used();
         if !self.got_header {
             self.violate("Missing header.");
         }
         self.violations
+    }
+
+    pub fn ingest_message(&mut self, msg: &Message) {
+        match msg {
+            Message::Header(h) => self.ingest_header(&h),
+            Message::ConstraintSystem(cs) => self.ingest_constraint_system(&cs),
+            Message::Witness(w) => self.ingest_witness(&w),
+            Message::Command(_) => {}
+            Message::Err(err) => self.violate(err.to_string()),
+        }
     }
 
     pub fn ingest_header(&mut self, header: &CircuitHeader) {
@@ -107,10 +83,9 @@ impl Validator {
     }
 
     pub fn ingest_witness(&mut self, witness: &Witness) {
+        if !self.as_prover { return; }
+
         self.ensure_header();
-        if !self.as_prover {
-            self.violate("As verifier, got an unexpected Witness message.");
-        }
 
         for var in witness.assigned_variables.get_variables() {
             self.define(var.id, var.value, || format!("value of the witness variable_{}", var.id));

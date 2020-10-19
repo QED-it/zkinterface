@@ -1,4 +1,4 @@
-use crate::{Result, CircuitHeader, Witness, ConstraintSystem, Messages, Variables, Workspace, Message};
+use crate::{Result, CircuitHeader, Witness, ConstraintSystem, Variables, Message};
 use crate::structs::constraints::BilinearConstraint;
 
 use std::collections::HashMap;
@@ -13,38 +13,38 @@ pub struct Simulator {
     values: HashMap<Var, Field>,
     modulus: Field,
 
-    violations: Vec<String>,
+    verified_at_least_one_constraint: bool,
+    found_error: Option<String>,
 }
 
 impl Simulator {
-    pub fn simulate(&mut self, messages: &Messages) -> Result<()> {
-        for header in &messages.circuit_headers {
-            self.ingest_header(header)?;
+    pub fn get_violations(self) -> Vec<String> {
+        let mut violations = vec![];
+        if !self.verified_at_least_one_constraint {
+            violations.push("Did not receive any constraint to verify.".to_string());
         }
-        for witness in &messages.witnesses {
-            self.ingest_witness(witness)?;
+        if let Some(err) = self.found_error {
+            violations.push(err);
         }
-        for cs in &messages.constraint_systems {
-            self.ingest_constraint_system(cs)?;
-        }
-        Ok(())
+        violations
     }
 
-    pub fn simulate_workspace(&mut self, ws: &Workspace) -> Result<()> {
-        for msg in ws.iter_messages() {
-            match msg {
-                Message::Header(header) => {
-                    self.ingest_header(&header)?;
-                }
-                Message::ConstraintSystem(cs) => {
-                    self.ingest_constraint_system(&cs)?;
-                }
-                Message::Witness(witness) => {
-                    self.ingest_witness(&witness)?;
-                }
-                Message::Command(_) => {}
-                Message::Err(_) => {}
-            }
+    pub fn ingest_message(&mut self, msg: &Message) {
+        if self.found_error.is_some() { return; }
+
+        match self.ingest_message_(msg) {
+            Err(err) => self.found_error = Some(err.to_string()),
+            Ok(()) => {}
+        }
+    }
+
+    fn ingest_message_(&mut self, msg: &Message) -> Result<()> {
+        match msg {
+            Message::Header(h) => self.ingest_header(&h)?,
+            Message::ConstraintSystem(cs) => self.ingest_constraint_system(&cs)?,
+            Message::Witness(w) => self.ingest_witness(&w)?,
+            Message::Command(_) => {}
+            Message::Err(_) => {}
         }
         Ok(())
     }
@@ -75,6 +75,10 @@ impl Simulator {
 
     pub fn ingest_constraint_system(&mut self, system: &ConstraintSystem) -> Result<()> {
         self.ensure_header()?;
+
+        if system.constraints.len() > 0 {
+            self.verified_at_least_one_constraint = true;
+        }
 
         for constraint in &system.constraints {
             self.verify_constraint(constraint)?;

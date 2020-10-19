@@ -195,32 +195,36 @@ fn main_explain(reader: &Reader) -> Result<()> {
 fn main_validate(ws: &Workspace) -> Result<()> {
     // Validate semantics as verifier.
     let mut validator = Validator::new_as_verifier();
-    validator.ingest_workspace(ws);
-    print_violations(&validator.get_violations())
+    for msg in ws.iter_messages() {
+        validator.ingest_message(&msg);
+    }
+    print_violations(&validator.get_violations(), "COMPLIANT with the specification")
 }
 
 fn main_simulate(ws: &Workspace) -> Result<()> {
     // Validate semantics as prover.
     let mut validator = Validator::new_as_prover();
-    validator.ingest_workspace(ws);
-    print_violations(&validator.get_violations())?;
-
     // Check whether the statement is true.
-    let ok = Simulator::default().simulate_workspace(ws);
-    match ok {
-        Err(_) => eprintln!("The statement is NOT TRUE!"),
-        Ok(_) => eprintln!("The statement is TRUE!"),
+    let mut simulator = Simulator::default();
+
+    // Must validate and simulate in parallel to support stdin.
+    for msg in ws.iter_messages() {
+        validator.ingest_message(&msg);
+        simulator.ingest_message(&msg);
     }
-    ok
+
+    let result_val = print_violations(&validator.get_violations(), "COMPLIANT with the specification");
+    print_violations(&simulator.get_violations(), "TRUE")?;
+    result_val
 }
 
-fn print_violations(errors: &[String]) -> Result<()> {
+fn print_violations(errors: &[String], what_it_is_supposed_to_be: &str) -> Result<()> {
     if errors.len() > 0 {
-        eprintln!("The statement is NOT COMPLIANT with the specification!");
+        eprintln!("The statement is NOT {}!", what_it_is_supposed_to_be);
         eprintln!("Violations:\n- {}\n", errors.join("\n- "));
-        Err(format!("Found {} violations of the specification.", errors.len()).into())
+        Err(format!("Found {} violations.", errors.len()).into())
     } else {
-        eprintln!("The statement is COMPLIANT with the specification!");
+        eprintln!("The statement is {}!", what_it_is_supposed_to_be);
         Ok(())
     }
 }
