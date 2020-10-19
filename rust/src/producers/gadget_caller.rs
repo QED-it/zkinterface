@@ -33,11 +33,14 @@ impl<S: Sink + GadgetCallbacks> GadgetCallbacks for StatementBuilder<S> {
 }
 
 impl GadgetCallbacks for WorkspaceSink {
-    fn receive_constraints(&mut self, msg: &[u8]) -> Result<()> {
+    fn receive_constraints(&mut self, _msg: &[u8]) -> Result<()> {
+        unimplemented!();
+        /*
         if let Some(ref mut file) = self.constraints_file {
             file.write_all(msg)?;
         }
         Ok(())
+        */
     }
 
     fn receive_witness(&mut self, msg: &[u8]) -> Result<()> {

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
-use std::fs::{File, create_dir_all};
+use std::fs::{File, create_dir_all, remove_file};
 use std::ffi::OsStr;
 
 const ABOUT: &str = "
@@ -67,6 +67,9 @@ pub struct Options {
     /// simulate    Simulate a proving system as prover by verifying that the statement is true.
     ///
     /// stats       Calculate statistics about the circuit.
+    ///
+    /// clean       Clean workspace by deleting all *.zkif files in it.
+    ///
     #[structopt(default_value = "help")]
     pub tool: String,
 
@@ -89,6 +92,7 @@ pub fn cli(options: &Options) -> Result<()> {
         "validate" => main_validate(&stream_messages(options)?),
         "simulate" => main_simulate(&stream_messages(options)?),
         "stats" => main_stats(&stream_messages(options)?),
+        "clean" => main_clean(options),
         "fake_prove" => main_fake_prove(&load_messages(options)?),
         "fake_verify" => main_fake_verify(&load_messages(options)?),
         "help" => {
@@ -257,6 +261,21 @@ fn main_stats(ws: &Workspace) -> Result<()> {
     stats.ingest_workspace(ws);
     serde_json::to_writer_pretty(stdout(), &stats)?;
     println!();
+    Ok(())
+}
+
+fn main_clean(opts: &Options) -> Result<()> {
+    let all_files = list_files(opts)?;
+    for file in &all_files {
+        eprintln!("Removing {}", file.display());
+        match remove_file(file) {
+            Err(err) => {
+                eprintln!("Warning: {}", err)
+            }
+            _ => {/* OK */}
+        }
+    }
+
     Ok(())
 }
 
