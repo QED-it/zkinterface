@@ -3,7 +3,8 @@ use std::fs::File;
 use std::iter;
 use std::io::{Read, stdin};
 use crate::consumers::reader::read_buffer;
-use crate::Message;
+use crate::{Message, Messages};
+
 
 pub struct Workspace {
     paths: Vec<PathBuf>,
@@ -37,6 +38,10 @@ impl Workspace {
         };
 
         buffers.map(|buffer| Message::from(&buffer[..]))
+    }
+
+    pub fn read_all_messages(&self) -> Messages {
+        Messages::from(self)
     }
 }
 

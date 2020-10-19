@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+use crate::Workspace;
 use crate::consumers::reader::Reader;
 use crate::zkinterface_generated::zkinterface as fb;
 use super::header::CircuitHeader;
 use super::constraints::ConstraintSystem;
 use super::witness::Witness;
+use super::message::Message;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Messages {
@@ -37,6 +39,24 @@ impl From<&Reader> for Messages {
                 }
                 fb::Message::Command => {}
                 fb::Message::NONE => {}
+            }
+        }
+        messages
+    }
+}
+
+impl From<&Workspace> for Messages {
+    /// Convert from Flatbuffers messages to owned structure.
+    fn from(ws: &Workspace) -> Messages {
+        let mut messages = Messages::default();
+
+        for msg in ws.iter_messages() {
+            match msg {
+                Message::Header(h) => messages.circuit_headers.push(h),
+                Message::ConstraintSystem(cs) => messages.constraint_systems.push(cs),
+                Message::Witness(w) => messages.witnesses.push(w),
+                Message::Command(_) => {}
+                Message::Err(_) => {}
             }
         }
         messages
