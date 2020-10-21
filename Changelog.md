@@ -1,3 +1,10 @@
+# Version v1.3.2, 2020-10, Improve simulator
+
+Rust:
+- Fix a bug when using simulate from stdin.
+- Simplify and unify the interface of Validator and Simulator.
+- Method `CircuitHeader.list_witness_ids()`.
+
 # Version v1.3.1, 2020-10, Rust streaming
 
 Rust:
