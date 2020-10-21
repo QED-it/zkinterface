@@ -9,6 +9,8 @@ use super::keyvalue::KeyValue;
 use crate::Result;
 use std::convert::TryFrom;
 use std::error::Error;
+use std::collections::HashSet;
+
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CircuitHeader {
@@ -45,6 +47,22 @@ impl<'a> TryFrom<&'a [u8]> for CircuitHeader {
 }
 
 impl CircuitHeader {
+    /// Enumerate the IDs of witness variables based on a header.
+    /// # Example
+    /// ```
+    /// use zkinterface_bellman::export::list_witness_ids;
+    /// let header = zkinterface::producers::examples::example_circuit_header();
+    /// let witness_ids = list_witness_ids(&header);
+    /// assert_eq!(witness_ids, vec![4, 5]);
+    /// ```
+    pub fn list_witness_ids(&self) -> Vec<u64> {
+        let instance_ids = self.instance_variables.variable_ids.iter().cloned().collect::<HashSet<u64>>();
+
+        (1..self.free_variable_id)
+            .filter(|id| !instance_ids.contains(id))
+            .collect()
+    }
+
     pub fn with_instance_values(mut self, vars: Variables) -> Result<Self> {
         if self.instance_variables.variable_ids != vars.variable_ids {
             return Err(format!("The provided instance variables do not match.\nGot     : {:?}\nExpected:{:?}", vars.variable_ids, self.instance_variables.variable_ids).into());
