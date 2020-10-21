@@ -50,9 +50,8 @@ impl CircuitHeader {
     /// Enumerate the IDs of witness variables based on a header.
     /// # Example
     /// ```
-    /// use zkinterface_bellman::export::list_witness_ids;
     /// let header = zkinterface::producers::examples::example_circuit_header();
-    /// let witness_ids = list_witness_ids(&header);
+    /// let witness_ids = header.list_witness_ids();
     /// assert_eq!(witness_ids, vec![4, 5]);
     /// ```
     pub fn list_witness_ids(&self) -> Vec<u64> {
