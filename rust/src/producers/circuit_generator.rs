@@ -36,8 +36,8 @@ const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
 /// This is the list of sizes for the list of instance variables.
 const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 3]  = [
     10,
-    100000,
-    100000000
+    10000,
+    1000000
 ];
 
 
