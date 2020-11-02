@@ -16,6 +16,8 @@ use rand::Rng;
 ///   - Compute the product   (witness * b_1) * (witness * b_2) = c_i
 ///   - The result is then stored in c_i, a newly created instance variable
 
+/// This is the list of all primes characteristics to be used for generating constraints.
+/// They are written as hexadecimal strings, big endian.
 const BENCHMARK_PRIMES: [&str; 4]  = [
     "2",   // 2
     "11",   // 17
@@ -23,6 +25,7 @@ const BENCHMARK_PRIMES: [&str; 4]  = [
     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF43", // 256 prime: 2**256 - 189
 ];
 
+/// This is the list of sizes for the list of witnesses.
 const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
     3,
     100,
@@ -30,6 +33,7 @@ const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
     1000000
 ];
 
+/// This is the list of sizes for the list of instance variables.
 const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 3]  = [
     10,
     100000,
@@ -68,11 +72,19 @@ macro_rules! bits_to_bytes {
     ($val:expr) => (($val + 7) / 8);
 }
 
+/// This function will generate R1CS constraints systems for all parameters
+/// set here.
+///
+/// # Arguments
+///
+/// * `workspace_`  - a PathBuf giving the output directory
+///
 pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
 
     for hexaprime in BENCHMARK_PRIMES.iter() {
         for wit_nbr in BENCHMARK_CS_WITNESS_NUMBER.iter() {
             for ins_nbr in BENCHMARK_CS_INSTANCES_NUMBER.iter() {
+                println!("Generating R1CS system for prime:{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
                 generate_metrics_data(&workspace_, &hexaprime, *wit_nbr, *ins_nbr)?;
             }
         }
@@ -81,6 +93,33 @@ pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
+/// This function will generate a R1CS constraints system, and stores it in the directory specified
+/// as parameter, for the given field characteristic, with the given number of witnesses / instances
+/// variables. It returns an `Error<>`.
+///
+/// # Arguments
+///
+/// * `workspace_`  - a PathBuf giving the output directory
+/// * `hexaprime`  - a string slice containing the hexadecimal representation of the prime
+/// * `wit_nbr` - a integer giving the number of witnesses the generated system should have
+/// * `ins_nbr` - a integer giving the number of instance variables the generated system should have
+///
+/// # Examples
+/// To generate a R1CS system with 10 witnesses, 20 instance variables, over the field F_{257}
+/// ```
+///     use std::fs::remove_dir_all;
+///     use std::path::PathBuf;
+///
+///     let workspace = PathBuf::from("local/test_metrics");
+///     let _ = remove_dir_all(&workspace);
+///     let prime: &str = "101";  // 257 which is prime
+///
+///     match generate_metrics_data(&workspace, &prime, 10, 20) {
+///         Err(_) => eprintln!("Error"),
+///         _ => {}
+///     }
+/// ```
+///
 fn generate_metrics_data(workspace_: impl AsRef<Path>, hexaprime: &str, wit_nbr: u64, ins_nbr: u64) -> Result<()> {
     let mut rng = rand::thread_rng();
     let empty_constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![];
@@ -137,6 +176,7 @@ fn generate_metrics_data(workspace_: impl AsRef<Path>, hexaprime: &str, wit_nbr:
     Ok(())
 }
 
+/// serialize `BigUint` as a vector of u8 (in Little-endian), of a given size, padded with 0's if required.
 fn serialize_biguint(biguint: BigUint, byte_len: usize) -> Vec<u8> {
     let mut ret: Vec<u8> = Vec::new();
     let mut binary = biguint.to_bytes_le();
@@ -147,6 +187,8 @@ fn serialize_biguint(biguint: BigUint, byte_len: usize) -> Vec<u8> {
     ret
 }
 
+/// serialize a `Vec<BigUint>` as a vector of u8, each `BigUint` exported a fixed-size vector of u8
+/// padded with 0's if required.
 fn serialize_biguints(biguints: Vec<BigUint>, byte_len: usize) -> Vec<u8> {
     let mut ret: Vec<u8> = Vec::new();
 

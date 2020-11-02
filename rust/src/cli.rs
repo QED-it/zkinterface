@@ -10,6 +10,7 @@ use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
 use crate::consumers::workspace::{list_workspace_files, has_zkif_extension};
 use crate::consumers::validator::Validator;
 use crate::consumers::simulator::Simulator;
+use crate::producers::circuit_generator::generate_all_metrics_data;
 
 const ABOUT: &str = "
 This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
@@ -40,6 +41,7 @@ Write all the statement files to stdout (to pipe to another program):
 
 use structopt::clap::AppSettings::*;
 
+
 #[derive(Debug, StructOpt)]
 #[structopt(
 name = "zkif",
@@ -69,6 +71,8 @@ pub struct Options {
     ///
     /// clean       Clean workspace by deleting all *.zkif files in it.
     ///
+    /// metrics     Generate many R1CS constraint systems with different parameters to benchmark proof systems.
+    ///
     #[structopt(default_value = "help")]
     pub tool: String,
 
@@ -94,6 +98,7 @@ pub fn cli(options: &Options) -> Result<()> {
         "clean" => main_clean(options),
         "fake_prove" => main_fake_prove(&load_messages(options)?),
         "fake_verify" => main_fake_verify(&load_messages(options)?),
+        "metrics" => main_generate_metrics(options),
         "help" => {
             Options::clap().print_long_help()?;
             eprintln!("\n");
@@ -267,6 +272,20 @@ fn main_fake_verify(_: &Reader) -> Result<()> {
     assert_eq!(proof, "I hereby promess that I saw a witness that satisfies the constraint system.");
     eprintln!("Fake proof verified!");
     Ok(())
+}
+
+fn main_generate_metrics(opts: &Options) -> Result<()> {
+    if opts.paths.len() != 1 {
+        return Err("Specify a single directory where to write examples.".into());
+    }
+    let out_dir = &opts.paths[0];
+
+    if (out_dir == Path::new("-")) || has_zkif_extension(out_dir) {
+        panic!("Cannot open following folder: {:?}", out_dir)
+    } else {
+        create_dir_all(out_dir)?;
+        generate_all_metrics_data(&out_dir)
+    }
 }
 
 #[test]
