@@ -16,26 +16,24 @@ use rand::Rng;
 ///   - Compute the product   (witness * b_1) * (witness * b_2) = c_i
 ///   - The result is then stored in c_i, a newly created instance variable
 
-const BENCHMARK_PRIMES: [&str; 1]  = [
-//     "2",    // 2
-    "101",  // 257
-//     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF61", // 128-bits prime: 2**128 - 158
-//     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF43", // 256 prime: 2**256 - 189
+const BENCHMARK_PRIMES: [&str; 4]  = [
+    "2",   // 2
+    "11",   // 17
+    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF61", // 128-bits prime: 2**128 - 158
+    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF43", // 256 prime: 2**256 - 189
 ];
 
-// const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
-const BENCHMARK_CS_WITNESS_NUMBER: [u64; 1] = [
+const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
     3,
-//     100,
-//     1000,
-//     1000000
+    100,
+    1000,
+    1000000
 ];
 
-// const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 3]  = [
-const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 1]  = [
-    1,
-//     100000,
-//     100000000
+const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 3]  = [
+    10,
+    100000,
+    100000000
 ];
 
 
@@ -70,57 +68,72 @@ macro_rules! bits_to_bytes {
     ($val:expr) => (($val + 7) / 8);
 }
 
-pub fn generate_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
-    let mut rng = rand::thread_rng();
+pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
 
     for hexaprime in BENCHMARK_PRIMES.iter() {
         for wit_nbr in BENCHMARK_CS_WITNESS_NUMBER.iter() {
             for ins_nbr in BENCHMARK_CS_INSTANCES_NUMBER.iter() {
-
-                let bp = BenchmarkParameter::new(&workspace_, *ins_nbr, *wit_nbr, &hexaprime)?;
-                let size_in_bytes = bits_to_bytes!(&bp.modulus.bits()) as usize;
-                let witnesses: Vec<BigUint> = (0..*wit_nbr).map(|_| rng.gen_biguint_below(&bp.modulus)).collect();
-                let mut builder = StatementBuilder::new(bp);
-
-                builder.header.field_maximum = Some(serialize_biguint(&builder.sink.modulus - BigUint::one(), size_in_bytes));
-                let wit_idx = builder.allocate_vars(*wit_nbr as usize);
-
-                for _i in 0..*ins_nbr {
-                    let b1: Vec<u8> = (0..*wit_nbr).map(|_| rng.gen_range(0, 2)).collect();
-                    let b2: Vec<u8> = (0..*wit_nbr).map(|_| rng.gen_range(0, 2)).collect();
-
-                    println!("b1 = {:?}", b1);
-                    println!("b2 = {:?}", b2);
-
-                    let mut result_of_equation = compute_equation(&witnesses, &b1) * compute_equation(&witnesses, &b2);
-                    result_of_equation %= &builder.sink.modulus;
-                    let buf = serialize_biguint(result_of_equation, size_in_bytes);
-                    println!("Instance buffer : {:?}", buf);
-
-                    let instance_id = builder.allocate_instance_var(&buf);
-
-                    let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
-                        // (A ids values)  *  (B ids values)  =  (C ids values)
-                        ((vec![0], vec![1]), (wit_idx.clone(), vec![1]), (wit_idx.clone(), vec![1])),
-                        ((wit_idx.clone(), b1), (wit_idx.clone(), b2), (vec![instance_id], vec![1])),
-                    ];
-                    builder.push_constraints(ConstraintSystem::from(constraints_vec))?;
-                }
-
-                let witness_buffer = serialize_biguints(witnesses, size_in_bytes);
-                println!("wit = {:?}", witness_buffer);
-                builder.push_witness(Witness {
-                    assigned_variables: Variables {
-                        variable_ids: wit_idx, // xx, yy
-                        values: Some(witness_buffer),
-                    }
-                })?;
-
-                builder.finish_header()?;
+                generate_metrics_data(&workspace_, &hexaprime, *wit_nbr, *ins_nbr)?;
             }
         }
     }
 
+    Ok(())
+}
+
+fn generate_metrics_data(workspace_: impl AsRef<Path>, hexaprime: &str, wit_nbr: u64, ins_nbr: u64) -> Result<()> {
+    let mut rng = rand::thread_rng();
+    let empty_constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![];
+
+    let bp = BenchmarkParameter::new(&workspace_, ins_nbr, wit_nbr, &hexaprime)?;
+    let size_in_bytes = bits_to_bytes!(&bp.modulus.bits()) as usize;
+    let witnesses: Vec<BigUint> = (0..wit_nbr).map(|_| rng.gen_biguint_below(&bp.modulus)).collect();
+    let mut builder = StatementBuilder::new(bp);
+
+    builder.header.field_maximum = Some(serialize_biguint(&builder.sink.modulus - BigUint::one(), size_in_bytes));
+    let wit_idx = ((ins_nbr+1)..(ins_nbr + wit_nbr + 1)).collect::<Vec<u64>>();
+
+    let mut constraints_vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+        // (A ids values)  *  (B ids values)  =  (C ids values)
+        ((vec![0], vec![1]), (wit_idx.clone(), vec![1; wit_idx.len()]), (wit_idx.clone(), vec![1; wit_idx.len()])),
+    ];
+
+    for _i in 0..ins_nbr {
+        let b1: Vec<u8> = (0..wit_nbr).map(|_| rng.gen_range(0, 2)).collect();
+        let b2: Vec<u8> = (0..wit_nbr).map(|_| rng.gen_range(0, 2)).collect();
+
+        let mut result_of_equation = compute_equation(&witnesses, &b1) * compute_equation(&witnesses, &b2);
+        result_of_equation %= &builder.sink.modulus;
+        let buf = serialize_biguint(result_of_equation, size_in_bytes);
+
+        let instance_id = builder.allocate_instance_var(&buf);
+
+        let mut new_constraint: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+            ((wit_idx.clone(), b1), (wit_idx.clone(), b2), (vec![instance_id], vec![1]))
+        ];
+        constraints_vec.append(&mut new_constraint);
+        if constraints_vec.len() >= 100000 {
+            builder.push_constraints(ConstraintSystem::from(constraints_vec.as_ref()))?;
+            constraints_vec = empty_constraints.clone();
+        }
+
+    }
+
+    // if it remains constraints not yet pushed, push them.
+    if constraints_vec.len() > 0 {
+        builder.push_constraints(ConstraintSystem::from(constraints_vec.as_ref()))?;
+    }
+
+    let witness_buffer = serialize_biguints(witnesses, size_in_bytes);
+
+    builder.push_witness(Witness {
+        assigned_variables: Variables {
+            variable_ids: wit_idx, // xx, yy
+            values: Some(witness_buffer),
+        }
+    })?;
+    builder.header.free_variable_id += wit_nbr + 1;
+    builder.finish_header()?;
     Ok(())
 }
 
@@ -161,12 +174,26 @@ fn compute_equation(witnesses: &Vec<BigUint>, bit_vector: &[u8]) -> BigUint {
 fn test_generate_metrics() {
     use std::fs::remove_dir_all;
     use std::path::PathBuf;
+    use crate::consumers::simulator::Simulator;
+    use crate::consumers::workspace::Workspace;
 
     let workspace = PathBuf::from("local/test_metrics");
     let _ = remove_dir_all(&workspace);
 
-    match generate_metrics_data(workspace) {
+    match generate_metrics_data(&workspace, &BENCHMARK_PRIMES[0], 500, 500) {
         Err(_) => eprintln!("Error"),
         _ => {}
     }
+
+    // Check whether the statement is true.
+    let mut simulator = Simulator::default();
+    let ws: Workspace = Workspace::from_dir(&workspace.join(format!("metrics_{}_500_500/", &BENCHMARK_PRIMES[0])) ).unwrap();
+
+    // Must validate and simulate in parallel to support stdin.
+    for msg in ws.iter_messages() {
+        simulator.ingest_message(&msg);
+    }
+
+    assert_eq!(simulator.get_violations().len(), 0);
+
 }
