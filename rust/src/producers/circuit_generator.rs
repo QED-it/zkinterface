@@ -109,6 +109,7 @@ pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
 /// ```
 ///     use std::fs::remove_dir_all;
 ///     use std::path::PathBuf;
+///     use zkinterface::producers::circuit_generator::generate_metrics_data;
 ///
 ///     let workspace = PathBuf::from("local/test_metrics");
 ///     let _ = remove_dir_all(&workspace);
@@ -120,7 +121,7 @@ pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
 ///     }
 /// ```
 ///
-fn generate_metrics_data(workspace_: impl AsRef<Path>, hexaprime: &str, wit_nbr: u64, ins_nbr: u64) -> Result<()> {
+pub fn generate_metrics_data(workspace_: impl AsRef<Path>, hexaprime: &str, wit_nbr: u64, ins_nbr: u64) -> Result<()> {
     let mut rng = rand::thread_rng();
     let empty_constraints: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![];
 
