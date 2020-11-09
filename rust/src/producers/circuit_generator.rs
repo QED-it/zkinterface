@@ -9,7 +9,7 @@ use rand::Rng;
 /// Will generate a constraint system as a system of quadratic equations.
 /// SUM_i ( SUM_j ( lambda_{i,j} * w_i * w_j ) )  =  c_k
 ///
-/// The witnesses are x_i variables, while the instances variables are the c_i ones.
+/// The witnesses are w_i variables, while the instances variables are the c_i ones.
 /// This can be expressed easily as a R1CS system using the following trick:
 ///   - Generate first a bunch of witnesses of size 'wit_nbr' in the underlying field,
 ///   - Generate 'ins_nbr' pairs of binary vectors, each of size wit_nbr (named b_1, b_2)
@@ -84,6 +84,27 @@ pub fn generate_all_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
     for hexaprime in BENCHMARK_PRIMES.iter() {
         for wit_nbr in BENCHMARK_CS_WITNESS_NUMBER.iter() {
             for ins_nbr in BENCHMARK_CS_INSTANCES_NUMBER.iter() {
+                println!("Generating R1CS system for prime:{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
+                generate_metrics_data(&workspace_, &hexaprime, *wit_nbr, *ins_nbr)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// This function will generate R1CS constraints systems for some parameters
+/// set here.
+///
+/// # Arguments
+///
+/// * `workspace_`  - a PathBuf giving the output directory
+///
+pub fn generate_some_metrics_data(workspace_: impl AsRef<Path>) -> Result<()> {
+
+    for hexaprime in BENCHMARK_PRIMES.iter() {
+        for wit_nbr in [3, 100].iter() {
+            for ins_nbr in [3, 10].iter() {
                 println!("Generating R1CS system for prime:{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
                 generate_metrics_data(&workspace_, &hexaprime, *wit_nbr, *ins_nbr)?;
             }
