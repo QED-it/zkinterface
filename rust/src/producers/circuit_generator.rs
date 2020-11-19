@@ -148,11 +148,11 @@ pub fn generate_metrics_data(sink: impl Sink, hexaprime: &str, wit_nbr: u64, ins
     builder.header.field_maximum = Some(serialize_biguint(&bp.modulus - BigUint::one(), size_in_bytes));
     let wit_idx = ((ins_nbr+1)..(ins_nbr + wit_nbr + 1)).collect::<Vec<u64>>();
 
-    let constraints_vec: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+    let constraints_start: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
         ((vec![0], vec![1]), (wit_idx.clone(), vec![1; wit_idx.len()]), (wit_idx.clone(), vec![1; wit_idx.len()])),
     ];
-    builder.push_constraints(ConstraintSystem::from(constraints_vec.as_ref()))?;
+    builder.push_constraints(ConstraintSystem::from(constraints_start))?;
 
     for _i in 0..ins_nbr {
         let b1: Vec<u8> = (0..wit_nbr).map(|_| rng.gen_range(0, 2)).collect();
@@ -164,16 +164,11 @@ pub fn generate_metrics_data(sink: impl Sink, hexaprime: &str, wit_nbr: u64, ins
 
         let instance_id = builder.allocate_instance_var(&buf);
 
-        let new_constraint: Vec<((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))> = vec![
+        let new_constraint: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
             ((wit_idx.clone(), b1), (wit_idx.clone(), b2), (vec![instance_id], vec![1]))
         ];
-        builder.push_constraints(ConstraintSystem::from(new_constraint.as_ref()))?;
+        builder.push_constraints(ConstraintSystem::from(new_constraint))?;
 
-    }
-
-    // if it remains constraints not yet pushed, push them.
-    if constraints_vec.len() > 0 {
-        builder.push_constraints(ConstraintSystem::from(constraints_vec.as_ref()))?;
     }
 
     let witness_buffer = serialize_biguints(witnesses, size_in_bytes);
