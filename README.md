@@ -13,8 +13,7 @@ Integration instructions:
 - [Dalek Bulletproofs](#Dalek-Bulletproofs)
 - [Bellman](#Bellman)
 - [libSNARK](#libSNARK)
-- [Gadgets in Rust](#Gadgets-in-Rust)
-- [Gadgets in C](#gadgets-in-c--foreign-function-interface)
+- [Gadgets](#Gadgets-in-Rust)
 
 ## Introduction
 
