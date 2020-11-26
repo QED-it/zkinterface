@@ -14,7 +14,7 @@ Integration instructions:
 - [Bellman](#Bellman)
 - [libSNARK](#libSNARK)
 - [Gadgets in Rust](#Gadgets-in-Rust)
-- [Gadgets in C](#Gadgets-in-C-/-Foreign-Function-Interface)
+- [Gadgets in C](#gadgets-in-c--foreign-function-interface)
 
 ## Introduction
 
