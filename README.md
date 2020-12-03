@@ -133,14 +133,6 @@ The [zkInterface specification document](zkInterface.pdf) providers further cont
 * A protocol for building a constraint system from gadget composition.
 * Technical recommendations for implementation.
 
-## Limitations
-
-This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation. Extension to other forms of constraint systems is planned.
-
-The associated code is experimental.
-
-See the [specification document](zkInterface.pdf) for more information about limitations and scope.
-
 ## Integration examples
 
 ### Dalek Bulletproofs
@@ -169,7 +161,7 @@ See the [specification document](zkInterface.pdf) for more information about lim
     zkif example - | zkif_bellman prove
 
 #### Verify
-    (todo)
+    (not implemented)
 
 
 ### libSNARK
@@ -206,3 +198,12 @@ See examples in `libsnark-rust/src/test.rs`
 See API in `gadgetlib.h`
 
 See FFI call in Rust `libsnark-rust/src/gadgetlib.rs`
+
+
+## Limitations
+
+This first revision focuses on non-interactive proof systems (NIZKs) for general statements (i.e., NP relations) represented in the R1CS/QAP-style constraint system representation. Extension to other forms of constraint systems is planned.
+
+The associated code is experimental.
+
+See the [specification document](zkInterface.pdf) for more information about limitations and scope.
