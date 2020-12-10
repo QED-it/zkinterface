@@ -25,6 +25,9 @@
 //!
 //! ```
 //! use zkinterface::producers::examples::{serialize_small, NEG_ONE};
+//! use zkinterface::KeyValue;
+//!
+//! let (x,y,zz) = (3,4,25);
 //!
 //! // variables ids 1,2 and 3 are used as instances variables
 //! let header = zkinterface::CircuitHeader {
@@ -35,7 +38,7 @@
 //!        free_variable_id: 6,
 //!        field_maximum: Some(serialize_small(&[NEG_ONE])),
 //!        configuration: Some(vec![
-//!             KV::from(("Name", "example")),
+//!             KeyValue::from(("Name", "example")),
 //!         ]),
 //!    };
 //! ```
@@ -43,6 +46,8 @@
 //! Create a Circuit Header
 //!
 //! ```
+//! let (x,y) = (3,4);
+//!
 //! use zkinterface::producers::examples::serialize_small;
 //!
 //! //variables ids 4 and 5 are used as witness variables
@@ -99,14 +104,17 @@
 //! # use zkinterface::producers::examples::{example_circuit_header, example_witness, example_constraints};
 //! use zkinterface::consumers::simulator::Simulator;
 //!
-//! let header = example_circuit_header();
-//! let witness = example_witness();
-//! let cs = example_constraints();
+//! pub fn simulate() -> zkinterface::Result<()> {
+//!   let header = example_circuit_header();
+//!   let witness = example_witness();
+//!   let cs = example_constraints();
 //!
-//!  let mut simulator = Simulator::default();
-//!  simulator.ingest_header(&header)?;
-//!  simulator.ingest_witness(&witness)?;
-//!  simulator.ingest_constraint_system(&cs)?;
+//!   let mut simulator = Simulator::default();
+//!   simulator.ingest_header(&header)?;
+//!   simulator.ingest_witness(&witness)?;
+//!   simulator.ingest_constraint_system(&cs)?;
+//!   Ok(())
+//! }
 //!```
 //!
 //! ## The Validator
