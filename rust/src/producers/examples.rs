@@ -23,6 +23,7 @@ pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeader {
     }
 }
 
+/// A test R1Cs system which represents x^2 + y^2 = zz.
 pub fn example_constraints() -> ConstraintSystem {
     let constraints_vec: &[((Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>), (Vec<u64>, Vec<u8>))] = &[
         // (A ids values)  *  (B ids values)  =  (C ids values)
