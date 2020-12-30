@@ -35,10 +35,9 @@ const BENCHMARK_CS_WITNESS_NUMBER: [u64; 4] = [
 ];
 
 /// This is the list of sizes for the list of instance variables.
-const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 3]  = [
+const BENCHMARK_CS_INSTANCES_NUMBER: [u64; 2]  = [
     10,
     10000,
-    1000000
 ];
 
 
@@ -179,7 +178,7 @@ pub fn generate_metrics_data(sink: impl Sink, hexaprime: &str, wit_nbr: u64, ins
             values: Some(witness_buffer),
         }
     })?;
-    builder.header.free_variable_id += wit_nbr + 1;
+    builder.header.free_variable_id += wit_nbr;
     builder.finish_header()?;
     Ok(())
 }
