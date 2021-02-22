@@ -1,3 +1,9 @@
+# Version v1.3.3, 2020-02, Metrics
+
+Rust:
+- Circuit generator for benchmarking (`zkif metrics`).
+- More documentation.
+
 # Version v1.3.2, 2020-10, Improve simulator
 
 Rust:
