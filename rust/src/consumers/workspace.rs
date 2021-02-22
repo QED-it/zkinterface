@@ -132,7 +132,10 @@ pub fn list_workspace_files(paths: &[PathBuf]) -> Result<Vec<PathBuf>> {
     let mut all_paths = vec![];
 
     for path in paths {
-        if has_zkif_extension(path) || path == Path::new("-") {
+        if has_zkif_extension(path) {
+            all_paths.push(path.clone());
+        } else if path == Path::new("-") {
+            if paths.len() > 1 { return Err("Cannot combine files and stdin".into()); }
             all_paths.push(path.clone());
         } else {
             for file in read_dir(path)? {
