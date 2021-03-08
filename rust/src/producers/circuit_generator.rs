@@ -62,41 +62,26 @@ macro_rules! bits_to_bytes {
     ($val:expr) => (($val + 7) / 8);
 }
 
-/// This function will generate R1CS constraints systems for all parameters
+
+/// This function will generate R1CS constraints systems for the given list of parameters
 /// set here.
 ///
 /// # Arguments
 ///
-/// * `workspace_`  - a PathBuf giving the output directory
+/// * `workspace`  - a PathBuf giving the output directory
+/// * `hexaprimes` - a vector of hexa-decimal primes
+/// * `wit_nbrs`   - a vector of numbers, representing the number of witnesses used in each circuit generation
+/// * `ins_nbrs`   - a vector of numbers, representing the number of instances variables used in each circuit generation
 ///
-pub fn generate_all_metrics_data(workspace: impl AsRef<Path>) -> Result<()> {
+pub fn generate_sequence_metrics_data(workspace: impl AsRef<Path>, hexaprimes_opt: Option<&[&str]>, wit_nbrs_opt: Option<&[u64]>, ins_nbrs_opt: Option<&[u64]>) -> Result<()> {
+    let hexaprimes = hexaprimes_opt.unwrap_or(&BENCHMARK_PRIMES);
+    let wit_nbrs = wit_nbrs_opt.unwrap_or(&BENCHMARK_CS_WITNESS_NUMBER);
+    let ins_nbrs = ins_nbrs_opt.unwrap_or(&BENCHMARK_CS_INSTANCES_NUMBER);
 
-    for hexaprime in BENCHMARK_PRIMES.iter() {
-        for wit_nbr in BENCHMARK_CS_WITNESS_NUMBER.iter() {
-            for ins_nbr in BENCHMARK_CS_INSTANCES_NUMBER.iter() {
-                println!("Generating R1CS system for prime:{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
-                let sink = WorkspaceSink::new(workspace.as_ref().to_path_buf().join(format!("metrics_{}_{}_{}/", &hexaprime, *ins_nbr, *wit_nbr)))?;
-                generate_metrics_data(sink, &hexaprime, *wit_nbr, *ins_nbr)?;
-            }
-        }
-    }
-
-    Ok(())
-}
-
-/// This function will generate R1CS constraints systems for some parameters
-/// set here.
-///
-/// # Arguments
-///
-/// * `workspace_`  - a PathBuf giving the output directory
-///
-pub fn generate_some_metrics_data(workspace: impl AsRef<Path>) -> Result<()> {
-
-    for hexaprime in BENCHMARK_PRIMES.iter() {
-        for wit_nbr in [3, 100].iter() {
-            for ins_nbr in [3, 10].iter() {
-                println!("Generating R1CS system for prime:{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
+    for hexaprime in hexaprimes.iter() {
+        for wit_nbr in wit_nbrs.iter() {
+            for ins_nbr in ins_nbrs.iter() {
+                println!("Generating R1CS system for prime: 0x{} / witness number: {} / instance number: {}", &hexaprime, *wit_nbr, *ins_nbr);
                 let sink = WorkspaceSink::new(workspace.as_ref().to_path_buf().join(format!("metrics_{}_{}_{}/", &hexaprime, *ins_nbr, *wit_nbr)))?;
                 generate_metrics_data(sink, &hexaprime, *wit_nbr, *ins_nbr)?;
             }
