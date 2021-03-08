@@ -114,6 +114,7 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
         if proving {
             b.store.push_witness(&WitnessOwned { assigned_variables: some_vars.clone() })?;
         }
+        let command = CommandOwned { constraints_generation: !proving, witness_generation: proving };
 
         let gadget_call = CircuitOwned {
             connections: some_vars.clone(),
@@ -127,7 +128,20 @@ fn test_libsnark_with_statement_builder() -> Result<()> {
                     number: 0,
                 }]),
         };
-        let command = CommandOwned { constraints_generation: !proving, witness_generation: proving };
+        call_gadget_cb(b, &gadget_call, &command)?;
+
+        let gadget_call = CircuitOwned {
+            connections: some_vars.clone(),
+            free_variable_id: b.vars.free_variable_id,
+            field_maximum: None,
+            configuration: Some(vec![
+                KeyValueOwned {
+                    key: "function".to_string(),
+                    text: Some("tinyram.or".to_string()),
+                    data: None,
+                    number: 0,
+                }]),
+        };
         call_gadget_cb(b, &gadget_call, &command)?;
 
         Ok(())

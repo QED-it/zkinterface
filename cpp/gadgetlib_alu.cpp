@@ -11,6 +11,30 @@ namespace gadgetlib_alu {
     typedef word_variable_gadget<FieldT> PbWord;
 
 
+    tinyram_standard_gadget<FieldT> *make_gadget(
+            string function_name,
+            tinyram_protoboard<FieldT> &pb,
+            const PbArray &opcode_indicators,
+            const PbWord &desval,
+            const PbWord &arg1val,
+            const PbWord &arg2val,
+            const PbVariable &flag,
+            const PbVariable &result,
+            const PbVariable &result_flag,
+            const string &annotation_prefix = ""
+    ) {
+        if (function_name == "tinyram.and") {
+            return new ALU_and_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result,
+                                              result_flag);
+        }
+        if (function_name == "tinyram.or") {
+            return new ALU_or_gadget<FieldT>(pb, opcode_indicators, desval, arg1val, arg2val, flag, result,
+                                             result_flag);
+        }
+        return nullptr;
+    }
+
+
     bool call_gadget(
             char *circuit_msg,
             char *command_msg,
@@ -30,38 +54,6 @@ namespace gadgetlib_alu {
         // Setup.
         tinyram_architecture_params tinyram_params(8, 4);
         tinyram_protoboard<FieldT> pb(tinyram_params);
-
-        // Transition function.
-        auto transition = [&](PbVariable destval, PbVariable arg1val,
-                              PbVariable arg2val, PbVariable flag,
-                              PbVariable out_result, PbVariable out_flag
-        ) {
-            // Allocate.
-            PbArray opcode_indicators; // Unused.
-            PbWord destword(pb, destval);
-            PbWord arg1word(pb, arg1val);
-            PbWord arg2word(pb, arg2val);
-
-            // ALU gadget.
-            ALU_and_gadget<FieldT> gadget(pb, opcode_indicators, destword, arg1word, arg2word, flag, out_result,
-                                          out_flag);
-
-            // Constraints.
-            if (command->constraints_generation()) {
-                destword.generate_r1cs_constraints(false); // TODO: true
-                arg1word.generate_r1cs_constraints(false);
-                arg2word.generate_r1cs_constraints(false);
-                gadget.generate_r1cs_constraints();
-            }
-
-            // Witness.
-            if (command->witness_generation()) {
-                destword.generate_r1cs_witness_from_packed();
-                arg1word.generate_r1cs_witness_from_packed();
-                arg2word.generate_r1cs_witness_from_packed();
-                gadget.generate_r1cs_witness();
-            }
-        };
 
         // Read input values (or zeros if omitted).
         vector<FieldT> inputs = deserialize_incoming_elements(circuit);
@@ -86,23 +78,53 @@ namespace gadgetlib_alu {
         pb.val(arg2val) = inputs[2];
         pb.val(flag) = inputs[3];
 
-        // Call the transition.
-        // In principle, this block could be iterated over multiple instructions.
-        {
-            // Allocate outputs.
-            PbVariable out_result;
-            PbVariable out_flag;
-            out_result.allocate(pb);
-            out_flag.allocate(pb);
+        // Allocate outputs.
+        PbVariable out_result;
+        PbVariable out_flag;
+        out_result.allocate(pb);
+        out_flag.allocate(pb);
 
-            transition(destval, arg1val, arg2val, flag, out_result, out_flag);
+        // Allocate converters to words.
+        PbWord destword(pb, destval);
+        PbWord arg1word(pb, arg1val);
+        PbWord arg2word(pb, arg2val);
+        PbArray opcode_indicators; // Unused.
 
-            destval = out_result;
-            flag = out_flag;
+        // Init gadget.
+        string function_name = find_config_text(circuit, "function", "");
+        cerr << "Function: " << function_name << endl;
 
-            cout << "Variables: " << pb.num_variables() << endl;
-            cout << "Result: " << destval.index << " = " << pb.val(destval).as_ulong() << endl;
+        tinyram_standard_gadget<FieldT> *gadget = make_gadget(
+                function_name,
+                pb, opcode_indicators, destword, arg1word, arg2word, flag, out_result, out_flag);
+
+        if (gadget == nullptr) {
+            cerr << "Gadget not supported" << endl;
+            return false;
         }
+
+        // Constraints.
+        if (command->constraints_generation()) {
+            destword.generate_r1cs_constraints(false); // TODO: true
+            arg1word.generate_r1cs_constraints(false);
+            arg2word.generate_r1cs_constraints(false);
+            gadget->generate_r1cs_constraints();
+        }
+
+        // Witness.
+        if (command->witness_generation()) {
+            destword.generate_r1cs_witness_from_packed();
+            arg1word.generate_r1cs_witness_from_packed();
+            arg2word.generate_r1cs_witness_from_packed();
+            gadget->generate_r1cs_witness();
+            // out_result and out_flags contain values now.
+        }
+
+        free(gadget);
+
+        cerr << "Variables: " << pb.num_variables() << endl;
+        cerr << "Result: " << out_result.index << " = " << pb.val(out_result).as_ulong() << endl;
+
 
         // Serialize constraints.
         if (command->constraints_generation()) {
@@ -122,17 +144,17 @@ namespace gadgetlib_alu {
             VarIdConverter converter(circuit);
 
             vector<uint64_t> output_ids({
-                converter.get_variable_id(destval),
-                converter.get_variable_id(flag),
-            });
+                                                converter.get_variable_id(out_result),
+                                                converter.get_variable_id(out_flag),
+                                        });
 
             Offset<Vector<unsigned char>> output_values;
             if (command->witness_generation()) {
                 output_values = builder.CreateVector(
-                    elements_into_le({
-                            pb.val(destval),
-                            pb.val(flag),
-                        }));
+                        elements_into_le({
+                                                 pb.val(out_result),
+                                                 pb.val(out_flag),
+                                         }));
             }
 
             auto connections = CreateVariables(
@@ -156,4 +178,4 @@ namespace gadgetlib_alu {
         return true;
     }
 
-} // namespace gadgetlib_example
+} // namespace gadgetlib_alu
