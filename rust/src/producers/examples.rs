@@ -4,19 +4,22 @@ use std::mem::size_of;
 use crate::{CircuitHeader, ConstraintSystem, Variables, KeyValue as KV, Witness};
 
 
+/// A test circuit of inputs x,y,zz such that x^2 + y^2 = zz.
 pub fn example_circuit_header() -> CircuitHeader {
-    example_circuit_header_inputs(3, 4, 25)
+    example_circuit_header_in_field(serialize_small(&[NEG_ONE]))
 }
 
 /// A test circuit of inputs x,y,zz such that x^2 + y^2 = zz.
-pub fn example_circuit_header_inputs(x: u32, y: u32, zz: u32) -> CircuitHeader {
+pub fn example_circuit_header_in_field(field_max: Vec<u8>) -> CircuitHeader {
     CircuitHeader {
         instance_variables: Variables {
-            variable_ids: vec![1, 2, 3],  // x, y, zz
-            values: Some(serialize_small(&[x, y, zz])),
+            // IDs of          x, y, zz.
+            variable_ids: vec![1, 2, 3],
+            // Values of                   x, y, zz.
+            values: Some(serialize_small(&[3, 4, 25])),
         },
         free_variable_id: 6,
-        field_maximum: Some(serialize_small(&[NEG_ONE])),
+        field_maximum: Some(field_max),
         configuration: Some(vec![
             KV::from(("Name", "example")),
         ]),
@@ -53,10 +56,6 @@ pub fn example_witness_inputs(x: u32, y: u32) -> Witness {
 pub const MODULUS: u64 = 101;
 
 pub const NEG_ONE: u64 = MODULUS - 1;
-
-pub fn neg(val: u64) -> u64 {
-    MODULUS - (val % MODULUS)
-}
 
 pub fn serialize_small<T: EndianScalar>(values: &[T]) -> Vec<u8> {
     let sz = size_of::<T>();

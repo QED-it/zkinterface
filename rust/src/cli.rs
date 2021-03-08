@@ -5,6 +5,8 @@ use std::fs::{File, create_dir_all, remove_file};
 use std::io::{stdin, stdout, Read, Write, copy};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
+use num_bigint::BigUint;
+use num_integer::Integer;
 
 use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
 use crate::consumers::workspace::{list_workspace_files, has_zkif_extension};
@@ -40,6 +42,7 @@ Write all the statement files to stdout (to pipe to another program):
 ";
 
 use structopt::clap::AppSettings::*;
+use num_traits::Zero;
 
 
 #[derive(Debug, StructOpt)]
@@ -85,6 +88,9 @@ pub struct Options {
     /// The dash - means either write to stdout or read from stdin.
     #[structopt(default_value = ".")]
     pub paths: Vec<PathBuf>,
+
+    #[structopt(short, long, default_value = "101")]
+    pub field_order: BigUint,
 }
 
 pub fn cli(options: &Options) -> Result<()> {
@@ -137,8 +143,20 @@ fn stream_messages(opts: &Options) -> Result<Workspace> {
     Workspace::from_dirs_and_files(&opts.paths)
 }
 
+fn field_order_to_maximum(order: &BigUint) -> Result<Vec<u8>> {
+    let two = &BigUint::from(2 as u32);
+    if order < two
+        || two < order && order.is_even() {
+        return Err(format!("Invalid field order {}. Expected a prime modulus (not the field maximum)", order).into());
+    }
+    let field_max = order - 1 as u32;
+    Ok(field_max.to_bytes_le())
+}
+
 fn main_example(opts: &Options) -> Result<()> {
     use crate::producers::examples::*;
+
+    let field_max = field_order_to_maximum(&opts.field_order)?;
 
     if opts.paths.len() != 1 {
         return Err("Specify a single directory where to write examples.".into());
@@ -146,19 +164,19 @@ fn main_example(opts: &Options) -> Result<()> {
     let out_dir = &opts.paths[0];
 
     if out_dir == Path::new("-") {
-        example_circuit_header().write_into(&mut stdout())?;
+        example_circuit_header_in_field(field_max).write_into(&mut stdout())?;
         example_witness().write_into(&mut stdout())?;
         example_constraints().write_into(&mut stdout())?;
     } else if has_zkif_extension(out_dir) {
         let mut file = File::create(out_dir)?;
-        example_circuit_header().write_into(&mut file)?;
+        example_circuit_header_in_field(field_max).write_into(&mut file)?;
         example_witness().write_into(&mut file)?;
         example_constraints().write_into(&mut file)?;
     } else {
         create_dir_all(out_dir)?;
 
         let path = out_dir.join("header.zkif");
-        example_circuit_header().write_into(&mut File::create(&path)?)?;
+        example_circuit_header_in_field(field_max).write_into(&mut File::create(&path)?)?;
         eprintln!("Written {}", path.display());
 
         let path = out_dir.join("witness.zkif");
@@ -292,7 +310,6 @@ fn main_generate_metrics(opts: &Options, generate_all: bool) -> Result<()> {
         } else {
             generate_some_metrics_data(&out_dir)
         }
-
     }
 }
 
@@ -306,16 +323,19 @@ fn test_cli() -> Result<()> {
     cli(&Options {
         tool: "example".to_string(),
         paths: vec![workspace.clone()],
+        field_order: BigUint::from(101 as u32),
     })?;
 
     cli(&Options {
         tool: "validate".to_string(),
         paths: vec![workspace.clone()],
+        field_order: BigUint::from(101 as u32),
     })?;
 
     cli(&Options {
         tool: "simulate".to_string(),
         paths: vec![workspace.clone()],
+        field_order: BigUint::from(101 as u32),
     })?;
 
     Ok(())
