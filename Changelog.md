@@ -1,4 +1,9 @@
-# Version v1.3.3, 2020-02, Metrics
+# Version v1.3.4, 2021-02, example --field-order
+
+Rust:
+- Generate example circuit with a configurable field order in the header: `zkif example --field-order 101`
+
+# Version v1.3.3, 2021-02, Metrics
 
 Rust:
 - Circuit generator for benchmarking (`zkif metrics`).

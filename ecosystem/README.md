@@ -12,30 +12,41 @@
 ### Install
     git clone https://github.com/QED-it/bulletproofs.git
     cd bulletproofs
-    cargo install --features yoloproofs --path .
+    cargo +nightly install --path .
 
-### Prove
-    zkif example - | zkif_bulletproofs prove
+### Prove and Verify
+    zkif example --field-order=7237005577332262213973186563042994240857116359379907606001950938285454250989 - | \
+        zkif_bulletproofs prove
+    
+    zkif example --field-order=7237005577332262213973186563042994240857116359379907606001950938285454250989 - | \
+        zkif_bulletproofs verify
 
-### Verify
-    zkif example - | zkif_bulletproofs verify
+With the field of Ed25519.
+Tested with zkinterface 1.3.4, bulletproofs/zkinterface c210e4fe, rustc 1.52.0-nightly 2021-03-07.
 
 
 ## Bellman
 ### Install
     git clone https://github.com/QED-it/zkinterface-bellman.git
     cd zkinterface-bellman
-    cargo install --path .
+    cargo +nightly install --path .
 
 ### Validate / Print
-    zkif example - | zkif_bellman print
+    zkif example --field-order=52435875175126190479447740508185965837690552500527637822603658699938581184513 - | \
+        zkif_bellman print
 
-### Prove
-    zkif example - | zkif_bellman prove
+### Setup, Prove and Verify
+    zkif example --field-order=52435875175126190479447740508185965837690552500527637822603658699938581184513 - | \
+        zkif_bellman setup
+    
+    zkif example --field-order=52435875175126190479447740508185965837690552500527637822603658699938581184513 - | \
+        zkif_bellman prove
+    
+    zkif example --field-order=52435875175126190479447740508185965837690552500527637822603658699938581184513 - | \
+        zkif_bellman verify
 
-### Verify
-    (todo)
-
+With the field of BLS12-381.
+Tested with zkinterface 1.3.4, zkinterface-bellman 1.3.4, rustc 1.52.0-nightly 2021-03-07.
 
 ## libSNARK
 ### Install
