@@ -140,7 +140,7 @@ impl CircuitHeader {
     pub fn write_into(&self, writer: &mut impl Write) -> Result<()> {
         let mut builder = FlatBufferBuilder::new();
         let message = self.build(&mut builder);
-        builder.finish_size_prefixed(message, None);
+        fb::finish_size_prefixed_root_buffer(&mut builder, message);
         writer.write_all(builder.finished_data())?;
         Ok(())
     }
