@@ -12,7 +12,7 @@ use crate::{Reader, Workspace, Messages, consumers::stats::Stats, Result};
 use crate::consumers::workspace::{list_workspace_files, has_zkif_extension};
 use crate::consumers::validator::Validator;
 use crate::consumers::simulator::Simulator;
-use crate::producers::circuit_generator::{generate_all_metrics_data, generate_some_metrics_data};
+use crate::producers::circuit_generator::generate_sequence_metrics_data;
 
 const ABOUT: &str = "
 This is a collection of tools to work with zero-knowledge statements encoded in zkInterface messages.
@@ -74,9 +74,9 @@ pub struct Options {
     ///
     /// clean       Clean workspace by deleting all *.zkif files in it.
     ///
-    /// metrics-all Generate lots of R1CS constraint systems with different parameters to benchmark proof systems.
+    /// metrics-all Generate lots of R1CS constraint systems with pre-defined parameters to benchmark proof systems.
     ///
-    /// metrics     Generate some R1CS constraint systems with different parameters to benchmark proof systems.
+    /// metrics     Generate R1CS constraint systems using parameters given in command line to benchmark proof systems.
     ///
     #[structopt(default_value = "help")]
     pub tool: String,
@@ -91,6 +91,12 @@ pub struct Options {
 
     #[structopt(short, long, default_value = "101")]
     pub field_order: BigUint,
+
+    #[structopt(short, long, default_value = "100")]
+    pub witness_nbr: u64,
+
+    #[structopt(short, long, default_value = "100")]
+    pub instance_nbr: u64,
 }
 
 pub fn cli(options: &Options) -> Result<()> {
@@ -306,9 +312,15 @@ fn main_generate_metrics(opts: &Options, generate_all: bool) -> Result<()> {
     } else {
         create_dir_all(out_dir)?;
         if generate_all {
-            generate_all_metrics_data(&out_dir)
+            generate_sequence_metrics_data(&out_dir, None, None, None)
         } else {
-            generate_some_metrics_data(&out_dir)
+            let hexaprime = opts.field_order.to_str_radix(16);
+            generate_sequence_metrics_data(
+                &out_dir,
+                Some(vec![hexaprime.as_str()].as_slice()),
+                Some(vec![opts.witness_nbr].as_slice()),
+                Some(vec![opts.instance_nbr].as_slice())
+            )
         }
     }
 }
@@ -324,18 +336,24 @@ fn test_cli() -> Result<()> {
         tool: "example".to_string(),
         paths: vec![workspace.clone()],
         field_order: BigUint::from(101 as u32),
+        witness_nbr: 0,
+        instance_nbr: 0,
     })?;
 
     cli(&Options {
         tool: "validate".to_string(),
         paths: vec![workspace.clone()],
         field_order: BigUint::from(101 as u32),
+        witness_nbr: 0,
+        instance_nbr: 0,
     })?;
 
     cli(&Options {
         tool: "simulate".to_string(),
         paths: vec![workspace.clone()],
         field_order: BigUint::from(101 as u32),
+        witness_nbr: 0,
+        instance_nbr: 0,
     })?;
 
     Ok(())
