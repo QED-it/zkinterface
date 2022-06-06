@@ -16,7 +16,7 @@ keywords = ["zero-knowledge", "zkproof", "cryptography"]
 fbs = []
 
 [dependencies]
-flatbuffers = "0.5.0"
+flatbuffers = "0.8.1"
 serde = { version = "1.0.111", features = ["derive"] }
 serde_json = "1.0.53"
 serde_yaml = "0.8.13"
